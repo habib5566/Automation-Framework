@@ -1,0 +1,27 @@
+TC_ID,Category,Description,Viewport_Group
+PAY-001,URL,Admin payment path in URL,All
+PAY-002,HTTP,Navigation status below 400,All
+PAY-003,Content,Minimum visible text 120 chars,All
+PAY-004,Content,Minimum visible text 250 chars,All
+PAY-005,Content,Minimum visible text 350 chars,All
+PAY-006,Controls,At least one visible button,All
+PAY-007,Controls,At least two visible buttons,All
+PAY-008,Controls,At least three visible links,All
+PAY-009,Controls,At least one visible input,All
+PAY-010,Domain,Vocabulary payment/invoice/amount etc.,All
+PAY-011,Shell,DesignCentura brand visible,All
+PAY-012,Nav,Dashboard link in DOM,All
+PAY-013,Errors,No critical server error alert,All
+PAY-014,Layout,Body scroll metrics valid,All
+PAY-015,Stability,Reload preserves payment URL,All
+PAY-016,Stability,Double reload preserves URL,All
+PAY-017,Domain,Payment wording in body text,All
+PAY-018,Data,Table/grid or table-like wrapper,All
+PAY-019,Meta,Charset or viewport meta tag present,All
+PAY-020,SPA,localStorage API exists,All
+PAY-021,A11y,Tab key does not break page,All
+PAY-022,Layout,main/main role/form present,All
+PAY-X-01,Flow,Dashboard payment round-trip,
+PAY-X-02,Flow,Hard reload on payment,
+PAY-X-03,Flow,Host remains designcentura,
+PAY-X-04,Flow,Three sequential payment loads,

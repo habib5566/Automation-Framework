@@ -1,0 +1,20 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
+  "functions": {
+    "api/scan.js": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "api/ping.js": {
+      "memory": 128
+    },
+    "api/runtime.js": {
+      "memory": 128
+    },
+    "api/email-status.js": {
+      "memory": 128
+    }
+  }
+}

@@ -1,0 +1,17 @@
+node_modules/
+# Root-only (plain public/ would ignore go-live-audit/public)
+/public/
+api/_scan-core.js
+.pw-browsers/
+.env
+auth.json
+reports/html-report/
+reports/logs/
+test-results/
+playwright-report/
+blob-report/
+*.log
+.DS_Store
+*.zip
+tools/mailpit/
+go-live-audit/public/last-scan-email-report.txt

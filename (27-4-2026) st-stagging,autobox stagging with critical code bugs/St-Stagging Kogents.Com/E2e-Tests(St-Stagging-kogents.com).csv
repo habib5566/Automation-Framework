@@ -1,0 +1,75 @@
+Test Case,Expected Result,Actual Result,Status,Duration (ms)
+Login - Successful login,User should be logged in and redirected to dashboard,User logged in successfully and redirected to dashboard,Passed,2500
+Dashboard - Page loads correctly,Dashboard page should load with all elements,Dashboard loaded with all elements visible,Passed,1200
+Dashboard - Navigation to Chat Logs,Should navigate to chat logs page,Navigated to chat logs page,Passed,800
+Chat Logs - Page loads,Chat logs page should load,Page loaded successfully,Passed,1000
+Banned Visitors - Ban IP Address,IP should be banned and appear in list,IP 192.168.1.1 banned successfully,Passed,1500
+Agent Control - Load page,Agent control page should load,Page loaded with controls,Passed,900
+Website Data - Save and Crawl,Save and crawl functions should work,Data saved and crawl initiated,Passed,3000
+Website Data - Add Escalation in Escalation tab,Escalation rule should be added,Rule 'High priority' added successfully,Passed,1800
+Contacts - Upgrade now,Upgrade prompt should be visible,Upgrade now button visible,Passed,700
+Pricing - Load page,Pricing page should load,Pricing plans displayed,Passed,1100
+Channels WhatsApp - Reconnect and Add Account,Reconnect and add account options available,Reconnect and Add Account buttons present,Passed,1300
+Channels Messenger - Upgrade Now,Upgrade prompt visible,Upgrade Now displayed,Passed,600
+Channels Instagram - Upgrade Now,Upgrade prompt visible,Upgrade Now displayed,Passed,600
+Voice Agent AI Agent - Load page,AI Agent page should load,Page loaded with configuration options,Passed,950
+Dashboard - Check overview metrics,4 metric cards should be visible,4 metric cards displayed,Passed,500
+Dashboard - Navigate to settings,Should navigate to settings page,Navigated to settings,Passed,750
+Chat Logs - Filter by date,Logs should be filtered by selected date,Logs filtered for 2024-01-01,Passed,2200
+Chat Logs - Export logs,Export should trigger download,Download initiated,Passed,1000
+Banned Visitors - Unban IP,IP should be removed from banned list,IP unbanned successfully,Passed,1200
+Agent Control - Start agent,Agent status should change to online,Agent started and online,Passed,1500
+Agent Control - Stop agent,Agent status should change to offline,Agent stopped and offline,Passed,1400
+Website Data - Add feature,New feature should be added,Feature 'New Feature' added,Passed,1600
+Website Data - Crawl website,Crawl should start,Crawling initiated,Passed,2500
+Website Data - Add escalation rule,Rule should be added,Rule added successfully,Passed,1700
+Contacts - View contact details,Contact details should open,Details displayed,Passed,800
+Contacts - Search contacts,Search results should appear,Contacts filtered by 'John',Passed,1300
+Pricing - Select plan,Plan should be selected,Pro plan selected,Passed,900
+Pricing - Compare plans,Comparison table should show,Table displayed,Passed,700
+WhatsApp - View QR code,QR code should appear,QR code visible,Passed,2000
+WhatsApp - Reconnect existing,Reconnection should start,Reconnecting...,Passed,1800
+Messenger - View integration,Integration options visible,Options displayed,Passed,600
+Instagram - View integration,Integration options visible,Options displayed,Passed,600
+AI Agent - Configure responses,Responses should be saved,Configuration saved,Passed,1200
+AI Agent - Test conversation,Response should appear,Response received,Passed,1500
+Dashboard - Real-time updates,Updates should reflect,Updates working,Passed,500
+Chat Logs - Pagination,Next page should load,Page 2 loaded,Passed,1000
+Banned Visitors - Bulk ban,Multiple IPs should be banned,IPs banned,Passed,2000
+Agent Control - View logs,Logs should be visible,Logs displayed,Passed,800
+Website Data - Edit feature,Feature should be updated,Feature updated to 'Updated Feature',Passed,1400
+Contacts - Export contacts,Export should trigger,Download started,Passed,900
+Pricing - Contact sales,Contact form should open,Form displayed,Passed,700
+WhatsApp - View message history,History should load,History visible,Passed,1100
+AI Agent - View analytics,Analytics chart should show,Chart displayed,Passed,1000
+Dashboard - Theme toggle,Theme should change to dark,Dark theme applied,Passed,600
+Chat Logs - Sort by date,Logs should be sorted,Sorted by date,Passed,800
+Banned Visitors - Search banned IPs,Search results should appear,IPs filtered,Passed,900
+Agent Control - Configure auto-responses,Responses should be saved,Saved successfully,Passed,1100
+Website Data - Delete feature,Feature should be removed,Feature deleted,Passed,1300
+Contacts - Add tag,Tag should be added,VIP tag added,Passed,1000
+Pricing - Apply coupon,Discount should apply,10% off applied,Passed,800
+WhatsApp - Send test message,Message should be sent,Message sent,Passed,1800
+Messenger - Connect account,OAuth flow should start,Flow initiated,Passed,1200
+Instagram - Connect account,OAuth flow should start,Flow initiated,Passed,1200
+AI Agent - Enable voice,Voice should be enabled,Voice enabled,Passed,700
+Dashboard - Download report,Download should start,Report downloaded,Passed,1500
+Chat Logs - Mark as read,Item should be marked as read,Marked as read,Passed,600
+Banned Visitors - Set ban duration,Duration should be set,24 hours set,Passed,1000
+Agent Control - View queue,Queue should be visible,Queue displayed,Passed,800
+Website Data - Schedule crawl,Crawl should be scheduled,Scheduled for 2024-12-31,Passed,1600
+Contacts - Merge duplicates,Duplicates should be merged,Merged successfully,Passed,1400
+Pricing - View billing history,History should load,Billing table shown,Passed,900
+WhatsApp - View templates,Templates should list,Templates displayed,Passed,1100
+AI Agent - Train model,Training should start,Training initiated,Passed,2000
+Dashboard - Logout,User should be logged out,Logged out to login page,Passed,800
+Login - Invalid credentials,Should show error message,Error message displayed,Failed,1500
+Dashboard - Invalid navigation,Should handle gracefully,Error handled,Passed,500
+Chat Logs - No data,Should show empty state,Empty state shown,Passed,400
+Banned Visitors - Invalid IP,Should show validation error,Error: Invalid IP format,Failed,800
+Agent Control - Agent offline,Should show offline status,Offline status displayed,Passed,600
+Website Data - Crawl failure,Should show error message,Error: Crawl failed,Failed,3000
+Contacts - No contacts,Should show no data message,No contacts message,Passed,300
+Pricing - Invalid coupon,Should show error,Error: Invalid coupon,Failed,700
+WhatsApp - QR expired,Should refresh QR,QR refreshed,Passed,2500
+AI Agent - Response timeout,Should show timeout error,Timeout error,Failed,5000

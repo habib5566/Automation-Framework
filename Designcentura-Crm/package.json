@@ -1,0 +1,21 @@
+{
+  "name": "designcentura-crm-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright E2E + regression for Design Centura CRM admin",
+  "scripts": {
+    "test": "playwright test",
+    "test:unit": "node --test ./lib/crmPath.test.js",
+    "test:e2e": "playwright test",
+    "test:all": "npm run test:unit && playwright test",
+    "test:headed": "playwright test --headed",
+    "test:report": "npm run test:all && node scripts/build-word-report.cjs",
+    "report:html": "playwright show-report reports/html-report",
+    "report:word": "node scripts/build-word-report.cjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "docx": "^9.1.0",
+    "dotenv": "^16.4.5"
+  }
+}

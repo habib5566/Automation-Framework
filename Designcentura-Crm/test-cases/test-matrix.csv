@@ -1,0 +1,10 @@
+TC_ID,Module,URL_Path,Expected_Result,Test_Type
+TC-ADM-001,Dashboard,/crm-pay/admin/dashboard,"Page loads (2xx), URL matches, body visible, no 5xx banner",Regression
+TC-ADM-002,Payment,/crm-pay/admin/payment,"Page loads (2xx), URL matches, body visible, no 5xx banner",Regression
+TC-ADM-003,Customer,/crm-pay/admin/customer,"Page loads (2xx), URL matches, body visible, no 5xx banner",Regression
+TC-ADM-004,Brief list,/crm-pay/admin/brief/list,"Page loads (2xx), URL matches, body visible, no 5xx banner",Regression
+TC-ADM-005,Lead list,/crm-pay/admin/lead/list,"Page loads (2xx), URL matches, body visible, no 5xx banner",Regression
+TC-ADM-006,Chat,/crm-pay/admin/chat,"Page loads (2xx), URL matches, body visible, no 5xx banner",Regression
+TC-ADM-007,Brief link list,/crm-pay/admin/brief/link/list,"Page loads (2xx), URL matches, body visible, no 5xx banner",Regression
+TC-ADM-008,Activity logs,/crm-pay/admin/activity-logs,"Page loads (2xx), URL matches, body visible, no 5xx banner",Regression
+STRESS-001,All modules,cycle,"Each route opens repeatedly without HTTP 4xx/5xx",Stress

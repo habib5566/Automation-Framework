@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Demo Login</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="card">
+      <h1>Sign in</h1>
+      <p class="hint">Use admin / admin123 for a successful login.</p>
+      <form id="login-form" novalidate>
+        <label>
+          Username
+          <input id="username" name="username" type="text" autocomplete="username" />
+        </label>
+        <label>
+          Password
+          <input id="password" name="password" type="password" autocomplete="current-password" />
+        </label>
+        <button type="submit" id="login-button">Log in</button>
+      </form>
+      <p id="error-message" class="error" role="alert" hidden></p>
+    </main>
+    <script>
+      const form = document.getElementById('login-form');
+      const error = document.getElementById('error-message');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        error.hidden = true;
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) {
+          error.textContent = data.messag`e || 'Login failed.';
+          error.hidden = false;
+          return;
+        }
+        window.location.href = data.redirect || '/dashboard.html';
+      });
+    </script>
+  </body>
+</html>

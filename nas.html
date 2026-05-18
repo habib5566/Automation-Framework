@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Demo website for testing go-live checklist automation">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Demo Website - Go-Live Checklist Test</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        header {
+            background: #f0f0f0;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        form {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        input,
+        textarea {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 8px;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        .cta-button {
+            background: #28a745;
+            margin: 10px;
+        }
+        
+        footer {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f8f8f8;
+            text-align: center;
+        }
+        
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Welcome to Demo Website</h1>
+        <p>This is a test website for the go-live checklist automation system.</p>
+    </header>
+
+    <main>
+        <section>
+            <h2>About Us</h2>
+            <p>This website demonstrates proper implementation of web standards and best practices.</p>
+            <img src="https://via.placeholder.com/400x200?text=Demo+Image" alt="Demo image">
+        </section>
+
+        <section>
+            <h2>Contact Form</h2>
+            <form id="contactForm">
+                <label for="name">Name *</label>
+                <input type="text" id="name" name="name" required>
+
+                <label for="email">Email *</label>
+                <input type="email" id="email" name="email" required>
+
+                <label for="message">Message</label>
+                <textarea id="message" name="message" rows="4"></textarea>
+
+                <button type="submit">Send Message</button>
+            </form>
+        </section>
+
+        <section>
+            <h2>Call to Actions</h2>
+            <button class="cta-button" onclick="alert('CTA clicked!')">Get Started</button>
+            <button class="cta-button" onclick="alert('Another CTA!')">Learn More</button>
+        </section>
+
+        <section>
+            <h2>Contact Information</h2>
+            <p>Email: <a href="mailto:info@demo.com">info@demo.com</a></p>
+            <p>Phone: <a href="tel:+1234567890">+1 (234) 567-8900</a></p>
+            <p>Address: 123 Demo Street, Demo City, DC 12345</p>
+        </section>
+
+        <section>
+            <h2>Links Test</h2>
+            <ul>
+                <li><a href="#top">Back to Top</a></li>
+                <li><a href="https://example.com">External Link</a></li>
+                <li><a href="/nonexistent">Broken Link (will fail)</a></li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Demo Website. All rights reserved.</p>
+        <p><a href="/privacy">Privacy Policy</a> | <a href="/terms">Terms of Service</a></p>
+    </footer>
+
+    <script>
+        // Form validation
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+
+            if (!name || !email) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            alert('Form submitted successfully!');
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,641 @@
+{
+  "config": {
+    "configFile": "D:\\Automation-Framework\\Designcentura-Crm\\playwright.config.js",
+    "rootDir": "D:/Automation-Framework/Designcentura-Crm/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/Automation-Framework/Designcentura-Crm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "setup",
+        "name": "setup",
+        "testDir": "D:/Automation-Framework/Designcentura-Crm/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/auth\\.setup\\.js/"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "D:/Automation-Framework/Designcentura-Crm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "crm-chromium",
+        "name": "crm-chromium",
+        "testDir": "D:/Automation-Framework/Designcentura-Crm/tests",
+        "testIgnore": [
+          "/auth\\.setup\\.js/"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "reports/html-report",
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "reports/playwright-results.json"
+        }
+      ],
+      [
+        "D:\\Automation-Framework\\Designcentura-Crm\\reporters\\designcentura-reporter.cjs",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "auth.setup.js",
+      "file": "auth.setup.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "setup",
+          "file": "auth.setup.js",
+          "line": 8,
+          "column": 6,
+          "specs": [
+            {
+              "title": "authenticate and save session",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "setup",
+                  "projectName": "setup",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 32031,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-21T13:05:33.358Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\Designcentura-Crm\\test-results\\auth.setup.js-setup-authenticate-and-save-session-setup\\test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f376efe52c54b1a876fd-ce1b70d54217908838a7",
+              "file": "auth.setup.js",
+              "line": 9,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "admin-routes.spec.js",
+      "file": "admin-routes.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "CRM admin — route regression (read-only checks)",
+          "file": "admin-routes.spec.js",
+          "line": 8,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC-ADM-001: Dashboard — page loads and URL is correct",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [
+                    {
+                      "type": "expected",
+                      "description": "Navigate to /crm-pay/admin/dashboard; expect HTTP < 400, URL matches route, substantial page text (logged-in shell)."
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "crm-chromium",
+                  "projectName": "crm-chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 22786,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-21T13:06:06.939Z",
+                      "annotations": [
+                        {
+                          "type": "expected",
+                          "description": "Navigate to /crm-pay/admin/dashboard; expect HTTP < 400, URL matches route, substantial page text (logged-in shell)."
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\Designcentura-Crm\\test-results\\admin-routes-CRM-admin-—-r-bc7d4-ge-loads-and-URL-is-correct-crm-chromium\\test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b42675744cc87d6bac59-302317bebc76f61e6b6f",
+              "file": "admin-routes.spec.js",
+              "line": 10,
+              "column": 5
+            },
+            {
+              "title": "TC-ADM-002: Payment — page loads and URL is correct",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [
+                    {
+                      "type": "expected",
+                      "description": "Navigate to /crm-pay/admin/payment; expect HTTP < 400, URL matches route, substantial page text (logged-in shell)."
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "crm-chromium",
+                  "projectName": "crm-chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8086,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-21T13:06:30.035Z",
+                      "annotations": [
+                        {
+                          "type": "expected",
+                          "description": "Navigate to /crm-pay/admin/payment; expect HTTP < 400, URL matches route, substantial page text (logged-in shell)."
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\Designcentura-Crm\\test-results\\admin-routes-CRM-admin-—-r-5c947-ge-loads-and-URL-is-correct-crm-chromium\\test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b42675744cc87d6bac59-b0e25d774bca2a85f8db",
+              "file": "admin-routes.spec.js",
+              "line": 10,
+              "column": 5
+            },
+            {
+              "title": "TC-ADM-003: Customer — page loads and URL is correct",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [
+                    {
+                      "type": "expected",
+                      "description": "Navigate to /crm-pay/admin/customer; expect HTTP < 400, URL matches route, substantial page text (logged-in shell)."
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "crm-chromium",
+                  "projectName": "crm-chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8770,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-21T13:06:38.147Z",
+                      "annotations": [
+                        {
+                          "type": "expected",
+                          "description": "Navigate to /crm-pay/admin/customer; expect HTTP < 400, URL matches route, substantial page text (logged-in shell)."
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\Designcentura-Crm\\test-results\\admin-routes-CRM-admin-—-r-8077c-ge-loads-and-URL-is-correct-crm-chromium\\test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b42675744cc87d6bac59-3fc795ece47eafa73bcb",
+              "file": "admin-routes.spec.js",
+              "line": 10,
+              "column": 5
+            },
+            {
+              "title": "TC-ADM-004: Brief list — page loads and URL is correct",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [
+                    {
+                      "type": "expected",
+                      "description": "Navigate to /crm-pay/admin/brief/list; expect HTTP < 400, URL matches route, substantial page text (logged-in shell)."
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "crm-chromium",
+                  "projectName": "crm-chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7798,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-21T13:06:46.939Z",
+                      "annotations": [
+                        {
+                          "type": "expected",
+                          "description": "Navigate to /crm-pay/admin/brief/list; expect HTTP < 400, URL matches route, substantial page text (logged-in shell)."
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\Designcentura-Crm\\test-results\\admin-routes-CRM-admin-—-r-da5d3-ge-loads-and-URL-is-correct-crm-chromium\\test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b42675744cc87d6bac59-de39119d83124d32bb3a",
+              "file": "admin-routes.spec.js",
+              "line": 10,
+              "column": 5
+            },
+            {
+              "title": "TC-ADM-005: Lead list — page loads and URL is correct",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [
+                    {
+                      "type": "expected",
+                      "description": "Navigate to /crm-pay/admin/lead/list; expect HTTP < 400, URL matches route, substantial page text (logged-in shell)."
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "crm-chromium",
+                  "projectName": "crm-chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8861,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-21T13:06:54.758Z",
+                      "annotations": [
+                        {
+                          "type": "expected",
+                          "description": "Navigate to /crm-pay/admin/lead/list; expect HTTP < 400, URL matches route, substantial page text (logged-in shell)."
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\Designcentura-Crm\\test-results\\admin-routes-CRM-admin-—-r-51aed-ge-loads-and-URL-is-correct-crm-chromium\\test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b42675744cc87d6bac59-8918d8b71f0e73267614",
+              "file": "admin-routes.spec.js",
+              "line": 10,
+              "column": 5
+            },
+            {
+              "title": "TC-ADM-006: Chat — page loads and URL is correct",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [
+                    {
+                      "type": "expected",
+                      "description": "Navigate to /crm-pay/admin/chat; expect HTTP < 400, URL matches route, substantial page text (logged-in shell)."
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "crm-chromium",
+                  "projectName": "crm-chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8652,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-21T13:07:03.639Z",
+                      "annotations": [
+                        {
+                          "type": "expected",
+                          "description": "Navigate to /crm-pay/admin/chat; expect HTTP < 400, URL matches route, substantial page text (logged-in shell)."
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\Designcentura-Crm\\test-results\\admin-routes-CRM-admin-—-r-98ac4-ge-loads-and-URL-is-correct-crm-chromium\\test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b42675744cc87d6bac59-bfa936bfdeec9f91460f",
+              "file": "admin-routes.spec.js",
+              "line": 10,
+              "column": 5
+            },
+            {
+              "title": "TC-ADM-007: Brief link list — page loads and URL is correct",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [
+                    {
+                      "type": "expected",
+                      "description": "Navigate to /crm-pay/admin/brief/link/list; expect HTTP < 400, URL matches route, substantial page text (logged-in shell)."
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "crm-chromium",
+                  "projectName": "crm-chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8947,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-21T13:07:12.310Z",
+                      "annotations": [
+                        {
+                          "type": "expected",
+                          "description": "Navigate to /crm-pay/admin/brief/link/list; expect HTTP < 400, URL matches route, substantial page text (logged-in shell)."
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\Designcentura-Crm\\test-results\\admin-routes-CRM-admin-—-r-4b198-ge-loads-and-URL-is-correct-crm-chromium\\test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b42675744cc87d6bac59-3ed358a5d127a27082b1",
+              "file": "admin-routes.spec.js",
+              "line": 10,
+              "column": 5
+            },
+            {
+              "title": "TC-ADM-008: Activity logs — page loads and URL is correct",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [
+                    {
+                      "type": "expected",
+                      "description": "Navigate to /crm-pay/admin/activity-logs; expect HTTP < 400, URL matches route, substantial page text (logged-in shell)."
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "crm-chromium",
+                  "projectName": "crm-chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8973,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-21T13:07:21.276Z",
+                      "annotations": [
+                        {
+                          "type": "expected",
+                          "description": "Navigate to /crm-pay/admin/activity-logs; expect HTTP < 400, URL matches route, substantial page text (logged-in shell)."
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\Designcentura-Crm\\test-results\\admin-routes-CRM-admin-—-r-60167-ge-loads-and-URL-is-correct-crm-chromium\\test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b42675744cc87d6bac59-c0bb261356fd12d279ac",
+              "file": "admin-routes.spec.js",
+              "line": 10,
+              "column": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "stress-routes.spec.js",
+      "file": "stress-routes.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "CRM admin — repeat navigation (light stress)",
+          "file": "stress-routes.spec.js",
+          "line": 9,
+          "column": 6,
+          "specs": [
+            {
+              "title": "STRESS-001: cycle all admin routes 3 times",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [
+                    {
+                      "type": "expected",
+                      "description": "Each of 8 routes opens successfully 3 times; URL stable; status < 400."
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "crm-chromium",
+                  "projectName": "crm-chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 72791,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-21T13:07:30.284Z",
+                      "annotations": [
+                        {
+                          "type": "expected",
+                          "description": "Each of 8 routes opens successfully 3 times; URL stable; status < 400."
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\Designcentura-Crm\\test-results\\stress-routes-CRM-admin-—--610c9-le-all-admin-routes-3-times-crm-chromium\\test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "3a6089a31131020be45c-ec508226dcd90bfbfe14",
+              "file": "stress-routes.spec.js",
+              "line": 10,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-04-21T13:05:32.216Z",
+    "duration": 191074.54499999998,
+    "expected": 10,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

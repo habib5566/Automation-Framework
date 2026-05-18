@@ -1,0 +1,155 @@
+{
+  "timestamp": "2026-04-23T09:30:07.561Z",
+  "url": "https://vettedlogos.com/",
+  "page": "/",
+  "analysis": {
+    "dummyContent": [],
+    "phoneNumbers": [
+      {
+        "phone": "323-283-8536",
+        "screenshot": "vettedlogos-analysis\\phone-3232838536-1776936600470.png",
+        "context": "323-283-8536",
+        "location": "Position: (1052, 14)"
+      },
+      {
+        "phone": "323-283-8536",
+        "screenshot": "vettedlogos-analysis\\phone-3232838536-1776936600622.png",
+        "context": "323-283-8536",
+        "location": "Position: (130, 6709)"
+      },
+      {
+        "phone": "323-283-8536",
+        "screenshot": "vettedlogos-analysis\\phone-3232838536-1776936600795.png",
+        "context": "323-283-8536",
+        "location": "Position: (652, 7073)"
+      }
+    ],
+    "telLinks": [
+      {
+        "href": "tel:323-283-8536",
+        "text": "323-283-8536",
+        "screenshot": "vettedlogos-analysis\\tel-link-1.png",
+        "location": "Position: (1052, 14)"
+      },
+      {
+        "href": "tel:323-283-8536",
+        "text": "323-283-8536",
+        "screenshot": "vettedlogos-analysis\\tel-link-4.png",
+        "location": "Position: (130, 6709)"
+      },
+      {
+        "href": "tel:323-283-8536",
+        "text": "323-283-8536",
+        "screenshot": "vettedlogos-analysis\\tel-link-5.png",
+        "location": "Position: (652, 7073)"
+      }
+    ],
+    "images": [
+      {
+        "src": "https://vettedlogos.com/assets/img/logo/logo-0001.svg",
+        "alt": "(empty)",
+        "screenshot": "vettedlogos-analysis\\missing-alt-2.png",
+        "location": "Position: (-132, 709)"
+      },
+      {
+        "src": "https://vettedlogos.com/assets/img/logo/logo-0002.svg",
+        "alt": "(empty)",
+        "screenshot": "vettedlogos-analysis\\missing-alt-3.png",
+        "location": "Position: (50, 709)"
+      },
+      {
+        "src": "https://vettedlogos.com/assets/img/logo/logo-0003.svg",
+        "alt": "(empty)",
+        "screenshot": "vettedlogos-analysis\\missing-alt-4.png",
+        "location": "Position: (233, 709)"
+      },
+      {
+        "src": "https://vettedlogos.com/assets/img/logo/logo-0004.svg",
+        "alt": "(empty)",
+        "screenshot": "vettedlogos-analysis\\missing-alt-5.png",
+        "location": "Position: (410, 709)"
+      },
+      {
+        "src": "https://vettedlogos.com/assets/img/logo/logo-0005.svg",
+        "alt": "(empty)",
+        "screenshot": "vettedlogos-analysis\\missing-alt-6.png",
+        "location": "Position: (609, 709)"
+      },
+      {
+        "src": "https://vettedlogos.com/assets/img/logo/logo-0006.svg",
+        "alt": "(empty)",
+        "screenshot": "vettedlogos-analysis\\missing-alt-7.png",
+        "location": "Position: (796, 709)"
+      },
+      {
+        "src": "https://vettedlogos.com/assets/img/logo/logo-0007.svg",
+        "alt": "(empty)",
+        "screenshot": "vettedlogos-analysis\\missing-alt-8.png",
+        "location": "Position: (1037, 709)"
+      },
+      {
+        "src": "https://vettedlogos.com/assets/img/logo/logo-0008.svg",
+        "alt": "(empty)",
+        "screenshot": "vettedlogos-analysis\\missing-alt-9.png",
+        "location": "Position: (1219, 709)"
+      },
+      {
+        "src": "https://vettedlogos.com/assets/img/business-logo-design.png",
+        "alt": "(empty)",
+        "screenshot": "vettedlogos-analysis\\missing-alt-11.png",
+        "location": "Position: (105, 2027)"
+      },
+      {
+        "src": "https://vettedlogos.com/assets/img/rebranding-logo-refresh.png",
+        "alt": "(empty)",
+        "screenshot": "vettedlogos-analysis\\missing-alt-12.png",
+        "location": "Position: (485, 2027)"
+      },
+      {
+        "src": "https://vettedlogos.com/assets/img/startup-brand-packages.png",
+        "alt": "(empty)",
+        "screenshot": "vettedlogos-analysis\\missing-alt-13.png",
+        "location": "Position: (865, 2027)"
+      },
+      {
+        "src": "https://vettedlogos.com/assets/img/veicon_BrandingThatWorks.svg",
+        "alt": "(empty)",
+        "screenshot": "vettedlogos-analysis\\missing-alt-96.png",
+        "location": "Position: (105, 4503)"
+      },
+      {
+        "src": "https://vettedlogos.com/assets/img/veicon_DesignThatConverts.svg",
+        "alt": "(empty)",
+        "screenshot": "vettedlogos-analysis\\missing-alt-97.png",
+        "location": "Position: (390, 4503)"
+      },
+      {
+        "src": "https://vettedlogos.com/assets/img/veicon_StartupBrandPackages1.svg",
+        "alt": "(empty)",
+        "screenshot": "vettedlogos-analysis\\missing-alt-98.png",
+        "location": "Position: (675, 4503)"
+      },
+      {
+        "src": "https://vettedlogos.com/assets/img/veicon_BrandConsistencyAcrossPlatforms.svg",
+        "alt": "(empty)",
+        "screenshot": "vettedlogos-analysis\\missing-alt-99.png",
+        "location": "Position: (960, 4503)"
+      }
+    ],
+    "noIndex": [
+      {
+        "status": "missing",
+        "robotsContent": "No robots meta tag found",
+        "screenshot": "vettedlogos-analysis\\noindex-missing.png",
+        "headContent": "\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <meta name=\"csrf-token\" content=\"3iDnOoYMC1McZFrJ4cvPzSzx1StKx0EFxWr11Rdj\">\n  \n    <!---->\n    <title>\n        Custom Logo Maker | Online Logo Maker | Vetted Logos\n    </title>\n    \n    <!---->\n    <meta name=\"description\" content=\"Need a custom logo maker that converts? Get a powerful, memorable logo built for growth and brand authority, start designing now with Vetted Logos!\">\n    \n    <!---->\n  ..."
+      }
+    ]
+  },
+  "summary": {
+    "dummyContent": 0,
+    "phoneNumbers": 3,
+    "telLinks": 3,
+    "images": 15,
+    "noIndex": 1
+  }
+}

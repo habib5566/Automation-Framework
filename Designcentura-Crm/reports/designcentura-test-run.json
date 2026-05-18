@@ -1,0 +1,83 @@
+[
+  {
+    "tcId": "TC-ADM-001",
+    "title": "TC-ADM-001: Dashboard — page loads and URL is correct",
+    "expected": "Navigate to /crm-pay/admin/dashboard; expect HTTP < 400, URL matches route, substantial page text (logged-in shell).",
+    "status": "passed",
+    "durationMs": 23878,
+    "error": "",
+    "actual": "Observed: assertions passed; URL/body/status checks succeeded."
+  },
+  {
+    "tcId": "TC-ADM-002",
+    "title": "TC-ADM-002: Payment — page loads and URL is correct",
+    "expected": "Navigate to /crm-pay/admin/payment; expect HTTP < 400, URL matches route, substantial page text (logged-in shell).",
+    "status": "passed",
+    "durationMs": 8537,
+    "error": "",
+    "actual": "Observed: assertions passed; URL/body/status checks succeeded."
+  },
+  {
+    "tcId": "TC-ADM-003",
+    "title": "TC-ADM-003: Customer — page loads and URL is correct",
+    "expected": "Navigate to /crm-pay/admin/customer; expect HTTP < 400, URL matches route, substantial page text (logged-in shell).",
+    "status": "passed",
+    "durationMs": 8198,
+    "error": "",
+    "actual": "Observed: assertions passed; URL/body/status checks succeeded."
+  },
+  {
+    "tcId": "TC-ADM-004",
+    "title": "TC-ADM-004: Brief list — page loads and URL is correct",
+    "expected": "Navigate to /crm-pay/admin/brief/list; expect HTTP < 400, URL matches route, substantial page text (logged-in shell).",
+    "status": "passed",
+    "durationMs": 9637,
+    "error": "",
+    "actual": "Observed: assertions passed; URL/body/status checks succeeded."
+  },
+  {
+    "tcId": "TC-ADM-005",
+    "title": "TC-ADM-005: Lead list — page loads and URL is correct",
+    "expected": "Navigate to /crm-pay/admin/lead/list; expect HTTP < 400, URL matches route, substantial page text (logged-in shell).",
+    "status": "passed",
+    "durationMs": 8665,
+    "error": "",
+    "actual": "Observed: assertions passed; URL/body/status checks succeeded."
+  },
+  {
+    "tcId": "TC-ADM-006",
+    "title": "TC-ADM-006: Chat — page loads and URL is correct",
+    "expected": "Navigate to /crm-pay/admin/chat; expect HTTP < 400, URL matches route, substantial page text (logged-in shell).",
+    "status": "passed",
+    "durationMs": 7919,
+    "error": "",
+    "actual": "Observed: assertions passed; URL/body/status checks succeeded."
+  },
+  {
+    "tcId": "TC-ADM-007",
+    "title": "TC-ADM-007: Brief link list — page loads and URL is correct",
+    "expected": "Navigate to /crm-pay/admin/brief/link/list; expect HTTP < 400, URL matches route, substantial page text (logged-in shell).",
+    "status": "passed",
+    "durationMs": 7899,
+    "error": "",
+    "actual": "Observed: assertions passed; URL/body/status checks succeeded."
+  },
+  {
+    "tcId": "TC-ADM-008",
+    "title": "TC-ADM-008: Activity logs — page loads and URL is correct",
+    "expected": "Navigate to /crm-pay/admin/activity-logs; expect HTTP < 400, URL matches route, substantial page text (logged-in shell).",
+    "status": "passed",
+    "durationMs": 8483,
+    "error": "",
+    "actual": "Observed: assertions passed; URL/body/status checks succeeded."
+  },
+  {
+    "tcId": "STRESS-001",
+    "title": "STRESS-001: cycle all admin routes 3 times",
+    "expected": "Each of 8 routes opens successfully 3 times; URL stable; status < 400.",
+    "status": "passed",
+    "durationMs": 70567,
+    "error": "",
+    "actual": "Observed: assertions passed; URL/body/status checks succeeded."
+  }
+]

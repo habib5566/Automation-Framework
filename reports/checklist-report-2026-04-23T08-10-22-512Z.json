@@ -1,0 +1,71 @@
+{
+  "timestamp": "2026-04-23T08:10:20.296Z",
+  "url": "https://vettedlogos.com/",
+  "staticChecks": {
+    "dummyContent": {
+      "status": "FAIL",
+      "details": "Found placeholders: placeholder, dummy"
+    },
+    "metaTags": {
+      "title": {
+        "status": "PASS",
+        "value": "\r\n        Custom Logo Maker | Online Logo Maker | Vetted Logos\r\n    "
+      },
+      "description": {
+        "status": "PASS",
+        "value": "Need a custom logo maker that converts? Get a powerful, memorable logo built for growth and brand authority, start designing now with Vetted Logos!"
+      },
+      "favicon": {
+        "status": "PASS",
+        "value": "https://vettedlogos.com/assets/img/favicon.svg"
+      }
+    },
+    "contactConsistency": {
+      "emails": {
+        "status": "PASS",
+        "details": "Found 1 unique emails: info@vettedlogos.com"
+      },
+      "phones": {
+        "status": "WARN",
+        "details": "Found 4 unique phones: 2147482647, 2147483000, 323-283-8536, 17991026478"
+      }
+    },
+    "telLinks": {
+      "status": "FAIL",
+      "details": "6 tel: links found, 12 phone numbers detected"
+    },
+    "images": {
+      "status": "FAIL",
+      "details": "Issues: Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\", Image with alt=\"\""
+    },
+    "noIndex": {
+      "status": "FAIL",
+      "details": "Website may be indexed - check robots meta tag"
+    }
+  },
+  "dynamicChecks": {},
+  "summary": {
+    "totalChecks": 9,
+    "passed": 4,
+    "failed": 4,
+    "warnings": 1,
+    "manualRequired": 9,
+    "manualItems": [
+      "Visual alignment and spacing",
+      "Content quality review",
+      "Legal page content verification",
+      "Zendesk chat integration testing",
+      "Security measures verification",
+      "SSR implementation verification",
+      "Cross-browser testing (Chrome, Safari, Edge, Firefox)",
+      "Analytics, tracking codes, and third-party scripts testing",
+      "Chat, CRM, webhook, and email automation integrations"
+    ]
+  },
+  "recommendations": [
+    "Remove all dummy content and placeholder text",
+    "Use consistent phone number across the website",
+    "Add tel: links for all phone numbers",
+    "Add noindex/nofollow meta tags until final approval"
+  ]
+}

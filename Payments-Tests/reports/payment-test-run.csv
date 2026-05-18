@@ -1,0 +1,2 @@
+TC_ID,Test_Title,Expected_Result,Actual_Result,Status,Duration_Ms,Error_Summary,Screenshot_Relative_Paths
+"AUTH-001","AUTH-001: authenticate and save session (login → storageState)","Admin login succeeds; URL leaves /login; session saved to playwright/.auth/admin.json.","Error: Missing DESIGNCENTURA_EMAIL or DESIGNCENTURA_PASSWORD in .env","failed",566,"Error: Missing DESIGNCENTURA_EMAIL or DESIGNCENTURA_PASSWORD in .env","test-results/auth.setup.js-setup-authenticate-and-save-session-setup/test-failed-1.png"

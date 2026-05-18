@@ -1,0 +1,26 @@
+Designcentura-Crm — Playwright QA pack
+=====================================
+
+1) cd Designcentura-Crm
+2) npm install
+3) npx playwright install chromium
+4) Copy .env.example to .env and set DESIGNCENTURA_EMAIL and DESIGNCENTURA_PASSWORD
+   (use double quotes in .env if password contains $ or special characters)
+5) Tests:
+   npm run test:unit   — Node.js unit tests (lib/*.test.js), no browser
+   npm test            — Playwright (regression + UI unit checks + stress)
+   npm run test:all    — unit + Playwright
+   — HTML report: reports/html-report (npm run report:html)
+   — Screenshots: playwright.config → screenshot: 'on'
+   — CSV + JSON: reports/designcentura-test-run.csv and .json
+   — Stress tuning: STRESS_LOOPS (1–30), STRESS_BURST (3–40) env vars before npm test
+6) npm run report:word
+   — Word: reports/Designcentura-CRM-QA-Report.docx (exec summary + Section 5 per-URL CRM risks/improvements for your eight admin links + run snapshot; CSV = row-level)
+
+Full pipeline (tests + Word):
+  npm run test:report
+
+Static test case catalogue (expected behaviour):
+  test-cases/test-matrix.csv
+
+Security: never commit .env or playwright/.auth/ to git.

@@ -1,0 +1,26 @@
+Payments-Tests — Design Centura /crm-pay/admin/payment
+=====================================================
+
+1) cd Payments-Tests
+2) npm install && npx playwright install chromium
+3) Copy .env.example to .env — set DESIGNCENTURA_EMAIL and DESIGNCENTURA_PASSWORD (same admin login)
+4) Sirf tests: npm test   (ya: node node_modules/@playwright/test/cli.js test)
+   — 66 checks = 22 × 3 viewports + 4 cross + setup row in CSV = 70+ lines possible
+5) Sab kuch ek baar (tests + catalog CSV + Word — tests fail bhi hon to reports banenge):
+   node scripts/payment-full-pipeline.cjs
+
+Outputs:
+   reports/Payments-Module-QA-Report.docx     — Word (masla + steps)
+   reports/payment-test-run.csv / .json       — har run ke results + screenshot paths
+   reports/payment-test-cases-catalog.csv     — saare planned test cases (matrix)
+   reports/html-report/                       — Playwright HTML + screenshots
+
+Alag se Word: npm run report:word
+Playwright HTML: npm run report:html
+
+CSV column "Screenshot_Relative_Paths" = Playwright ki PNG (test-results/...)
+AUTH-001 row = login setup; agar fail ho to baqi payment tests skip ho sakti hain.
+
+Tuning: edit data/payment-checks.js to align with your real Payment UI if a genuine failure appears.
+
+Never commit .env or playwright/.auth/

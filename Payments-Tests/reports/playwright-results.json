@@ -1,0 +1,1646 @@
+{
+  "config": {
+    "configFile": "D:\\Automation-Framework\\Payments-Tests\\playwright.config.js",
+    "rootDir": "D:/Automation-Framework/Payments-Tests/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/Automation-Framework/Payments-Tests/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "setup",
+        "name": "setup",
+        "testDir": "D:/Automation-Framework/Payments-Tests/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/auth\\.setup\\.js/"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "D:/Automation-Framework/Payments-Tests/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "payments",
+        "name": "payments",
+        "testDir": "D:/Automation-Framework/Payments-Tests/tests",
+        "testIgnore": [
+          "/auth\\.setup\\.js/"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "reports/html-report",
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "reports/playwright-results.json"
+        }
+      ],
+      [
+        "D:\\Automation-Framework\\Payments-Tests\\reporters\\payment-reporter.cjs",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "auth.setup.js",
+      "file": "auth.setup.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "setup",
+          "file": "auth.setup.js",
+          "line": 8,
+          "column": 6,
+          "specs": [
+            {
+              "title": "authenticate and save session",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "setup",
+                  "projectName": "setup",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 566,
+                      "error": {
+                        "message": "Error: Missing DESIGNCENTURA_EMAIL or DESIGNCENTURA_PASSWORD in .env",
+                        "stack": "Error: Missing DESIGNCENTURA_EMAIL or DESIGNCENTURA_PASSWORD in .env\n    at D:\\Automation-Framework\\Payments-Tests\\tests\\auth.setup.js:15:13",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\Payments-Tests\\tests\\auth.setup.js",
+                          "column": 13,
+                          "line": 15
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 13 |\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mif\u001b[39m (\u001b[33m!\u001b[39memail \u001b[33m||\u001b[39m \u001b[33m!\u001b[39mpassword) {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 15 |\u001b[39m       \u001b[36mthrow\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mError\u001b[39m(\u001b[32m'Missing DESIGNCENTURA_EMAIL or DESIGNCENTURA_PASSWORD in .env'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 16 |\u001b[39m     }\n \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m     fs\u001b[33m.\u001b[39mmkdirSync(path\u001b[33m.\u001b[39mdirname(authFile)\u001b[33m,\u001b[39m { recursive\u001b[33m:\u001b[39m \u001b[36mtrue\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\Payments-Tests\\tests\\auth.setup.js",
+                            "column": 13,
+                            "line": 15
+                          },
+                          "message": "Error: Missing DESIGNCENTURA_EMAIL or DESIGNCENTURA_PASSWORD in .env\n\n\u001b[0m \u001b[90m 13 |\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mif\u001b[39m (\u001b[33m!\u001b[39memail \u001b[33m||\u001b[39m \u001b[33m!\u001b[39mpassword) {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 15 |\u001b[39m       \u001b[36mthrow\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mError\u001b[39m(\u001b[32m'Missing DESIGNCENTURA_EMAIL or DESIGNCENTURA_PASSWORD in .env'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 16 |\u001b[39m     }\n \u001b[90m 17 |\u001b[39m\n \u001b[90m 18 |\u001b[39m     fs\u001b[33m.\u001b[39mmkdirSync(path\u001b[33m.\u001b[39mdirname(authFile)\u001b[33m,\u001b[39m { recursive\u001b[33m:\u001b[39m \u001b[36mtrue\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\Payments-Tests\\tests\\auth.setup.js:15:13\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-22T14:56:19.928Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\Payments-Tests\\test-results\\auth.setup.js-setup-authenticate-and-save-session-setup\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Automation-Framework\\Payments-Tests\\test-results\\auth.setup.js-setup-authenticate-and-save-session-setup\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\Payments-Tests\\test-results\\auth.setup.js-setup-authenticate-and-save-session-setup\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\Payments-Tests\\test-results\\auth.setup.js-setup-authenticate-and-save-session-setup\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\Payments-Tests\\tests\\auth.setup.js",
+                        "column": 13,
+                        "line": 15
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f376efe52c54b1a876fd-ce1b70d54217908838a7",
+              "file": "auth.setup.js",
+              "line": 9,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "payment-cross.spec.js",
+      "file": "payment-cross.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Payments — cross-route flows",
+          "file": "payment-cross.spec.js",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "PAY-X-01: dashboard → payment → dashboard → payment",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "46c2a9072b46d2293ad1-b3ac14905d90812e936d",
+              "file": "payment-cross.spec.js",
+              "line": 5,
+              "column": 3
+            },
+            {
+              "title": "PAY-X-02: hard reload on payment preserves URL",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "46c2a9072b46d2293ad1-ba15a31281bac7b3aba8",
+              "file": "payment-cross.spec.js",
+              "line": 18,
+              "column": 3
+            },
+            {
+              "title": "PAY-X-03: payment page exposes same host (no unexpected redirect host)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "46c2a9072b46d2293ad1-081a51ce84d8211cb735",
+              "file": "payment-cross.spec.js",
+              "line": 25,
+              "column": 3
+            },
+            {
+              "title": "PAY-X-04: sequential payment loads (3) remain stable",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "46c2a9072b46d2293ad1-acf4cfd51c72d15dafbd",
+              "file": "payment-cross.spec.js",
+              "line": 31,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "payment-deep.spec.js",
+      "file": "payment-deep.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Payments module @ desktop-fhd (1920×1080)",
+          "file": "payment-deep.spec.js",
+          "line": 8,
+          "column": 8,
+          "specs": [
+            {
+              "title": "PAY-001 [desktop-fhd]: URL contains admin payment segment",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-1dbc1e63426e312ff607",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-002 [desktop-fhd]: Navigation returns HTTP status below 400",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-3c9bfc1c515fe0b67c24",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-003 [desktop-fhd]: Page exposes substantial visible text (>= 120 chars)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-367a172193f48e6f5e5a",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-004 [desktop-fhd]: Page exposes rich content (>= 250 chars)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-eb7d3e07dacdd4a0916f",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-005 [desktop-fhd]: Page exposes very rich content (>= 350 chars)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-1982a881a6d2f1d7af78",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-006 [desktop-fhd]: At least one button is visible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-7277068a327d1ca8a8c2",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-007 [desktop-fhd]: At least two visible buttons",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-da585bef588b434560a4",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-008 [desktop-fhd]: At least three visible links",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-c9150f4abda2d92e2c40",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-009 [desktop-fhd]: At least one visible text input or search field",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-76feec873a227c479a1a",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-010 [desktop-fhd]: Finance-related vocabulary appears (payment|invoice|amount|transaction|billing|receipt)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-d2d37516983d90b2844c",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-011 [desktop-fhd]: DesignCentura brand visible in shell",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-56e3fa4ac69cac06d551",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-012 [desktop-fhd]: Dashboard nav link exists in DOM",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-9327aab593e2f9ad4824",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-013 [desktop-fhd]: No visible ARIA alert with critical server error wording",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-5057a6c960aa2c88578d",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-014 [desktop-fhd]: Document body is attached and scrollable container exists",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-9901131a77dd057eb143",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-015 [desktop-fhd]: Reload keeps user on payment route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-69b66cc1f160141b3e9c",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-016 [desktop-fhd]: Second reload still on payment route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-ae807360e327e4cba144",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-017 [desktop-fhd]: Payments or Payment appears in page text",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-b0cd9528a0ab9411a60e",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-018 [desktop-fhd]: Data presentation layer (table, grid, or common table wrapper class)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-2d06eeb53d00d1cc4bc0",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-019 [desktop-fhd]: Document has charset or viewport meta (baseline HTML quality)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-4bd668e3799a5adae627",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-020 [desktop-fhd]: LocalStorage API available (SPA expectation)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-87d7932647f1f7fe329b",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-021 [desktop-fhd]: Keyboard focus can move (Tab does not throw)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-f97b43fd8c98a3f7ade3",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-022 [desktop-fhd]: Viewport renders primary interactive region (main or role main or form)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-60da4ea865ee2bc716aa",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Payments module @ desktop-laptop (1366×768)",
+          "file": "payment-deep.spec.js",
+          "line": 8,
+          "column": 8,
+          "specs": [
+            {
+              "title": "PAY-001 [desktop-laptop]: URL contains admin payment segment",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-209fff02fa474f883cac",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-002 [desktop-laptop]: Navigation returns HTTP status below 400",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-6138318843a7842fcc19",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-003 [desktop-laptop]: Page exposes substantial visible text (>= 120 chars)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-a9b1174239c5e7b7d35d",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-004 [desktop-laptop]: Page exposes rich content (>= 250 chars)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-4a86946572c24481e71d",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-005 [desktop-laptop]: Page exposes very rich content (>= 350 chars)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-1b33ac5214b6a0a93976",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-006 [desktop-laptop]: At least one button is visible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-00a02e13ff2d3fa61e17",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-007 [desktop-laptop]: At least two visible buttons",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-e4271b797e573141a657",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-008 [desktop-laptop]: At least three visible links",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-dc3e8fc4f9b6f07c8ab5",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-009 [desktop-laptop]: At least one visible text input or search field",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-bd4b1f175df9d78e16c9",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-010 [desktop-laptop]: Finance-related vocabulary appears (payment|invoice|amount|transaction|billing|receipt)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-7222912c5351d2351ec1",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-011 [desktop-laptop]: DesignCentura brand visible in shell",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-4d59cc7cc3793581923a",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-012 [desktop-laptop]: Dashboard nav link exists in DOM",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-17a6c822acb03f7bedba",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-013 [desktop-laptop]: No visible ARIA alert with critical server error wording",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-e34c9ca12bacd954d693",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-014 [desktop-laptop]: Document body is attached and scrollable container exists",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-08d86a23223a5dc900c2",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-015 [desktop-laptop]: Reload keeps user on payment route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-a9a98cfacc30ec9877c2",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-016 [desktop-laptop]: Second reload still on payment route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-c283a809ceaba12974b8",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-017 [desktop-laptop]: Payments or Payment appears in page text",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-c020722b28eeba61a558",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-018 [desktop-laptop]: Data presentation layer (table, grid, or common table wrapper class)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-0f97b3c24fd843ca583c",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-019 [desktop-laptop]: Document has charset or viewport meta (baseline HTML quality)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-ad5ac7e8f5f5f0996cd8",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-020 [desktop-laptop]: LocalStorage API available (SPA expectation)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-569d26993283afe7a285",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-021 [desktop-laptop]: Keyboard focus can move (Tab does not throw)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-6ab769bcd9133bef467a",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-022 [desktop-laptop]: Viewport renders primary interactive region (main or role main or form)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-78ea3e1b19a3da34f479",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Payments module @ mobile (390×844)",
+          "file": "payment-deep.spec.js",
+          "line": 8,
+          "column": 8,
+          "specs": [
+            {
+              "title": "PAY-001 [mobile]: URL contains admin payment segment",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-fbb41fcb3206ce627390",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-002 [mobile]: Navigation returns HTTP status below 400",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-e0058e53eafe9a51beda",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-003 [mobile]: Page exposes substantial visible text (>= 120 chars)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-3e22667d2fa618a50f92",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-004 [mobile]: Page exposes rich content (>= 250 chars)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-12fb5b02127999ec37af",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-005 [mobile]: Page exposes very rich content (>= 350 chars)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-5fdbb6c932d1d5138c31",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-006 [mobile]: At least one button is visible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-048c553799f423a70fae",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-007 [mobile]: At least two visible buttons",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-d1a25475636db0e79923",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-008 [mobile]: At least three visible links",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-18fc993500adc1793b48",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-009 [mobile]: At least one visible text input or search field",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-7073cdf63d25be3a614b",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-010 [mobile]: Finance-related vocabulary appears (payment|invoice|amount|transaction|billing|receipt)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-a685aa824bce75bccc9f",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-011 [mobile]: DesignCentura brand visible in shell",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-6d0d1a9407960fa8fa39",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-012 [mobile]: Dashboard nav link exists in DOM",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-39c1882e726deccc34b8",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-013 [mobile]: No visible ARIA alert with critical server error wording",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-c9b4707f05782ff65279",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-014 [mobile]: Document body is attached and scrollable container exists",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-e7d6516c31fa91659791",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-015 [mobile]: Reload keeps user on payment route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-ef96aa3b58c08a6c1e46",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-016 [mobile]: Second reload still on payment route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-9739b776819705e6242f",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-017 [mobile]: Payments or Payment appears in page text",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-5236f4ad6360c8d4965c",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-018 [mobile]: Data presentation layer (table, grid, or common table wrapper class)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-37f502a27dd49f39d8f3",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-019 [mobile]: Document has charset or viewport meta (baseline HTML quality)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-7330ad93085f13a92e62",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-020 [mobile]: LocalStorage API available (SPA expectation)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-603cf91da87ac8e624d7",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-021 [mobile]: Keyboard focus can move (Tab does not throw)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-49fdb97fb35b728bd048",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "PAY-022 [mobile]: Viewport renders primary interactive region (main or role main or form)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "payments",
+                  "projectName": "payments",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4ed82e84f4c009276870-1b780eac7f33b5e7a1a6",
+              "file": "payment-deep.spec.js",
+              "line": 17,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-04-22T14:56:18.485Z",
+    "duration": 2590.773,
+    "expected": 0,
+    "skipped": 70,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

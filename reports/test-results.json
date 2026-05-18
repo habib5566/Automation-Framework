@@ -1,0 +1,97 @@
+{
+  "config": {
+    "configFile": "D:\\Automation-Framework\\playwright.config.js",
+    "rootDir": "D:/Automation-Framework/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/Automation-Framework/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "D:/Automation-Framework/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/Automation-Framework/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {},
+        "id": "staging-autobotx",
+        "name": "staging-autobotx",
+        "testDir": "D:/Automation-Framework/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "reports/html-report",
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "reports/test-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 2,
+    "webServer": {
+      "command": "\"C:\\Program Files\\nodejs\\node.exe\" \"D:\\Automation-Framework\\fixtures\\server.js\"",
+      "url": "http://localhost:3789",
+      "reuseExistingServer": true,
+      "timeout": 60000
+    }
+  },
+  "suites": [],
+  "errors": [
+    {
+      "message": "Error: Failed to launch: Error: spawn C:\\Users\\40191\\Downloads\\ffmpeg-6.0\\ffmpeg-6.0 ENOENT",
+      "stack": "Error: Failed to launch: Error: spawn C:\\Users\\40191\\Downloads\\ffmpeg-6.0\\ffmpeg-6.0 ENOENT"
+    }
+  ],
+  "stats": {
+    "startTime": "2026-04-27T06:53:34.951Z",
+    "duration": 353.09899999999993,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

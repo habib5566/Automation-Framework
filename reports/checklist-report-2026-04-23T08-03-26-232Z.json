@@ -1,0 +1,68 @@
+{
+  "timestamp": "2026-04-23T08:03:25.888Z",
+  "url": "https://example.com",
+  "staticChecks": {
+    "dummyContent": {
+      "status": "PASS",
+      "details": "No dummy content found"
+    },
+    "metaTags": {
+      "title": {
+        "status": "PASS",
+        "value": "Example Domain"
+      },
+      "description": {
+        "status": "FAIL",
+        "details": "Missing meta description"
+      },
+      "favicon": {
+        "status": "FAIL",
+        "details": "Missing favicon"
+      }
+    },
+    "contactConsistency": {
+      "emails": {
+        "status": "PASS",
+        "details": "Found 0 unique emails: "
+      },
+      "phones": {
+        "status": "PASS",
+        "details": "Found 0 unique phones: "
+      }
+    },
+    "telLinks": {
+      "status": "PASS",
+      "details": "0 tel: links found, 0 phone numbers detected"
+    },
+    "images": {
+      "status": "PASS",
+      "details": "No broken images detected"
+    },
+    "noIndex": {
+      "status": "FAIL",
+      "details": "Website may be indexed - check robots meta tag"
+    }
+  },
+  "dynamicChecks": {},
+  "summary": {
+    "totalChecks": 9,
+    "passed": 6,
+    "failed": 3,
+    "warnings": 0,
+    "manualRequired": 9,
+    "manualItems": [
+      "Visual alignment and spacing",
+      "Content quality review",
+      "Legal page content verification",
+      "Zendesk chat integration testing",
+      "Security measures verification",
+      "SSR implementation verification",
+      "Cross-browser testing (Chrome, Safari, Edge, Firefox)",
+      "Analytics, tracking codes, and third-party scripts testing",
+      "Chat, CRM, webhook, and email automation integrations"
+    ]
+  },
+  "recommendations": [
+    "Add noindex/nofollow meta tags until final approval"
+  ]
+}

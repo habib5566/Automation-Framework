@@ -1,0 +1,1315 @@
+{
+  "config": {
+    "configFile": "D:\\Automation-Framework\\e2es of change auto-stagging\\playwright.config.js",
+    "rootDir": "D:/Automation-Framework/e2es of change auto-stagging/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/Automation-Framework/e2es of change auto-stagging/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "D:/Automation-Framework/e2es of change auto-stagging/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "reports/html-report",
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "reports/test-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 2,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "users.spec.js",
+      "file": "users.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Users Page Tests",
+          "file": "users.spec.js",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Navigate to users page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11281,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"/users\"\u001b[39m\nReceived string:    \u001b[31m\"https://staging-dashboard.autobotx.ai/vetted-logos\"\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"/users\"\u001b[39m\nReceived string:    \u001b[31m\"https://staging-dashboard.autobotx.ai/vetted-logos\"\u001b[39m\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:12:24",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 24,
+                          "line": 12
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 10 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigateToUsers()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m     expect(page\u001b[33m.\u001b[39murl())\u001b[33m.\u001b[39mtoContain(\u001b[32m'/users'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m   test(\u001b[32m'Users page loads'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 24,
+                            "line": 12
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"/users\"\u001b[39m\nReceived string:    \u001b[31m\"https://staging-dashboard.autobotx.ai/vetted-logos\"\u001b[39m\n\n\u001b[0m \u001b[90m 10 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigateToUsers()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m     expect(page\u001b[33m.\u001b[39murl())\u001b[33m.\u001b[39mtoContain(\u001b[32m'/users'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m   test(\u001b[32m'Users page loads'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:12:24\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-24T07:09:58.600Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Navigate-to-users-page-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Navigate-to-users-page-chromium\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Navigate-to-users-page-chromium\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 24,
+                        "line": 12
+                      }
+                    },
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 11661,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-04-24T07:10:13.361Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Navigate-to-users-page-chromium-retry1\\test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "flaky"
+                }
+              ],
+              "id": "e43726c83847928dbeff-eff1c78f1eb4ad448243",
+              "file": "users.spec.js",
+              "line": 8,
+              "column": 3
+            },
+            {
+              "title": "Users page loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 5955,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:18:49",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 49,
+                          "line": 18
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 16 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 17 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 18 |\u001b[39m     expect(\u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39misVisible(\u001b[32m'.users-list'\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 19 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 20 |\u001b[39m\n \u001b[90m 21 |\u001b[39m   test(\u001b[32m'Add user functionality'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 49,
+                            "line": 18
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n\u001b[0m \u001b[90m 16 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 17 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 18 |\u001b[39m     expect(\u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39misVisible(\u001b[32m'.users-list'\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 19 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 20 |\u001b[39m\n \u001b[90m 21 |\u001b[39m   test(\u001b[32m'Add user functionality'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:18:49\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-24T07:09:58.616Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Users-page-loads-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Users-page-loads-chromium\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Users-page-loads-chromium\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 49,
+                        "line": 18
+                      }
+                    },
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 5202,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:18:49",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 49,
+                          "line": 18
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 16 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 17 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 18 |\u001b[39m     expect(\u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39misVisible(\u001b[32m'.users-list'\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 19 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 20 |\u001b[39m\n \u001b[90m 21 |\u001b[39m   test(\u001b[32m'Add user functionality'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 49,
+                            "line": 18
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n\u001b[0m \u001b[90m 16 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 17 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 18 |\u001b[39m     expect(\u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39misVisible(\u001b[32m'.users-list'\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 19 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 20 |\u001b[39m\n \u001b[90m 21 |\u001b[39m   test(\u001b[32m'Add user functionality'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:18:49\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-04-24T07:10:07.212Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Users-page-loads-chromium-retry1\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Users-page-loads-chromium-retry1\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Users-page-loads-chromium-retry1\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 49,
+                        "line": 18
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e43726c83847928dbeff-283e6a017d48851f3f56",
+              "file": "users.spec.js",
+              "line": 15,
+              "column": 3
+            },
+            {
+              "title": "Add user functionality",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 1,
+                      "status": "timedOut",
+                      "duration": 30486,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\pages\\UsersPage.js",
+                            "column": 21,
+                            "line": 17
+                          },
+                          "message": "Error: page.selectOption: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('select[name=\"role\"]')\u001b[22m\n\n\n\u001b[90m   at \u001b[39m..\\pages\\UsersPage.js:17\n\n\u001b[0m \u001b[90m 15 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mtype(\u001b[36mthis\u001b[39m\u001b[33m.\u001b[39muserNameInput\u001b[33m,\u001b[39m name)\u001b[33m;\u001b[39m\n \u001b[90m 16 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mtype(\u001b[36mthis\u001b[39m\u001b[33m.\u001b[39muserEmailInput\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 17 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mpage\u001b[33m.\u001b[39mselectOption(\u001b[36mthis\u001b[39m\u001b[33m.\u001b[39muserRoleSelect\u001b[33m,\u001b[39m role)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                     \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 18 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mclick(\u001b[36mthis\u001b[39m\u001b[33m.\u001b[39msaveButton)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mwaitForLoad()\u001b[33m;\u001b[39m\n \u001b[90m 20 |\u001b[39m   }\u001b[0m\n\u001b[2m    at UsersPage.addUser (D:\\Automation-Framework\\e2es of change auto-stagging\\pages\\UsersPage.js:17:21)\u001b[22m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:24:5\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-24T07:10:16.072Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Add-user-functionality-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Add-user-functionality-chromium\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Add-user-functionality-chromium\\trace.zip"
+                        }
+                      ]
+                    },
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "timedOut",
+                      "duration": 30481,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\pages\\UsersPage.js",
+                            "column": 21,
+                            "line": 17
+                          },
+                          "message": "TimeoutError: page.selectOption: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('select[name=\"role\"]')\u001b[22m\n\n\n\u001b[90m   at \u001b[39m..\\pages\\UsersPage.js:17\n\n\u001b[0m \u001b[90m 15 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mtype(\u001b[36mthis\u001b[39m\u001b[33m.\u001b[39muserNameInput\u001b[33m,\u001b[39m name)\u001b[33m;\u001b[39m\n \u001b[90m 16 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mtype(\u001b[36mthis\u001b[39m\u001b[33m.\u001b[39muserEmailInput\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 17 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mpage\u001b[33m.\u001b[39mselectOption(\u001b[36mthis\u001b[39m\u001b[33m.\u001b[39muserRoleSelect\u001b[33m,\u001b[39m role)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                     \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 18 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mclick(\u001b[36mthis\u001b[39m\u001b[33m.\u001b[39msaveButton)\u001b[33m;\u001b[39m\n \u001b[90m 19 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mwaitForLoad()\u001b[33m;\u001b[39m\n \u001b[90m 20 |\u001b[39m   }\u001b[0m\n\u001b[2m    at UsersPage.addUser (D:\\Automation-Framework\\e2es of change auto-stagging\\pages\\UsersPage.js:17:21)\u001b[22m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:24:5\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-04-24T07:10:48.748Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Add-user-functionality-chromium-retry1\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Add-user-functionality-chromium-retry1\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Add-user-functionality-chromium-retry1\\trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e43726c83847928dbeff-7f3f92a3703ce788a9ea",
+              "file": "users.spec.js",
+              "line": 21,
+              "column": 3
+            },
+            {
+              "title": "Edit user details",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 25102,
+                      "error": {
+                        "message": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .edit')\u001b[22m\n",
+                        "stack": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .edit')\u001b[22m\n\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:31:16",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 16,
+                          "line": 31
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 29 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 30 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 31 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'.user-item .edit'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 32 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"name\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'Updated Name'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 33 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button:has-text(\"Save\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 34 |\u001b[39m     expect(\u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39misVisible(\u001b[32m'text=Updated Name'\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 16,
+                            "line": 31
+                          },
+                          "message": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .edit')\u001b[22m\n\n\n\u001b[0m \u001b[90m 29 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 30 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 31 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'.user-item .edit'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 32 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"name\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'Updated Name'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 33 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button:has-text(\"Save\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 34 |\u001b[39m     expect(\u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39misVisible(\u001b[32m'text=Updated Name'\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:31:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-24T07:10:25.685Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Edit-user-details-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Edit-user-details-chromium\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Edit-user-details-chromium\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 16,
+                        "line": 31
+                      }
+                    },
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 25224,
+                      "error": {
+                        "message": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .edit')\u001b[22m\n",
+                        "stack": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .edit')\u001b[22m\n\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:31:16",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 16,
+                          "line": 31
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 29 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 30 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 31 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'.user-item .edit'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 32 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"name\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'Updated Name'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 33 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button:has-text(\"Save\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 34 |\u001b[39m     expect(\u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39misVisible(\u001b[32m'text=Updated Name'\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 16,
+                            "line": 31
+                          },
+                          "message": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .edit')\u001b[22m\n\n\n\u001b[0m \u001b[90m 29 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 30 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 31 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'.user-item .edit'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 32 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"name\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'Updated Name'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 33 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button:has-text(\"Save\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 34 |\u001b[39m     expect(\u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39misVisible(\u001b[32m'text=Updated Name'\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:31:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-04-24T07:10:52.579Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Edit-user-details-chromium-retry1\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Edit-user-details-chromium-retry1\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Edit-user-details-chromium-retry1\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 16,
+                        "line": 31
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e43726c83847928dbeff-ef83bab6a13f7bb863c5",
+              "file": "users.spec.js",
+              "line": 28,
+              "column": 3
+            },
+            {
+              "title": "Delete user",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 25292,
+                      "error": {
+                        "message": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .delete')\u001b[22m\n",
+                        "stack": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .delete')\u001b[22m\n\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:40:16",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 16,
+                          "line": 40
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 38 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 39 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 40 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'.user-item .delete'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 41 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button:has-text(\"Confirm\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 42 |\u001b[39m     \u001b[90m// Verify user deleted\u001b[39m\n \u001b[90m 43 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 16,
+                            "line": 40
+                          },
+                          "message": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .delete')\u001b[22m\n\n\n\u001b[0m \u001b[90m 38 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 39 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 40 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'.user-item .delete'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 41 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button:has-text(\"Confirm\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 42 |\u001b[39m     \u001b[90m// Verify user deleted\u001b[39m\n \u001b[90m 43 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:40:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-24T07:11:20.644Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Delete-user-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Delete-user-chromium\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Delete-user-chromium\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 16,
+                        "line": 40
+                      }
+                    },
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 25334,
+                      "error": {
+                        "message": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .delete')\u001b[22m\n",
+                        "stack": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .delete')\u001b[22m\n\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:40:16",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 16,
+                          "line": 40
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 38 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 39 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 40 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'.user-item .delete'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 41 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button:has-text(\"Confirm\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 42 |\u001b[39m     \u001b[90m// Verify user deleted\u001b[39m\n \u001b[90m 43 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 16,
+                            "line": 40
+                          },
+                          "message": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .delete')\u001b[22m\n\n\n\u001b[0m \u001b[90m 38 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 39 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 40 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'.user-item .delete'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 41 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button:has-text(\"Confirm\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 42 |\u001b[39m     \u001b[90m// Verify user deleted\u001b[39m\n \u001b[90m 43 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:40:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-04-24T07:11:48.241Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Delete-user-chromium-retry1\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Delete-user-chromium-retry1\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Delete-user-chromium-retry1\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 16,
+                        "line": 40
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e43726c83847928dbeff-42c53743d167bd722272",
+              "file": "users.spec.js",
+              "line": 37,
+              "column": 3
+            },
+            {
+              "title": "Search users",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 25146,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[placeholder*=\"search\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[placeholder*=\"search\"]')\u001b[22m\n\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:48:16",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 16,
+                          "line": 48
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 46 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 47 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 48 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[placeholder*=\"search\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'test'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 49 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button:has-text(\"Search\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 50 |\u001b[39m     \u001b[90m// Verify search results\u001b[39m\n \u001b[90m 51 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 16,
+                            "line": 48
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[placeholder*=\"search\"]')\u001b[22m\n\n\n\u001b[0m \u001b[90m 46 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 47 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 48 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[placeholder*=\"search\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'test'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 49 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button:has-text(\"Search\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 50 |\u001b[39m     \u001b[90m// Verify search results\u001b[39m\n \u001b[90m 51 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:48:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-24T07:11:22.449Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Search-users-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Search-users-chromium\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Search-users-chromium\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 16,
+                        "line": 48
+                      }
+                    },
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 25302,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[placeholder*=\"search\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[placeholder*=\"search\"]')\u001b[22m\n\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:48:16",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 16,
+                          "line": 48
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 46 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 47 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 48 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[placeholder*=\"search\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'test'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 49 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button:has-text(\"Search\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 50 |\u001b[39m     \u001b[90m// Verify search results\u001b[39m\n \u001b[90m 51 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 16,
+                            "line": 48
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[placeholder*=\"search\"]')\u001b[22m\n\n\n\u001b[0m \u001b[90m 46 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 47 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 48 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[placeholder*=\"search\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'test'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 49 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button:has-text(\"Search\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 50 |\u001b[39m     \u001b[90m// Verify search results\u001b[39m\n \u001b[90m 51 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:48:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-04-24T07:11:50.529Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Search-users-chromium-retry1\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Search-users-chromium-retry1\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Search-users-chromium-retry1\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 16,
+                        "line": 48
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e43726c83847928dbeff-7569f68a78d79a983dc5",
+              "file": "users.spec.js",
+              "line": 45,
+              "column": 3
+            },
+            {
+              "title": "Filter users by role",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 25326,
+                      "error": {
+                        "message": "TimeoutError: page.selectOption: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('select[name=\"role\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.selectOption: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('select[name=\"role\"]')\u001b[22m\n\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:56:16",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 16,
+                          "line": 56
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 54 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 55 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 56 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mselectOption(\u001b[32m'select[name=\"role\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'admin'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 57 |\u001b[39m     \u001b[90m// Verify filtered\u001b[39m\n \u001b[90m 58 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 59 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 16,
+                            "line": 56
+                          },
+                          "message": "TimeoutError: page.selectOption: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('select[name=\"role\"]')\u001b[22m\n\n\n\u001b[0m \u001b[90m 54 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 55 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 56 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mselectOption(\u001b[32m'select[name=\"role\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'admin'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 57 |\u001b[39m     \u001b[90m// Verify filtered\u001b[39m\n \u001b[90m 58 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 59 |\u001b[39m\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:56:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-24T07:12:15.915Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Filter-users-by-role-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Filter-users-by-role-chromium\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Filter-users-by-role-chromium\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 16,
+                        "line": 56
+                      }
+                    },
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 25247,
+                      "error": {
+                        "message": "TimeoutError: page.selectOption: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('select[name=\"role\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.selectOption: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('select[name=\"role\"]')\u001b[22m\n\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:56:16",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 16,
+                          "line": 56
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 54 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 55 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 56 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mselectOption(\u001b[32m'select[name=\"role\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'admin'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 57 |\u001b[39m     \u001b[90m// Verify filtered\u001b[39m\n \u001b[90m 58 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 59 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 16,
+                            "line": 56
+                          },
+                          "message": "TimeoutError: page.selectOption: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('select[name=\"role\"]')\u001b[22m\n\n\n\u001b[0m \u001b[90m 54 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 55 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 56 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mselectOption(\u001b[32m'select[name=\"role\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'admin'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 57 |\u001b[39m     \u001b[90m// Verify filtered\u001b[39m\n \u001b[90m 58 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 59 |\u001b[39m\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:56:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-04-24T07:12:43.680Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Filter-users-by-role-chromium-retry1\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Filter-users-by-role-chromium-retry1\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Filter-users-by-role-chromium-retry1\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 16,
+                        "line": 56
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e43726c83847928dbeff-7428916b03e924556309",
+              "file": "users.spec.js",
+              "line": 53,
+              "column": 3
+            },
+            {
+              "title": "User permissions",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 25171,
+                      "error": {
+                        "message": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .permissions')\u001b[22m\n",
+                        "stack": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .permissions')\u001b[22m\n\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:63:16",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 16,
+                          "line": 63
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 61 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 62 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 63 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'.user-item .permissions'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 64 |\u001b[39m     expect(\u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39misVisible(\u001b[32m'.permissions-modal'\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 65 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 66 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 16,
+                            "line": 63
+                          },
+                          "message": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .permissions')\u001b[22m\n\n\n\u001b[0m \u001b[90m 61 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 62 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 63 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'.user-item .permissions'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 64 |\u001b[39m     expect(\u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39misVisible(\u001b[32m'.permissions-modal'\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 65 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 66 |\u001b[39m\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:63:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-24T07:12:19.602Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-User-permissions-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-User-permissions-chromium\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-User-permissions-chromium\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 16,
+                        "line": 63
+                      }
+                    },
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 25247,
+                      "error": {
+                        "message": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .permissions')\u001b[22m\n",
+                        "stack": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .permissions')\u001b[22m\n\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:63:16",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 16,
+                          "line": 63
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 61 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 62 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 63 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'.user-item .permissions'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 64 |\u001b[39m     expect(\u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39misVisible(\u001b[32m'.permissions-modal'\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 65 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 66 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 16,
+                            "line": 63
+                          },
+                          "message": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .permissions')\u001b[22m\n\n\n\u001b[0m \u001b[90m 61 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 62 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 63 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'.user-item .permissions'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 64 |\u001b[39m     expect(\u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39misVisible(\u001b[32m'.permissions-modal'\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 65 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 66 |\u001b[39m\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:63:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-04-24T07:12:47.124Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-User-permissions-chromium-retry1\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-User-permissions-chromium-retry1\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-User-permissions-chromium-retry1\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 16,
+                        "line": 63
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e43726c83847928dbeff-6ac877a49b8a7c41a855",
+              "file": "users.spec.js",
+              "line": 60,
+              "column": 3
+            },
+            {
+              "title": "Bulk user actions",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 15,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 25475,
+                      "error": {
+                        "message": "TimeoutError: page.check: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-checkbox')\u001b[22m\n",
+                        "stack": "TimeoutError: page.check: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-checkbox')\u001b[22m\n\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:70:16",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 16,
+                          "line": 70
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 68 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 69 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 70 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mcheck(\u001b[32m'.user-checkbox'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 71 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button:has-text(\"Bulk Actions\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 72 |\u001b[39m     \u001b[90m// Verify bulk actions\u001b[39m\n \u001b[90m 73 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 16,
+                            "line": 70
+                          },
+                          "message": "TimeoutError: page.check: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-checkbox')\u001b[22m\n\n\n\u001b[0m \u001b[90m 68 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 69 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 70 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mcheck(\u001b[32m'.user-checkbox'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 71 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button:has-text(\"Bulk Actions\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 72 |\u001b[39m     \u001b[90m// Verify bulk actions\u001b[39m\n \u001b[90m 73 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:70:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-24T07:13:10.914Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Bulk-user-actions-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Bulk-user-actions-chromium\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Bulk-user-actions-chromium\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 16,
+                        "line": 70
+                      }
+                    },
+                    {
+                      "workerIndex": 17,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 25052,
+                      "error": {
+                        "message": "TimeoutError: page.check: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-checkbox')\u001b[22m\n",
+                        "stack": "TimeoutError: page.check: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-checkbox')\u001b[22m\n\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:70:16",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 16,
+                          "line": 70
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 68 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 69 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 70 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mcheck(\u001b[32m'.user-checkbox'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 71 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button:has-text(\"Bulk Actions\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 72 |\u001b[39m     \u001b[90m// Verify bulk actions\u001b[39m\n \u001b[90m 73 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 16,
+                            "line": 70
+                          },
+                          "message": "TimeoutError: page.check: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-checkbox')\u001b[22m\n\n\n\u001b[0m \u001b[90m 68 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 69 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 70 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mcheck(\u001b[32m'.user-checkbox'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 71 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button:has-text(\"Bulk Actions\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 72 |\u001b[39m     \u001b[90m// Verify bulk actions\u001b[39m\n \u001b[90m 73 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:70:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-04-24T07:13:38.478Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Bulk-user-actions-chromium-retry1\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Bulk-user-actions-chromium-retry1\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-Bulk-user-actions-chromium-retry1\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 16,
+                        "line": 70
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e43726c83847928dbeff-00e6102f722556d40b76",
+              "file": "users.spec.js",
+              "line": 67,
+              "column": 3
+            },
+            {
+              "title": "User activity log",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 16,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 25369,
+                      "error": {
+                        "message": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .activity')\u001b[22m\n",
+                        "stack": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .activity')\u001b[22m\n\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:78:16",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 16,
+                          "line": 78
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 76 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 77 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 78 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'.user-item .activity'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 79 |\u001b[39m     expect(\u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39misVisible(\u001b[32m'.activity-log'\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 80 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 81 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 16,
+                            "line": 78
+                          },
+                          "message": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .activity')\u001b[22m\n\n\n\u001b[0m \u001b[90m 76 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 77 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 78 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'.user-item .activity'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 79 |\u001b[39m     expect(\u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39misVisible(\u001b[32m'.activity-log'\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 80 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 81 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:78:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-24T07:13:14.661Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-User-activity-log-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-User-activity-log-chromium\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-User-activity-log-chromium\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 16,
+                        "line": 78
+                      }
+                    },
+                    {
+                      "workerIndex": 18,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 25112,
+                      "error": {
+                        "message": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .activity')\u001b[22m\n",
+                        "stack": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .activity')\u001b[22m\n\n    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:78:16",
+                        "location": {
+                          "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                          "column": 16,
+                          "line": 78
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 76 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 77 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 78 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'.user-item .activity'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 79 |\u001b[39m     expect(\u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39misVisible(\u001b[32m'.activity-log'\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 80 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 81 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                            "column": 16,
+                            "line": 78
+                          },
+                          "message": "TimeoutError: page.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.user-item .activity')\u001b[22m\n\n\n\u001b[0m \u001b[90m 76 |\u001b[39m     \u001b[36mconst\u001b[39m vettedLogosPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mVettedLogosPage\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 77 |\u001b[39m     \u001b[36mawait\u001b[39m vettedLogosPage\u001b[33m.\u001b[39mnavigate(\u001b[32m'/vetted-logos/users'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 78 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'.user-item .activity'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 79 |\u001b[39m     expect(\u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39misVisible(\u001b[32m'.activity-log'\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 80 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 81 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js:78:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-04-24T07:13:42.434Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-User-activity-log-chromium-retry1\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-User-activity-log-chromium-retry1\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Automation-Framework\\e2es of change auto-stagging\\test-results\\users-Users-Page-Tests-User-activity-log-chromium-retry1\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Automation-Framework\\e2es of change auto-stagging\\tests\\users.spec.js",
+                        "column": 16,
+                        "line": 78
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e43726c83847928dbeff-d6b0624fbd120ed840fe",
+              "file": "users.spec.js",
+              "line": 75,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-04-24T07:09:57.369Z",
+    "duration": 251120.959,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 9,
+    "flaky": 1
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "automation-framework",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright JavaScript test automation framework with POM, logging, and HTML reports",
+  "scripts": {
+    "build": "node scripts/vercel-prepare.cjs",
+    "test": "node scripts/run-playwright-with-local-browsers.cjs test",
+    "test:headed": "node scripts/run-playwright-with-local-browsers.cjs test --headed",
+    "test:debug": "node scripts/run-playwright-with-local-browsers.cjs test --debug",
+    "test:ui": "node scripts/run-playwright-with-local-browsers.cjs test --ui",
+    "test:staging": "node scripts/run-playwright-with-local-browsers.cjs test --project=staging-autobotx",
+    "report": "node scripts/run-playwright-with-local-browsers.cjs show-report reports/html-report",
+    "demo:server": "node fixtures/server.js",
+    "go-live:audit": "node scripts/go-live-audit-run.cjs",
+    "go-live:audit:strict": "node scripts/go-live-audit-server.js",
+    "go-live:audit:insecure-tls": "node -r ./scripts/go-live-audit-tls-insecure-preload.cjs scripts/go-live-audit-server.js",
+    "go-live:audit:tunnel": "node scripts/go-live-audit-tunnel.cjs",
+    "go-live:mailpit": "node scripts/go-live-mailpit.cjs",
+    "go-live:mailpit:install": "node scripts/mailpit-install.cjs",
+    "go-live:mailpit:install:insecure": "node scripts/mailpit-install-insecure.cjs",
+    "go-live:mailpit:docker": "docker run --rm -p 1025:1025 -p 8025:8025 axllent/mailpit",
+    "go-live:audit:with-mailpit": "node scripts/start-audit-with-mailpit.cjs",
+    "go-live:email-setup": "node scripts/go-live-email-setup.cjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.16"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "dotenv": "^16.4.5"
+  }
+}

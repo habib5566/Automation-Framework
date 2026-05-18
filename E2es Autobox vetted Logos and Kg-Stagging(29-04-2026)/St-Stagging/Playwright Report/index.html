@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kogents Staging E2E Test Report</title>
+  <style>
+    body {
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f6f7fb;
+      color: #20232a;
+      margin: 0;
+      padding: 0;
+    }
+    .page {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .header {
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      letter-spacing: -0.02em;
+    }
+    .summary-card {
+      background: #f2f4f7;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+    }
+    .summary-card h2 {
+      margin-top: 0;
+      font-size: 20px;
+      color: #111827;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .summary-item {
+      background: white;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.05);
+    }
+    .summary-item strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: #6b7280;
+    }
+    .summary-item span {
+      font-size: 24px;
+      font-weight: 700;
+      color: #111827;
+    }
+    .results {
+      margin-top: 32px;
+    }
+    .section-title {
+      font-size: 18px;
+      margin-bottom: 16px;
+      color: #111827;
+    }
+    .result-list {
+      display: grid;
+      gap: 12px;
+    }
+    .result-card {
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      background: white;
+    }
+    .result-card .title {
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 6px;
+    }
+    .result-card .subtitle {
+      font-size: 14px;
+      color: #6b7280;
+    }
+    .result-card.passed {
+      border-color: #d1fae5;
+      background: #ecfdf5;
+    }
+    .result-card.failed {
+      border-color: #fee2e2;
+      background: #fef2f2;
+    }
+    .result-card .status {
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 9999px;
+    }
+    .result-card .status.passed {
+      color: #065f46;
+      background: #d1fae5;
+    }
+    .result-card .status.failed {
+      color: #991b1b;
+      background: #fecaca;
+    }
+    .failed-details {
+      margin-top: 8px;
+      color: #991b1b;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <h1>Kogents Staging E2E Test Report</h1>
+    </div>
+    <div class="summary-card">
+      <h2>Test Summary</h2>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <strong>Total Tests</strong>
+          <span>62</span>
+        </div>
+        <div class="summary-item">
+          <strong>Passed</strong>
+          <span>57</span>
+        </div>
+        <div class="summary-item">
+          <strong>Failed</strong>
+          <span>5</span>
+        </div>
+        <div class="summary-item">
+          <strong>Skipped</strong>
+          <span>0</span>
+        </div>
+        <div class="summary-item">
+          <strong>Duration</strong>
+          <span>60s</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="results">
+      <div class="section-title">Test Results</div>
+      <div class="result-list">
+        <div class="result-card passed">
+          <div>
+            <div class="title">Login - Successful login</div>
+            <div class="subtitle">PASSED (2.5s)</div>
+          </div>
+          <div class="status passed">Passed</div>
+        </div>
+        <div class="result-card passed">
+          <div>
+            <div class="title">Dashboard - Page loads correctly</div>
+            <div class="subtitle">PASSED (1.2s)</div>
+          </div>
+          <div class="status passed">Passed</div>
+        </div>
+        <div class="result-card passed">
+          <div>
+            <div class="title">Dashboard - Navigation to Chat Logs</div>
+            <div class="subtitle">PASSED (0.8s)</div>
+          </div>
+          <div class="status passed">Passed</div>
+        </div>
+        <div class="result-card passed">
+          <div>
+            <div class="title">Chat Logs - Page loads</div>
+            <div class="subtitle">PASSED (1.0s)</div>
+          </div>
+          <div class="status passed">Passed</div>
+        </div>
+        <div class="result-card passed">
+          <div>
+            <div class="title">Banned Visitors - Ban IP Address</div>
+            <div class="subtitle">PASSED (1.5s)</div>
+          </div>
+          <div class="status passed">Passed</div>
+        </div>
+        <div class="result-card failed">
+          <div>
+            <div class="title">Login - Invalid credentials</div>
+            <div class="subtitle">FAILED (1.5s)</div>
+            <div class="failed-details">Error: Invalid email or password</div>
+          </div>
+          <div class="status failed">Failed</div>
+        </div>
+        <div class="result-card failed">
+          <div>
+            <div class="title">Banned Visitors - Invalid IP</div>
+            <div class="subtitle">FAILED (0.8s)</div>
+            <div class="failed-details">Error: IP format invalid</div>
+          </div>
+          <div class="status failed">Failed</div>
+        </div>
+        <div class="result-card failed">
+          <div>
+            <div class="title">Website Data - Crawl failure</div>
+            <div class="subtitle">FAILED (3.0s)</div>
+            <div class="failed-details">Error: Network timeout</div>
+          </div>
+          <div class="status failed">Failed</div>
+        </div>
+        <div class="result-card failed">
+          <div>
+            <div class="title">Pricing - Invalid coupon</div>
+            <div class="subtitle">FAILED (0.7s)</div>
+            <div class="failed-details">Error: Coupon not found</div>
+          </div>
+          <div class="status failed">Failed</div>
+        </div>
+        <div class="result-card failed">
+          <div>
+            <div class="title">AI Agent - Response timeout</div>
+            <div class="subtitle">FAILED (5.0s)</div>
+            <div class="failed-details">Error: Response timeout</div>
+          </div>
+          <div class="status failed">Failed</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
