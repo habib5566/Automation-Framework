@@ -4,7 +4,7 @@
  * SMTP readiness for go-live-audit (used by email-status API and startup logs).
  */
 require('./go-live-audit-smtp-env.cjs');
-const { envSmtpConfigured, uiSmtpAllowed } = require('./go-live-audit-email-notify');
+const { envSmtpConfigured, uiSmtpAllowed, looksLikeGoogleAppPassword } = require('./go-live-audit-email-notify');
 
 function smtpHostIsLocalMailpit() {
   const h = String(process.env.GO_LIVE_AUDIT_SMTP_HOST || '').trim().toLowerCase();
@@ -58,12 +58,24 @@ function getEmailConfigStatus() {
     headline = 'Enter Gmail App Password below';
     detail =
       'Local server uses Mailpit by default. For real Gmail delivery, paste App Password in the form (or run npm run go-live:email-setup once).';
+  } else if (host && host.includes('gmail.com') && !pass) {
+    ready = false;
+    level = 'bad';
+    headline = 'Gmail App Password missing';
+    detail =
+      'Server uses smtp.gmail.com but no password in .env. Run npm run go-live:email-setup OR paste App Password in the scan form.';
   } else if (user && !pass) {
     detail =
       'GO_LIVE_AUDIT_SMTP_USER is set but GO_LIVE_AUDIT_SMTP_PASS is missing in .env. Run npm run go-live:email-setup again.';
   } else if (user && pass && mailpit && !envReady) {
     detail =
       'SMTP user/password in .env but host is still Mailpit — set GO_LIVE_AUDIT_SMTP_PRESET=gmail or remove Mailpit default; restart server.';
+  } else if (envReady && pass && !looksLikeGoogleAppPassword(pass)) {
+    ready = false;
+    level = 'bad';
+    headline = '.env password is not a Google App Password';
+    detail =
+      'GO_LIVE_AUDIT_SMTP_PASS looks like a normal Gmail password (App Passwords are 16 letters/numbers, no @). Run npm run go-live:email-setup again, or paste App Password in the scan form.';
   }
 
   return {

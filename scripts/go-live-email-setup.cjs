@@ -58,8 +58,18 @@ async function main() {
       console.error('App Password too short.');
       process.exit(1);
     }
+    if (appPass.includes('@') || appPass.length < 16) {
+      console.error('');
+      console.error('That looks like your normal Gmail password, not a Google App Password.');
+      console.error('App Passwords are 16 letters/numbers only (no @). Create one at:');
+      console.error('  https://myaccount.google.com/apppasswords');
+      console.error('(2-Step Verification must be ON.)');
+      process.exit(1);
+    }
 
+    const alertInbox = 'habib.developer8899@gmail.com';
     const pairs = [
+      ['GO_LIVE_AUDIT_ALERT_EMAIL', alertInbox],
       ['GO_LIVE_AUDIT_SMTP_USER', gmail],
       ['GO_LIVE_AUDIT_SMTP_PASS', appPass],
       ['GO_LIVE_AUDIT_EMAIL_FROM', gmail],
@@ -80,7 +90,8 @@ async function main() {
     console.log('');
     console.log('Saved:', envPath);
     console.log('Next: stop the audit server (Ctrl+C), then run: npm run go-live:audit');
-    console.log('Then scan with Email scan summary ON and Report email =', gmail);
+    console.log('Scan reports will be sent to:', alertInbox);
+    console.log('SMTP sends as:', gmail, '(must match Google App Password account)');
   } finally {
     rl.close();
   }

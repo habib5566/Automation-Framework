@@ -27,15 +27,75 @@ function sendJson(res, status, obj) {
 
 const { maybeSendScanEmail } = require('./go-live-audit-email-notify');
 const { detectSiteStack } = require('./go-live-audit-site-stack.cjs');
+const { enrichSiteStackVersions } = require('./go-live-audit-laravel-version.cjs');
+const { getAlertEmail } = require('./go-live-audit-defaults.cjs');
+const {
+  detectHtmlRuntimeIssues,
+  issuesFromAvailability,
+  issuesFromPlaywrightConsole,
+  mergeIssues,
+  summarizeIssues,
+} = require('./go-live-audit-page-issues.cjs');
+const { captureBrowserConsole } = require('./go-live-audit-playwright-console.cjs');
+const { buildBrandMatrix, pickConsoleIssues, pickNonConsoleIssues } = require('./go-live-audit-brand-matrix.cjs');
+const { buildVulnerabilities } = require('./go-live-audit-vulnerabilities.cjs');
+const { detectSecurityThreats } = require('./go-live-audit-security-threats.cjs');
+const { findBrand, loadBrandsWatch, recordScanForBrand } = require('./go-live-audit-brand-watch.cjs');
 
 /**
  * When the client asks for email (sendEmail) or GO_LIVE_AUDIT_EMAIL_ALWAYS=1, run SMTP
  * before responding so the JSON includes emailReport. Otherwise skip (no surprise mail).
  */
+function enrichScanReportPayload(payload, ctx) {
+  const pageIssues = payload.pageIssues || { items: [], summary: { errors: 0, warns: 0, total: 0 } };
+  payload.consoleIssues = pickConsoleIssues(pageIssues);
+  payload.siteIssues = pickNonConsoleIssues(pageIssues);
+  payload.brandMatrix = buildBrandMatrix({
+    brandName: ctx.brandName || payload.brandName,
+    reachable: ctx.reachable,
+    statusCode: ctx.statusCode,
+    availability: payload.availability,
+    overallSummary: payload.overallSummary,
+    pageIssues,
+    siteStack: payload.siteStack,
+  });
+
+  const brandName = ctx.brandName || payload.brandName;
+  let baseline = null;
+  if (brandName) {
+    const doc = loadBrandsWatch();
+    const b = findBrand(doc, brandName);
+    if (b && b.baselineFingerprint) baseline = b.baselineFingerprint;
+  }
+
+  payload.security = detectSecurityThreats({
+    html: ctx.htmlBody || '',
+    headers: ctx.headers || {},
+    finalUrl: payload.finalUrl || payload.requestedUrl,
+    pageIssues,
+    consoleIssues: payload.consoleIssues,
+    baseline,
+  });
+  payload.securityWatch = recordScanForBrand(brandName, payload);
+  if (payload.security.shouldAlert) payload.securityAlert = true;
+  payload.vulnerabilities = buildVulnerabilities({
+    security: payload.security,
+    siteStack: payload.siteStack,
+    pageIssues,
+    siteIssues: payload.siteIssues,
+    consoleIssues: payload.consoleIssues,
+  });
+}
+
 async function flushScanEmailIfNeeded(requestJson, scanPayload) {
   if (requestJson && requestJson.skipEmail === true) return;
+  const threatMail =
+    scanPayload.securityAlert === true ||
+    (scanPayload.security && scanPayload.security.shouldAlert) ||
+    requestJson.securityWatch === true;
   const wants =
     process.env.GO_LIVE_AUDIT_EMAIL_ALWAYS === '1' ||
+    (process.env.GO_LIVE_AUDIT_ALERT_ON_THREAT !== '0' && threatMail) ||
     requestJson.sendEmail === true ||
     requestJson.emailReport === true ||
     requestJson.email === true;
@@ -1203,9 +1263,43 @@ async function handleScan(req, res) {
       return;
     }
     requestedUrl = String(json.url || '').trim();
+    const brandName = String(json.brandName || json.brand || '').trim().slice(0, 120);
     if (!requestedUrl) {
       sendJson(res, 400, { ok: false, error: 'Missing url' });
       return;
+    }
+
+    async function buildPageIssuesForScan(htmlBody, avail, sc, pageUrl) {
+      const lists = [issuesFromAvailability(avail, sc), detectHtmlRuntimeIssues(htmlBody)];
+      let consoleCapture = 'html-only';
+      const wantPw =
+        json.captureConsole !== false &&
+        process.env.GO_LIVE_AUDIT_NO_PLAYWRIGHT_CONSOLE !== '1' &&
+        sc >= 200 &&
+        sc < 400;
+      if (wantPw && process.env.VERCEL !== '1') {
+        const pw = await captureBrowserConsole(pageUrl || requestedUrl);
+        if (Array.isArray(pw)) {
+          lists.push(issuesFromPlaywrightConsole(pw));
+          consoleCapture = pw.length ? 'playwright' : 'playwright-empty';
+        } else if (pw && Array.isArray(pw.logs) && pw.logs.length) {
+          lists.push(issuesFromPlaywrightConsole(pw.logs));
+          consoleCapture = 'playwright';
+        } else if (pw && pw.error) {
+          consoleCapture = 'playwright-failed';
+          lists.push([
+            {
+              kind: 'console',
+              severity: 'info',
+              message: 'Browser console capture skipped: ' + String(pw.error).slice(0, 120),
+            },
+          ]);
+        }
+      } else if (process.env.VERCEL === '1') {
+        consoleCapture = 'unavailable-on-vercel';
+      }
+      const items = mergeIssues(lists);
+      return { items, summary: summarizeIssues(items), consoleCapture };
     }
 
     let bundle;
@@ -1221,13 +1315,18 @@ async function handleScan(req, res) {
         scanWarnings: [],
         html: null,
       });
+      const pageIssuesDown = await buildPageIssuesForScan('', availability, 0, requestedUrl);
       const unreachablePayload = {
         ok: false,
         requestedUrl,
+        brandName: brandName || null,
+        alertEmail: getAlertEmail(),
         availability,
         error: String(fetchErr.message || fetchErr),
         autoChecks: [],
         overallSummary,
+        pageIssues: pageIssuesDown,
+        statusCode: 0,
         siteStack: {
           host: '',
           headline: 'Site unreachable — stack unknown',
@@ -1243,6 +1342,13 @@ async function handleScan(req, res) {
           scannedAt: new Date().toISOString(),
         },
       };
+      enrichScanReportPayload(unreachablePayload, {
+        brandName,
+        reachable: false,
+        statusCode: 0,
+        htmlBody: '',
+        headers: {},
+      });
       await flushScanEmailIfNeeded(json, unreachablePayload);
       sendJson(res, 200, unreachablePayload);
       return;
@@ -1318,7 +1424,7 @@ async function handleScan(req, res) {
       });
     }
 
-    const siteStack = skipCh.skip
+    let siteStack = skipCh.skip
       ? {
           host: (() => {
             try {
@@ -1342,6 +1448,21 @@ async function handleScan(req, res) {
         }
       : detectSiteStack(headers, bodySlice, finalUrl);
 
+    if (!skipCh.skip && siteStack && siteStack.items) {
+      siteStack = await enrichSiteStackVersions(siteStack, bodySlice, finalUrl, fetchUrl);
+    }
+
+    const pageIssues = await buildPageIssuesForScan(bodySlice, availability, statusCode, finalUrl);
+    if (pageIssues.items.length) {
+      for (const it of pageIssues.items) {
+        if (it.severity === 'error' || it.severity === 'warn') {
+          scanWarnings.push({
+            message: `[${it.kind || 'issue'}] ${it.message}`,
+          });
+        }
+      }
+    }
+
     const overallSummary = buildOverallSummary({
       reachable: true,
       availability,
@@ -1354,6 +1475,9 @@ async function handleScan(req, res) {
     const successPayload = {
       ok: true,
       requestedUrl,
+      brandName: brandName || null,
+      alertEmail: getAlertEmail(),
+      pageIssues,
       availability,
       siteStack,
       contentAutoChecksSkipped: skipCh.skip,
@@ -1371,10 +1495,18 @@ async function handleScan(req, res) {
       scanMeta: {
         followUpPagesFetched: followUpSamples.length,
         followUpPageUrls: followUpSamples.map((s) => s.finalUrl),
+        consoleCapture: pageIssues.consoleCapture || 'unknown',
       },
       disclaimer:
         'Scan uses the start URL and robots.txt, then may fetch up to two same-origin pages linked from that HTML (time-capped) to widen signals. Form delivery, Zendesk, CLS, and full-site crawling still need manual QA or Playwright.',
     };
+    enrichScanReportPayload(successPayload, {
+      brandName,
+      reachable: true,
+      statusCode,
+      htmlBody: bodySlice,
+      headers,
+    });
     await flushScanEmailIfNeeded(json, successPayload);
     sendJson(res, 200, successPayload);
   } catch (e) {
@@ -1382,4 +1514,34 @@ async function handleScan(req, res) {
   }
 }
 
-module.exports = { handleScan, sendJson };
+/**
+ * Run a full scan in-process (for watch daemon / automation).
+ * @param {Record<string, unknown>} json Same body as POST /api/scan
+ */
+function runScanInternal(json) {
+  return new Promise((resolve, reject) => {
+    const http = require('http');
+    const body = JSON.stringify(json || {});
+    const req = new http.IncomingMessage();
+    req.push(body);
+    req.push(null);
+    req.method = 'POST';
+    req.headers = { 'content-type': 'application/json' };
+
+    const res = {
+      statusCode: 200,
+      writeHead() {},
+      end(data) {
+        try {
+          resolve(JSON.parse(String(data || '{}')));
+        } catch (e) {
+          reject(e);
+        }
+      },
+    };
+
+    handleScan(req, res).catch(reject);
+  });
+}
+
+module.exports = { handleScan, sendJson, runScanInternal };

@@ -1,8 +1,9 @@
 /**
  * Optional post-scan email (SMTP). Used by go-live-audit-core after each scan.
- * Recipient: user’s **reportEmail** in the POST body when allowed, else **GO_LIVE_AUDIT_EMAIL_TO**.
+ * Default recipient: GO_LIVE_AUDIT_ALERT_EMAIL or habib.developer8899@gmail.com (see go-live-audit-defaults.cjs).
  * @see go-live-audit/EMAIL.md
  */
+const { getAlertEmail } = require('./go-live-audit-defaults.cjs');
 function isLikelyEmail(s) {
   const t = String(s || '').trim();
   if (t.length < 6 || t.length > 254 || /[\s;,]/.test(t)) return false;
@@ -19,6 +20,11 @@ function recipientFromUiAllowed() {
 }
 
 function resolveRecipient(requestJson) {
+  const alertTo = getAlertEmail();
+  if (isLikelyEmail(alertTo)) {
+    return { to: alertTo, mode: 'alert' };
+  }
+
   const envTo = (process.env.GO_LIVE_AUDIT_EMAIL_TO || '').trim();
   const uiRaw = String(requestJson.reportEmail || requestJson.emailTo || requestJson.userEmail || '').trim();
   if (uiRaw && !isLikelyEmail(uiRaw)) {
@@ -37,17 +43,108 @@ function resolveRecipient(requestJson) {
   return {
     to: '',
     mode: 'skip',
-    reason:
-      'No recipient: enter **Report email** in the UI, or set GO_LIVE_AUDIT_EMAIL_TO on the server (.env).',
+    reason: 'No alert email configured.',
   };
 }
 
 function buildPlainText(scanResponse) {
   const o = scanResponse || {};
   const lines = [];
-  lines.push('Go-Live Audit — full scan report');
+  lines.push('Go-Live Audit — brand alert report');
   lines.push('Time (UTC): ' + new Date().toISOString());
+  if (o.brandName) lines.push('Brand: ' + o.brandName);
+  if (o.vulnerabilities && Array.isArray(o.vulnerabilities.items) && o.vulnerabilities.items.length) {
+    const v = o.vulnerabilities;
+    lines.push('');
+    lines.push('═══ VULNERABILITIES & RISKS ═══');
+    lines.push('Summary: ' + (v.headline || '—'));
+    lines.push(
+      'Counts — critical: ' +
+        (v.summary && v.summary.critical) +
+        ', high: ' +
+        (v.summary && v.summary.high) +
+        ', medium: ' +
+        (v.summary && v.summary.medium) +
+        ', low: ' +
+        (v.summary && v.summary.low)
+    );
+    for (const item of v.items.slice(0, 40)) {
+      lines.push(
+        '  [' +
+          (item.severity || '?').toUpperCase() +
+          '] ' +
+          (item.category || '') +
+          ' — ' +
+          (item.title || '') +
+          (item.detail ? ' — ' + item.detail : '')
+      );
+    }
+    lines.push('');
+  }
+  if (o.security) {
+    const sec = o.security;
+    lines.push('');
+    lines.push('═══ SECURITY MONITOR ═══');
+    lines.push('Alert level: ' + (sec.alertLevel || 'ok').toUpperCase());
+    lines.push('Summary: ' + (sec.headline || '—'));
+    lines.push('Critical: ' + (sec.criticalCount || 0) + ' | Warnings: ' + (sec.warnCount || 0));
+    if (sec.baselineDrift && sec.baselineDrift.changed) {
+      lines.push('Baseline drift: page changed vs last clean scan');
+      lines.push('  Was: ' + (sec.baselineDrift.previousTitle || '—'));
+      lines.push('  Now: ' + (sec.baselineDrift.currentTitle || '—'));
+    }
+    if (Array.isArray(sec.threats) && sec.threats.length) {
+      lines.push('');
+      lines.push('Threats / attack signals:');
+      for (const t of sec.threats) {
+        lines.push('  [' + (t.severity || '?').toUpperCase() + '] ' + (t.kind || '') + ' — ' + (t.message || ''));
+      }
+    }
+    lines.push('');
+  }
+  if (o.brandMatrix) {
+    const m = o.brandMatrix;
+    lines.push('');
+    lines.push('Brand performance matrix');
+    lines.push('  Performance rate: ' + m.performancePercent + '% (grade ' + m.performanceGrade + ')');
+    if (m.passRatePercent != null) lines.push('  Checklist pass rate: ' + m.passRatePercent + '%');
+    for (const row of m.matrix || []) {
+      lines.push('  ' + row.label + ': ' + row.value);
+    }
+    if (m.frameworks && m.frameworks.length) {
+      lines.push('  Frameworks / stack:');
+      for (const f of m.frameworks) {
+        lines.push('    · ' + f.label + (f.version ? ' ' + f.version : ' (version not exposed)'));
+      }
+    }
+  }
+  if (o.siteStack && o.siteStack.items && o.siteStack.items.length && !(o.brandMatrix && o.brandMatrix.frameworks && o.brandMatrix.frameworks.length)) {
+    lines.push('');
+    lines.push('Site technology stack:');
+    for (const it of o.siteStack.items.slice(0, 14)) {
+      lines.push('  · ' + it.label + (it.version ? ' ' + it.version : ''));
+    }
+  }
   lines.push('');
+  if (o.consoleIssues && o.consoleIssues.items && o.consoleIssues.items.length) {
+    lines.push('Browser console errors (' + o.consoleIssues.items.length + '):');
+    for (const it of o.consoleIssues.items) {
+      lines.push('  [' + (it.severity || 'error').toUpperCase() + '] ' + (it.message || ''));
+    }
+    lines.push('');
+  }
+  if (o.pageIssues && o.pageIssues.summary) {
+    const s = o.pageIssues.summary;
+    lines.push('Issues summary: ' + s.errors + ' error(s), ' + s.warns + ' warning(s)');
+    lines.push('');
+  }
+  if (Array.isArray(o.pageIssues && o.pageIssues.items) && o.pageIssues.items.length) {
+    lines.push('Detected issues (site / console / HTTP):');
+    for (const it of o.pageIssues.items) {
+      lines.push('  [' + (it.severity || '?').toUpperCase() + '] ' + (it.kind || '') + ' — ' + (it.message || ''));
+    }
+    lines.push('');
+  }
   lines.push('Requested URL: ' + (o.requestedUrl || '—'));
   if (o.finalUrl) lines.push('Final URL: ' + o.finalUrl);
   if (o.statusCode != null) lines.push('HTTP status: ' + o.statusCode);
@@ -157,9 +254,21 @@ function buildSubject(scanResponse) {
   } catch {
     host = (o.requestedUrl || '').slice(0, 60);
   }
+  const brand = o.brandName ? String(o.brandName).trim().slice(0, 40) : '';
   const head = (o.overallSummary && o.overallSummary.headline) || (o.ok === false ? 'Scan incomplete' : 'Scan complete');
-  const short = String(head).replace(/\s+/g, ' ').trim().slice(0, 80);
-  return '[Go-Live Audit] ' + host + ' — ' + short;
+  let short = String(head).replace(/\s+/g, ' ').trim().slice(0, 60);
+  if (o.vulnerabilities && o.vulnerabilities.summary && o.vulnerabilities.summary.critical > 0) {
+    short =
+      'VULN ' + o.vulnerabilities.summary.critical + ' critical — ' + (o.vulnerabilities.headline || short);
+  } else if (o.security && o.security.alertLevel === 'critical') {
+    short = 'SECURITY ' + (o.security.criticalCount || 0) + ' critical — ' + short;
+  } else if (o.security && o.security.shouldAlert) {
+    short = 'Security alert — ' + short;
+  } else if (o.pageIssues && o.pageIssues.summary && o.pageIssues.summary.errors > 0) {
+    short = 'ALERT ' + o.pageIssues.summary.errors + ' issue(s) — ' + short;
+  }
+  const prefix = brand ? '[Go-Live] ' + brand + ' — ' : '[Go-Live Audit] ';
+  return prefix + host + ' — ' + short;
 }
 
 function shouldSendForRequest(requestJson) {
@@ -212,6 +321,17 @@ function normalizeAppPassword(pass) {
   return String(pass || '').trim().replace(/\s+/g, '');
 }
 
+/** Google App Passwords are 16 chars, no @ — normal Gmail passwords fail SMTP with 535. */
+function looksLikeGoogleAppPassword(pass) {
+  const p = normalizeAppPassword(pass);
+  if (p.length < 16) return false;
+  if (/[@\s]/.test(p)) return false;
+  return /^[a-z0-9]+$/i.test(p);
+}
+
+const NOT_APP_PASSWORD_HINT =
+  'GO_LIVE_AUDIT_SMTP_PASS must be a Google App Password (16 letters/numbers, no @). Normal Gmail passwords do not work. Google Account → Security → 2-Step Verification → App passwords, or run npm run go-live:email-setup.';
+
 /** Gmail App Password from scan request (no .env needed on local server). */
 function smtpFromRequestBody(requestJson) {
   if (!uiSmtpAllowed() || !requestJson) return null;
@@ -232,6 +352,18 @@ function envSmtpConfigured() {
   return !!(host && user && pass && !smtpHostIsLocalMailpit());
 }
 
+function smtpTlsOptions(host) {
+  const tls = { minVersion: 'TLSv1.2' };
+  const h = String(host || '').toLowerCase();
+  const insecure =
+    process.env.GO_LIVE_AUDIT_SMTP_TLS_REJECT_UNAUTHORIZED === '0' ||
+    process.env.GO_LIVE_AUDIT_SMTP_TLS_INSECURE === '1';
+  if (insecure || h.includes('gmail.com')) {
+    tls.rejectUnauthorized = false;
+  }
+  return tls;
+}
+
 function createNodemailerTransport(cfg) {
   let nodemailer;
   try {
@@ -243,11 +375,59 @@ function createNodemailerTransport(cfg) {
     host: cfg.host,
     port: cfg.port,
     secure: !!cfg.secure,
-    tls:
-      process.env.GO_LIVE_AUDIT_SMTP_TLS_REJECT_UNAUTHORIZED === '0' ? { rejectUnauthorized: false } : undefined,
+    tls: smtpTlsOptions(cfg.host),
   };
   if (cfg.user) opts.auth = { user: cfg.user, pass: cfg.pass };
   return { transport: nodemailer.createTransport(opts), cfg };
+}
+
+async function sendMailWithGmailFallback(transport, mail, cfg) {
+  try {
+    await transport.sendMail(mail);
+    return { ok: true };
+  } catch (e) {
+    const msg = String((e && e.message) || e);
+    const isGmail = String(cfg.host || '').toLowerCase().includes('gmail');
+    const certFail = /certificate|UNABLE_TO_VERIFY|self[- ]signed|TLS/i.test(msg);
+    if (!isGmail) throw e;
+
+    let nodemailer;
+    try {
+      nodemailer = require('nodemailer');
+    } catch {
+      throw e;
+    }
+
+    if (cfg.port === 465 || cfg.secure) {
+      try {
+        const t587 = nodemailer.createTransport({
+          host: cfg.host || 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          auth: cfg.user ? { user: cfg.user, pass: cfg.pass } : undefined,
+          tls: smtpTlsOptions(cfg.host),
+          requireTLS: true,
+        });
+        await t587.sendMail(mail);
+        return { ok: true, usedPort587: true };
+      } catch (e2) {
+        if (!certFail) throw e2;
+      }
+    }
+
+    if (certFail) {
+      const relaxed = nodemailer.createTransport({
+        host: cfg.host || 'smtp.gmail.com',
+        port: cfg.port || 465,
+        secure: cfg.secure !== false,
+        auth: cfg.user ? { user: cfg.user, pass: cfg.pass } : undefined,
+        tls: { minVersion: 'TLSv1.2', rejectUnauthorized: false },
+      });
+      await relaxed.sendMail(mail);
+      return { ok: true, usedRelaxedTls: true };
+    }
+    throw e;
+  }
 }
 
 function createTransportFromEnv() {
@@ -255,6 +435,13 @@ function createTransportFromEnv() {
   if (!host) return { error: 'GO_LIVE_AUDIT_SMTP_HOST not set' };
   const user = (process.env.GO_LIVE_AUDIT_SMTP_USER || '').trim();
   const pass = String(process.env.GO_LIVE_AUDIT_SMTP_PASS || '').trim();
+  const localish = smtpHostIsLocalMailpit();
+  if (!localish && (!user || !pass)) {
+    return {
+      error:
+        '[GMAIL_SMTP_REQUIRED] Set GO_LIVE_AUDIT_SMTP_USER + GO_LIVE_AUDIT_SMTP_PASS in .env (npm run go-live:email-setup) or paste Gmail App Password in the scan form.',
+    };
+  }
   if (user && !pass) {
     return {
       error:
@@ -275,19 +462,47 @@ function createTransportFromEnv() {
   });
 }
 
-function resolveTransport(requestJson) {
+function resolveTransport(requestJson, to) {
+  const ui = smtpFromRequestBody(requestJson);
+  const needsInternet = reportEmailRequiresInternetSmtp(to);
+  const envPass = normalizeAppPassword(process.env.GO_LIVE_AUDIT_SMTP_PASS || '');
+  const envApp = looksLikeGoogleAppPassword(envPass);
+  const uiApp = ui ? looksLikeGoogleAppPassword(ui.pass) : false;
+
   if (envSmtpConfigured()) {
     const envT = createTransportFromEnv();
-    if (!envT.error) return envT;
+    if (!envT.error) {
+      if (needsInternet && envPass && !envApp) {
+        if (ui) return createNodemailerTransport(ui);
+        return { error: NOT_APP_PASSWORD_HINT };
+      }
+      return envT;
+    }
   }
-  const ui = smtpFromRequestBody(requestJson);
+  if (needsInternet && ui) {
+    return createNodemailerTransport(ui);
+  }
   if (ui) {
     return createNodemailerTransport(ui);
   }
-  if (envSmtpConfigured()) return createTransportFromEnv();
+  if (needsInternet && smtpHostIsLocalMailpit()) {
+    return {
+      error:
+        '[GMAIL_SMTP_REQUIRED] Gmail inbox needs Google App Password — paste it in the scan form (Gmail App Password field) or run: npm run go-live:email-setup',
+    };
+  }
   const envT = createTransportFromEnv();
   if (!envT.error) return envT;
-  return { error: 'No SMTP — add Gmail App Password in the form (below Report email) or run npm run go-live:email-setup.' };
+  if (envT.error && String(envT.error).includes('[GMAIL_SMTP_REQUIRED]')) {
+    return { error: envT.error };
+  }
+  if (needsInternet) {
+    return {
+      error:
+        '[GMAIL_SMTP_REQUIRED] Paste Gmail App Password in the scan form or run npm run go-live:email-setup, then restart npm run go-live:audit.',
+    };
+  }
+  return { error: 'No SMTP — add Gmail App Password in the form or run npm run go-live:email-setup.' };
 }
 
 /**
@@ -315,10 +530,13 @@ async function maybeSendScanEmail(requestJson, scanResponse) {
     return { skipped: true, reason: GMAIL_SMTP_REQUIRED_MSG };
   }
 
-  const t = resolveTransport(requestJson);
+  const t = resolveTransport(requestJson, resolved.to);
   if (t.error) {
     // eslint-disable-next-line no-console
     console.warn('[go-live-audit] email:', t.error);
+    if (String(t.error).includes('[GMAIL_SMTP_REQUIRED]')) {
+      return { skipped: true, reason: t.error };
+    }
     return { error: t.error };
   }
 
@@ -337,20 +555,37 @@ async function maybeSendScanEmail(requestJson, scanResponse) {
   };
 
   try {
-    await t.transport.sendMail(mail);
-    // eslint-disable-next-line no-console
-    console.log('[go-live-audit] email sent (' + resolved.mode + ') to', resolved.to.split(/[,;]/).map((s) => s.trim()).join(', '));
+    const sendMeta = await sendMailWithGmailFallback(t.transport, mail, t.cfg || {});
     const smtpHost = String((t.cfg && t.cfg.host) || process.env.GO_LIVE_AUDIT_SMTP_HOST || '')
       .trim()
       .toLowerCase();
     const localish = smtpHost === '127.0.0.1' || smtpHost === 'localhost' || smtpHost === '::1';
+    if (localish && reportEmailRequiresInternetSmtp(resolved.to)) {
+      return {
+        skipped: true,
+        reason:
+          '[GMAIL_SMTP_REQUIRED] Mailpit captured the message locally — it was NOT sent to ' +
+          resolved.to +
+          '. Paste Gmail App Password in the form or run npm run go-live:email-setup, then restart npm run go-live:audit.',
+        mailpitOnly: true,
+      };
+    }
+    // eslint-disable-next-line no-console
+    console.log('[go-live-audit] email sent (' + resolved.mode + ') to', resolved.to.split(/[,;]/).map((s) => s.trim()).join(', '));
     /** @type {{ sent: true, recipientMode: string, sentTo: string, deliveryHint?: string }} */
     const out = { sent: true, recipientMode: resolved.mode, sentTo: resolved.to };
-    if (t.cfg && t.cfg.source === 'ui') {
-      out.deliveryHint = 'Sent via Gmail using App Password from this browser (not stored on server).';
+    if (sendMeta.usedPort587) {
+      out.deliveryHint = 'Sent via Gmail on port 587 (465 failed). Check inbox and spam for ' + resolved.to + '.';
+    } else if (sendMeta.usedRelaxedTls) {
+      out.deliveryHint =
+        'Sent via Gmail (corporate TLS workaround). Check inbox and spam for ' + resolved.to + '.';
+    } else if (t.cfg && t.cfg.source === 'ui') {
+      out.deliveryHint = 'Delivered via Gmail (App Password from this browser). Check inbox and spam for ' + resolved.to + '.';
     } else if (localish) {
       out.deliveryHint =
-        'SMTP is local Mailpit (127.0.0.1:1025). The message is not sent over the internet — open http://localhost:8025 on this PC to read it. To deliver to the inbox you typed (e.g. Gmail), configure real SMTP in .env (GO_LIVE_AUDIT_SMTP_PRESET=gmail + App Password); see go-live-audit/EMAIL.md.';
+        'SMTP is local Mailpit only — open http://localhost:8025 on this PC. For real Gmail, run npm run go-live:email-setup.';
+    } else {
+      out.deliveryHint = 'Sent via ' + smtpHost + '. Check inbox and spam for ' + resolved.to + '.';
     }
     return out;
   } catch (e) {
@@ -384,12 +619,16 @@ async function maybeSendScanEmail(requestJson, scanResponse) {
       }
     }
 
+    if (/Invalid login|535|EAUTH|authentication failed/i.test(msg)) {
+      return { error: msg, reason: NOT_APP_PASSWORD_HINT };
+    }
     return { error: msg };
   }
 }
 
 module.exports = {
   maybeSendScanEmail,
+  looksLikeGoogleAppPassword,
   buildPlainText,
   buildSubject,
   isLikelyEmail,

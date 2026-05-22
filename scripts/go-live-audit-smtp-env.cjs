@@ -96,6 +96,42 @@ const fs = require('fs');
   }
 })();
 
+function isGmailAddress(email) {
+  const t = String(email || '').trim().toLowerCase();
+  return t.endsWith('@gmail.com') || t.endsWith('@googlemail.com');
+}
+
+/**
+ * Alert inbox is Gmail → use smtp.gmail.com (not Mailpit). User still needs App Password in .env or UI.
+ */
+(function applyGmailPresetForGmailAlertInbox() {
+  if (process.env.GO_LIVE_AUDIT_NO_DEFAULT_SMTP === '1') return;
+  if (String(process.env.GO_LIVE_AUDIT_SMTP_HOST || '').trim()) return;
+  if (String(process.env.GO_LIVE_AUDIT_SMTP_USER || '').trim()) return;
+  let alert = String(process.env.GO_LIVE_AUDIT_ALERT_EMAIL || process.env.GO_LIVE_AUDIT_EMAIL_TO || '').trim();
+  if (!alert) {
+    try {
+      alert = require('./go-live-audit-defaults.cjs').getAlertEmail();
+    } catch {
+      alert = '';
+    }
+  }
+  if (!isGmailAddress(alert)) return;
+  process.env.GO_LIVE_AUDIT_SMTP_PRESET = process.env.GO_LIVE_AUDIT_SMTP_PRESET || 'gmail';
+  process.env.GO_LIVE_AUDIT_SMTP_HOST = 'smtp.gmail.com';
+  if (!String(process.env.GO_LIVE_AUDIT_SMTP_PORT || '').trim()) {
+    process.env.GO_LIVE_AUDIT_SMTP_PORT = '465';
+    process.env.GO_LIVE_AUDIT_SMTP_SECURE = '1';
+  }
+  if (!String(process.env.GO_LIVE_AUDIT_EMAIL_FROM || '').trim()) {
+    process.env.GO_LIVE_AUDIT_EMAIL_FROM = alert;
+  }
+  // eslint-disable-next-line no-console
+  console.log(
+    '[go-live-audit] Alert email is Gmail — SMTP host smtp.gmail.com:465. Set GO_LIVE_AUDIT_SMTP_PASS in .env (npm run go-live:email-setup) or paste App Password in the scan form.'
+  );
+})();
+
 /**
  * Local dev: if SMTP host still unset, default to Mailpit — only when no GO_LIVE_AUDIT_SMTP_USER
  * (if USER is set we assume you intend real SMTP; infer + preset should have set host).

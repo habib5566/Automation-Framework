@@ -21,7 +21,9 @@
     "go-live:mailpit:install:insecure": "node scripts/mailpit-install-insecure.cjs",
     "go-live:mailpit:docker": "docker run --rm -p 1025:1025 -p 8025:8025 axllent/mailpit",
     "go-live:audit:with-mailpit": "node scripts/start-audit-with-mailpit.cjs",
-    "go-live:email-setup": "node scripts/go-live-email-setup.cjs"
+    "go-live:email-setup": "node scripts/go-live-email-setup.cjs",
+    "go-live:watch": "node scripts/go-live-audit-watch-runner.cjs",
+    "go-live:watch:daemon": "node scripts/go-live-audit-watch-runner.cjs --daemon"
   },
   "engines": {
     "node": ">=18"

@@ -37,6 +37,70 @@ function cookieHeaderHas(hLow, name) {
   return new RegExp('\\b' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '=', 'i').test(c);
 }
 
+/** Best-effort Laravel core version from public HTML (error pages, comments, JSON leaks). */
+function detectLaravelVersion(html) {
+  const body = String(html || '');
+  const patterns = [
+    /Laravel Framework\s+(\d+\.\d+\.\d+)/i,
+    /Laravel\s+v(\d+\.\d+\.\d+)/i,
+    /Laravel\s+v(\d+\.\d+)/i,
+    /"laravel_version"\s*:\s*"([^"]+)"/i,
+    /"framework_version"\s*:\s*"(\d+\.\d+\.\d+)"/i,
+    /laravel[_-]?framework[^0-9]{0,40}(\d+\.\d+\.\d+)/i,
+    /Illuminate\\Foundation\\Application[^0-9]{0,24}(\d+\.\d+\.\d+)/i,
+    /vendor\/laravel\/framework[^0-9]{0,24}(\d+\.\d+\.\d+)/i,
+    /<!--\s*Laravel v?(\d+\.\d+\.\d+)/i,
+    /window\.Laravel\s*=\s*\{[\s\S]{0,1200}?"version"\s*:\s*"([^"]+)"/i,
+    /data-laravel-version=["']([\d.]+)["']/i,
+    /laravelVersion["']\s*:\s*["']([\d.]+)["']/i,
+    /Application::VERSION\s*=\s*['"]([\d.]+)['"]/i,
+  ];
+  for (const re of patterns) {
+    const m = body.match(re);
+    if (m && m[1]) {
+      const raw = String(m[1]).trim();
+      const v = parseSemverish(raw);
+      if (v && v.major >= 4 && v.major <= 99) return raw;
+    }
+  }
+  return null;
+}
+
+function laravelVersionAlert(ver) {
+  const v = parseSemverish(ver);
+  if (!v) return { alert: 'good', detail: 'Laravel detected' };
+  if (v.major < 9) {
+    return {
+      alert: 'bad',
+      detail: `Laravel ${ver} is end-of-life — upgrade to 11.x or 12.x for security support.`,
+    };
+  }
+  if (v.major === 9) {
+    return {
+      alert: 'warn',
+      detail: `Laravel ${ver} — security fixes ended; plan upgrade to 10+.`,
+    };
+  }
+  if (v.major === 10) {
+    return {
+      alert: 'warn',
+      detail: `Laravel ${ver} — consider upgrading to 11+ for current LTS.`,
+    };
+  }
+  return {
+    alert: 'good',
+    detail: `Laravel ${ver} detected from page signals.`,
+  };
+}
+
+/** Livewire / Nova versions when present in asset URLs or markup. */
+function detectLivewireVersion(html) {
+  const m =
+    String(html || '').match(/livewire[@/](\d+\.\d+\.\d+)/i) ||
+    String(html || '').match(/Livewire\s+v?(\d+\.\d+\.\d+)/i);
+  return m ? m[1] : null;
+}
+
 /**
  * @param {Record<string, string>} headers
  * @param {string} body
@@ -55,8 +119,15 @@ function detectSiteStack(headers, body, finalUrl) {
     if (!item || !item.id) return;
     const prev = byId.get(item.id);
     const rank = { high: 3, medium: 2, low: 1 };
+    const merged = {
+      ...(prev || {}),
+      ...item,
+      version: item.version || (prev && prev.version) || null,
+    };
     if (!prev || (rank[item.confidence] || 0) >= (rank[prev.confidence] || 0)) {
-      byId.set(item.id, item);
+      byId.set(item.id, merged);
+    } else if (item.version && !prev.version) {
+      byId.set(item.id, { ...prev, version: item.version });
     }
   }
 
@@ -250,6 +321,41 @@ function detectSiteStack(headers, body, finalUrl) {
     });
   }
 
+  const laravelVer = detectLaravelVersion(html);
+  if (laravelVer && byId.has('laravel')) {
+    const lv = laravelVersionAlert(laravelVer);
+    const cur = byId.get('laravel');
+    add({
+      ...cur,
+      version: laravelVer,
+      alert: lv.alert,
+      detail: lv.detail,
+      source: cur.source + '+version',
+    });
+  } else if (byId.has('laravel') && !byId.get('laravel').version) {
+    const cur = byId.get('laravel');
+    add({
+      ...cur,
+      detail:
+        cur.detail +
+        ' Framework version is not exposed in HTML — check `php artisan --version` or composer.lock on the server.',
+    });
+  }
+
+  const livewireVer = detectLivewireVersion(html);
+  if (livewireVer) {
+    add({
+      id: 'livewire',
+      label: 'Livewire',
+      version: livewireVer,
+      category: 'framework',
+      confidence: 'medium',
+      source: 'html',
+      alert: 'info',
+      detail: 'Livewire version from asset URL or markup',
+    });
+  }
+
   // —— WordPress ——
   const wpGen = gen.match(/WordPress\s*([\d.]+)?/i);
   if (wpGen || /\/wp-content\//i.test(html) || /\/wp-includes\//i.test(html) || /wp-json/i.test(lower)) {
@@ -335,16 +441,30 @@ function detectSiteStack(headers, body, finalUrl) {
   }
 
   // —— Next.js ——
+  let nextVer = null;
+  const nextDataM = html.match(/<script[^>]+id\s*=\s*["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
+  if (nextDataM) {
+    try {
+      const nd = JSON.parse(nextDataM[1]);
+      if (nd && nd.nextVersion) nextVer = String(nd.nextVersion);
+    } catch {
+      /* ignore */
+    }
+  }
+  if (!nextVer) {
+    const nv = html.match(/"nextVersion"\s*:\s*"([^"]+)"/i) || html.match(/next[@/](\d+\.\d+\.\d+)/i);
+    if (nv) nextVer = nv[1];
+  }
   if (/__NEXT_DATA__/i.test(html) || h['x-nextjs-cache'] || h['x-nextjs-page'] || /\/_next\/static\//i.test(html)) {
     add({
       id: 'nextjs',
       label: 'Next.js',
-      version: null,
+      version: nextVer,
       category: 'framework',
       confidence: 'high',
       source: /__NEXT_DATA__/i.test(html) ? 'html' : 'header',
       alert: 'good',
-      detail: 'Next.js SSR/SSG markers',
+      detail: nextVer ? `Next.js ${nextVer} from page data` : 'Next.js SSR/SSG markers',
     });
   }
 
@@ -560,4 +680,9 @@ function detectSiteStack(headers, body, finalUrl) {
   };
 }
 
-module.exports = { detectSiteStack };
+module.exports = {
+  detectSiteStack,
+  detectLaravelVersion,
+  detectLivewireVersion,
+  laravelVersionAlert,
+};

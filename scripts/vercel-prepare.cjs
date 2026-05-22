@@ -70,3 +70,23 @@ if (!fs.existsSync(emailCfgSrc)) {
 }
 fs.copyFileSync(emailCfgSrc, emailCfgDest);
 console.log('Vercel: copied scripts/go-live-audit-email-config.cjs → api/go-live-audit-email-config.cjs');
+
+for (const name of [
+  'go-live-audit-defaults.cjs',
+  'go-live-audit-page-issues.cjs',
+  'go-live-audit-playwright-console.cjs',
+  'go-live-audit-brand-matrix.cjs',
+  'go-live-audit-laravel-version.cjs',
+  'go-live-audit-security-threats.cjs',
+  'go-live-audit-vulnerabilities.cjs',
+  'go-live-audit-brand-watch.cjs',
+]) {
+  const s = path.join(__dirname, name);
+  const d = path.join(__dirname, '..', 'api', name);
+  if (!fs.existsSync(s)) {
+    console.error('Missing module:', s);
+    process.exit(1);
+  }
+  fs.copyFileSync(s, d);
+  console.log('Vercel: copied scripts/' + name + ' → api/' + name);
+}

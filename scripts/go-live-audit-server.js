@@ -12,6 +12,11 @@ const path = require('path');
 const { handleScan, sendJson } = require('./go-live-audit-core');
 const { getRuntimeInfoSync, fetchNodeLatestLts } = require('./go-live-audit-runtime-info.cjs');
 const { getEmailConfigStatus } = require('./go-live-audit-email-config.cjs');
+const {
+  handleBrandsGet,
+  handleBrandsPost,
+  handleWatchRun,
+} = require('./go-live-audit-brands-api.cjs');
 
 /** Render / Railway / Fly set PORT; local uses GO_LIVE_AUDIT_PORT or 3940. */
 const PORT = Number(process.env.PORT || process.env.GO_LIVE_AUDIT_PORT || 3940);
@@ -65,6 +70,19 @@ const server = http.createServer((req, res) => {
 
   if (pathOnly === '/api/scan') {
     handleScan(req, res).catch((err) => sendJson(res, 500, { error: String(err.message || err) }));
+    return;
+  }
+
+  if (pathOnly === '/api/brands' && req.method === 'GET') {
+    handleBrandsGet(res, sendJson).catch((e) => sendJson(res, 500, { ok: false, error: String(e.message || e) }));
+    return;
+  }
+  if (pathOnly === '/api/brands' && req.method === 'POST') {
+    handleBrandsPost(req, res, sendJson).catch((e) => sendJson(res, 500, { ok: false, error: String(e.message || e) }));
+    return;
+  }
+  if (pathOnly === '/api/watch/run' && req.method === 'POST') {
+    handleWatchRun(req, res, sendJson).catch((e) => sendJson(res, 500, { ok: false, error: String(e.message || e) }));
     return;
   }
 

@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "env": {
+    "GO_LIVE_AUDIT_ALLOW_UI_SMTP": "1"
+  },
   "installCommand": "npm install",
   "buildCommand": "npm run build",
   "functions": {
