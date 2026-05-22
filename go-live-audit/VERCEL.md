@@ -56,7 +56,7 @@ Scans use **@sparticuz/chromium** + **playwright-core** inside `api/scan` (2048 
 - **Trust local (`npm run go-live:audit`)** for the most accurate DevTools-style console list on your PC.
 - After deploy, the UI should show capture mode **`playwright-vercel`** (not `html-only` / `failed`). If live still shows **0 console errors** but local shows some, third-party scripts (e.g. Google tags) may not fail the same way on Vercel’s browser — compare both; local is the QA reference.
 
-Redeploy after pulling changes. `vercel.json` includes `serverExternalPackages` for Chromium.
+Redeploy after pulling changes. Chromium ships via `@sparticuz/chromium` + `playwright-core` in `package.json` dependencies (no extra `vercel.json` keys needed).
 
 ## Environment variables (optional)
 
