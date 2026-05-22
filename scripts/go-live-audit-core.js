@@ -33,6 +33,7 @@ const {
   detectHtmlRuntimeIssues,
   issuesFromAvailability,
   issuesFromPlaywrightConsole,
+  issuesFromHtmlScriptHints,
   mergeIssues,
   summarizeIssues,
 } = require('./go-live-audit-page-issues.cjs');
@@ -1102,6 +1103,23 @@ function collectSameOriginPageUrls(finalUrl, body, max) {
 
     const hrefRe = /\bhref\s*=\s*["']([^"']+)["']/gi;
     let hm;
+    const routeRe = /"(?:href|as|pathname)"\s*:\s*"(\/(?!\/)[^"\\]{1,180})"/gi;
+    let rm;
+    while ((rm = routeRe.exec(body)) !== null && out.length < max * 2) {
+      const path = rm[1].trim();
+      if (!path || path.length < 2) continue;
+      try {
+        const abs = new URL(path, finalUrl);
+        if (abs.hostname !== originHost) continue;
+        const key = abs.href.split('#')[0];
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(key);
+      } catch {
+        /* skip */
+      }
+    }
+
     while ((hm = hrefRe.exec(body)) !== null && out.length < max) {
       const href = hm[1].trim();
       if (
@@ -1340,6 +1358,13 @@ async function handleScan(req, res) {
         const applied = applyPlaywrightConsoleResult(pw, lists, onServerless);
         consoleCapture = applied.consoleCapture;
         consoleCaptureDetail = applied.consoleCaptureDetail;
+        if (
+          onServerless &&
+          (consoleCapture === 'playwright-vercel-failed' || consoleCapture === 'playwright-vercel-empty') &&
+          htmlBody
+        ) {
+          lists.push(issuesFromHtmlScriptHints(htmlBody));
+        }
       }
       const items = mergeIssues(lists);
       return { items, summary: summarizeIssues(items), consoleCapture, consoleCaptureDetail };
@@ -1418,35 +1443,29 @@ async function handleScan(req, res) {
 
     if (statusCode && statusCode < 500) {
       if (onServerlessDeploy) {
-        const followPromise =
-          statusCode >= 200 && statusCode < 400 && html.isHtmlDocument
-            ? fetchFollowUpSameOriginSamples(finalUrl, body, {
-                maxPages: 2,
-                maxTotalMs: 12_000,
-                perPageTimeoutMs: 6_000,
-              }).then((fu) => fu.samples)
-            : Promise.resolve([]);
-
-        const robotsPromise = fetchRobotsTxt(finalUrl).catch((e) => ({
-          fetched: false,
-          status: null,
-          hasSitemapLine: false,
-          error: String(e.message || e),
-          preview: '',
-        }));
-
-        const consolePromise = wantConsoleOnServerless
-          ? captureBrowserConsole(finalUrl || requestedUrl, { timeoutMs: 26_000, waitAfterMs: 5000 })
-          : Promise.resolve(null);
-
-        const [robots, followUps, pw] = await Promise.all([
-          robotsPromise,
-          followPromise,
-          consolePromise,
-        ]);
-        robotsInfo = robots;
-        followUpSamples = Array.isArray(followUps) ? followUps : [];
-        cachedConsolePw = pw;
+        try {
+          robotsInfo = await fetchRobotsTxt(finalUrl);
+        } catch (e) {
+          robotsInfo.error = String(e.message || e);
+        }
+        if (statusCode >= 200 && statusCode < 400 && html.isHtmlDocument) {
+          try {
+            const fu = await fetchFollowUpSameOriginSamples(finalUrl, body, {
+              maxPages: 2,
+              maxTotalMs: 14_000,
+              perPageTimeoutMs: 7_000,
+            });
+            followUpSamples = fu.samples;
+          } catch {
+            followUpSamples = [];
+          }
+        }
+        if (wantConsoleOnServerless) {
+          cachedConsolePw = await captureBrowserConsole(finalUrl || requestedUrl, {
+            timeoutMs: 24_000,
+            waitAfterMs: 5000,
+          });
+        }
       } else {
         try {
           robotsInfo = await fetchRobotsTxt(finalUrl);

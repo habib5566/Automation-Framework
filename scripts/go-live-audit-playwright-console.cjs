@@ -17,21 +17,25 @@ function resolveLocalChromium() {
   return require('playwright-core').chromium;
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function captureWithLocalPlaywright(url, opts) {
   const timeoutMs = opts.timeoutMs || 18_000;
   const waitAfterMs = opts.waitAfterMs != null ? opts.waitAfterMs : 3000;
   const chromium = resolveLocalChromium();
   const browser = await chromium.launch({ headless: true });
   try {
-    return await collectConsoleLogs(browser, url, { timeoutMs, waitAfterMs });
+    return await collectConsoleLogs(browser, url, { timeoutMs, waitAfterMs, useDefaultPage: false });
   } finally {
     await browser.close().catch(() => {});
   }
 }
 
 async function captureWithServerlessChromium(url, opts) {
-  const timeoutMs = opts.timeoutMs || 28_000;
-  const waitAfterMs = opts.waitAfterMs != null ? opts.waitAfterMs : 6000;
+  const timeoutMs = opts.timeoutMs || 24_000;
+  const waitAfterMs = opts.waitAfterMs != null ? opts.waitAfterMs : 5000;
   const chromiumPack = require('@sparticuz/chromium');
   const pack = chromiumPack.default || chromiumPack;
   const { chromium } = require('playwright-core');
@@ -45,16 +49,34 @@ async function captureWithServerlessChromium(url, opts) {
     throw new Error('@sparticuz/chromium executablePath() returned empty — redeploy with includeFiles for chromium');
   }
 
-  const browser = await chromium.launch({
+  const launchOpts = {
     args: pack.args || [],
     executablePath,
-    headless: true,
-  });
-  try {
-    return await collectConsoleLogs(browser, url, { timeoutMs, waitAfterMs });
-  } finally {
-    await browser.close().catch(() => {});
+    headless: typeof pack.headless === 'boolean' ? pack.headless : true,
+  };
+  if (pack.defaultViewport) {
+    launchOpts.defaultViewport = pack.defaultViewport;
   }
+
+  let lastErr = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    let browser;
+    try {
+      browser = await chromium.launch(launchOpts);
+      const logs = await collectConsoleLogs(browser, url, {
+        timeoutMs,
+        waitAfterMs,
+        useDefaultPage: true,
+      });
+      await browser.close().catch(() => {});
+      return logs;
+    } catch (e) {
+      lastErr = e;
+      if (browser) await browser.close().catch(() => {});
+      if (attempt === 0) await sleep(500);
+    }
+  }
+  throw lastErr;
 }
 
 /**
@@ -63,13 +85,23 @@ async function captureWithServerlessChromium(url, opts) {
 async function collectConsoleLogs(browser, url, opts) {
   const timeoutMs = opts.timeoutMs || 18_000;
   const waitAfterMs = opts.waitAfterMs != null ? opts.waitAfterMs : 3000;
-  const context = await browser.newContext({
-    userAgent:
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-    viewport: { width: 1366, height: 768 },
-    ignoreHTTPSErrors: true,
-  });
-  const page = await context.newPage();
+  const useDefaultPage = opts.useDefaultPage === true;
+
+  let page;
+  let contextToClose = null;
+
+  if (useDefaultPage) {
+    page = await browser.newPage();
+  } else {
+    contextToClose = await browser.newContext({
+      userAgent:
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+      viewport: { width: 1366, height: 768 },
+      ignoreHTTPSErrors: true,
+    });
+    page = await contextToClose.newPage();
+  }
+
   /** @type {Array<{ type: string, text: string }>} */
   const logs = [];
   const seen = new Set();
@@ -118,13 +150,17 @@ async function collectConsoleLogs(browser, url, opts) {
     timeout: timeoutMs,
   });
   try {
-    await page.waitForLoadState('networkidle', { timeout: Math.min(12_000, timeoutMs / 2) });
+    await page.waitForLoadState('networkidle', { timeout: Math.min(10_000, timeoutMs / 2) });
   } catch {
-    /* SPA / long-polling — still wait below */
+    /* SPA / long-polling */
   }
-  await page.waitForTimeout(waitAfterMs);
+  await sleep(waitAfterMs);
 
-  await context.close().catch(() => {});
+  if (contextToClose) {
+    await contextToClose.close().catch(() => {});
+  } else {
+    await page.close().catch(() => {});
+  }
   return logs;
 }
 
@@ -145,8 +181,8 @@ async function captureBrowserConsole(url, opts = {}) {
 
   const serverless = isServerlessChromiumRuntime();
   const merged = {
-    timeoutMs: opts.timeoutMs != null ? opts.timeoutMs : serverless ? 28_000 : 18_000,
-    waitAfterMs: opts.waitAfterMs != null ? opts.waitAfterMs : serverless ? 6000 : 3000,
+    timeoutMs: opts.timeoutMs != null ? opts.timeoutMs : serverless ? 24_000 : 18_000,
+    waitAfterMs: opts.waitAfterMs != null ? opts.waitAfterMs : serverless ? 5000 : 3000,
   };
 
   try {

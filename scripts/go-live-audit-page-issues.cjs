@@ -37,6 +37,29 @@ function detectHtmlRuntimeIssues(body) {
   return issues;
 }
 
+/** When Playwright fails on Vercel, surface likely third-party script risks from HTML (partial parity with local console). */
+function issuesFromHtmlScriptHints(body) {
+  const html = String(body || '');
+  const issues = [];
+  const seen = new Set();
+  const srcRe = /\bsrc\s*=\s*["']([^"']+)["']/gi;
+  let m;
+  while ((m = srcRe.exec(html)) !== null && issues.length < 8) {
+    const u = m[1];
+    if (!/google\.com\/ccm|googletagmanager|google-analytics|doubleclick|gtag\/js/i.test(u)) continue;
+    const key = u.slice(0, 200);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    issues.push({
+      kind: 'console',
+      severity: 'warn',
+      message:
+        'Third-party script in HTML (often shows console errors in a real browser): ' + u.slice(0, 160),
+    });
+  }
+  return issues;
+}
+
 function issuesFromAvailability(availability, statusCode) {
   const issues = [];
   const sc = Number(statusCode) || 0;
@@ -112,6 +135,7 @@ function summarizeIssues(issues) {
 
 module.exports = {
   detectHtmlRuntimeIssues,
+  issuesFromHtmlScriptHints,
   issuesFromAvailability,
   issuesFromPlaywrightConsole,
   mergeIssues,

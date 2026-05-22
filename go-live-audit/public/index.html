@@ -2950,8 +2950,13 @@
           }
           if (data.scanMeta && data.scanMeta.scanDetailMode === 'vercel-full') {
             lines.push(
-              'Scan depth: full (Vercel) — robots.txt + up to 2 linked pages + browser console in parallel.'
+              'Scan depth: full (Vercel) — robots.txt, up to 2 linked pages, browser console (sequential).'
             );
+            if (data.scanMeta.consoleCapture === 'playwright-vercel-failed') {
+              lines.push(
+                'Console browser failed on Vercel — third-party script hints from HTML added when possible. For exact DevTools errors use local scan.'
+              );
+            }
           }
           lines.push(
             'X-Robots-Tag: ' + (data.xRobotsTag || '—'),
