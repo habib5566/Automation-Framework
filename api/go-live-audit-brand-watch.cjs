@@ -6,7 +6,17 @@ const path = require('path');
 const DATA_DIR = path.join(__dirname, '..', 'go-live-audit', 'data');
 const BRANDS_FILE = path.join(DATA_DIR, 'brands-watch.json');
 
+/** Vercel/Lambda: filesystem is read-only — never write under /var/task. */
+function isReadOnlyDatastore() {
+  return !!(
+    process.env.VERCEL === '1' ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.env.GO_LIVE_AUDIT_READ_ONLY_DATA === '1'
+  );
+}
+
 function ensureDataDir() {
+  if (isReadOnlyDatastore()) return;
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
@@ -19,8 +29,9 @@ function defaultBrandsDoc() {
 }
 
 function loadBrandsWatch() {
-  ensureDataDir();
   if (!fs.existsSync(BRANDS_FILE)) {
+    if (isReadOnlyDatastore()) return defaultBrandsDoc();
+    ensureDataDir();
     const doc = defaultBrandsDoc();
     fs.writeFileSync(BRANDS_FILE, JSON.stringify(doc, null, 2), 'utf8');
     return doc;
@@ -35,8 +46,9 @@ function loadBrandsWatch() {
 }
 
 function saveBrandsWatch(doc) {
-  ensureDataDir();
   doc.updatedAt = new Date().toISOString();
+  if (isReadOnlyDatastore()) return doc;
+  ensureDataDir();
   fs.writeFileSync(BRANDS_FILE, JSON.stringify(doc, null, 2), 'utf8');
   return doc;
 }
@@ -51,6 +63,13 @@ function findBrand(doc, nameOrUrl) {
 }
 
 function upsertBrand(entry) {
+  if (isReadOnlyDatastore()) {
+    const err = new Error(
+      'Brand list cannot be saved on Vercel (read-only disk). Run npm run go-live:audit locally or deploy on Render.'
+    );
+    err.code = 'READ_ONLY_DEPLOY';
+    throw err;
+  }
   const doc = loadBrandsWatch();
   const name = String(entry.name || '').trim();
   const url = String(entry.url || '').trim();
@@ -125,6 +144,7 @@ function listEnabledBrands() {
 
 module.exports = {
   BRANDS_FILE,
+  isReadOnlyDatastore,
   loadBrandsWatch,
   saveBrandsWatch,
   upsertBrand,

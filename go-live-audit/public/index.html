@@ -1710,6 +1710,34 @@
         return '/api/watch/run';
       }
 
+      const BRANDS_LS = 'goLiveAuditBrandsWatch';
+
+      function readLocalBrands() {
+        try {
+          const raw = localStorage.getItem(BRANDS_LS);
+          return raw ? JSON.parse(raw) : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function writeLocalBrands(brands) {
+        localStorage.setItem(BRANDS_LS, JSON.stringify(brands || []));
+      }
+
+      function mergeBrandLists(serverBrands, localBrands) {
+        const by = new Map();
+        (serverBrands || []).forEach(function (b) {
+          if (b && b.name) by.set(String(b.name).trim().toLowerCase(), b);
+        });
+        (localBrands || []).forEach(function (b) {
+          if (b && b.name && !by.has(String(b.name).trim().toLowerCase())) {
+            by.set(String(b.name).trim().toLowerCase(), b);
+          }
+        });
+        return Array.from(by.values());
+      }
+
       async function loadBrandWatchList() {
         const ul = document.getElementById('brandWatchList');
         if (!ul) return;
@@ -1718,12 +1746,13 @@
           const data = await r.json().catch(function () {
             return {};
           });
-          const brands = data.brands || [];
+          const brands = mergeBrandLists(data.brands || [], readLocalBrands());
           if (!brands.length) {
-            ul.innerHTML = '<li>No brands saved yet — scan with <strong>Save brand for automatic security watch</strong> on.</li>';
+            ul.innerHTML =
+              '<li>No brands saved yet — scan with <strong>Save brand for automatic security watch</strong> on (on Vercel, saved in this browser only).</li>';
             return;
           }
-          ul.innerHTML = brands
+          let html = brands
             .map(function (b) {
               return (
                 '<li><strong>' +
@@ -1731,22 +1760,56 @@
                 '</strong> — ' +
                 escapeHtml(b.url) +
                 (b.enabled === false ? ' (paused)' : '') +
+                (b._localOnly ? ' <em>(this browser)</em>' : '') +
                 '</li>'
               );
             })
             .join('');
+          if (data.readOnly) {
+            html +=
+              '<li class="site-stack-sub">Vercel: new brands save in <strong>this browser</strong> only. Full watch file needs local server or Render.</li>';
+          }
+          ul.innerHTML = html;
         } catch (e) {
-          ul.innerHTML = '<li>Could not load watch list (run server locally).</li>';
+          const local = readLocalBrands();
+          if (local.length) {
+            ul.innerHTML = local
+              .map(function (b) {
+                return (
+                  '<li><strong>' + escapeHtml(b.name) + '</strong> — ' + escapeHtml(b.url) + ' <em>(browser)</em></li>'
+                );
+              })
+              .join('');
+          } else {
+            ul.innerHTML = '<li>Could not load watch list — check /api/brands (redeploy after git push).</li>';
+          }
         }
       }
 
       async function saveBrandToWatch(name, url) {
-        await fetch(brandsEndpoint(), {
+        const r = await fetch(brandsEndpoint(), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: name, url: url, enabled: true }),
         });
-        loadBrandWatchList();
+        const data = await r.json().catch(function () {
+          return {};
+        });
+        if (r.ok && data.ok) {
+          loadBrandWatchList();
+          return;
+        }
+        if (data.readOnly || r.status === 503) {
+          const local = readLocalBrands();
+          const key = String(name).trim().toLowerCase();
+          if (!local.some(function (b) { return String(b.name).trim().toLowerCase() === key; })) {
+            local.push({ name: name, url: url, enabled: true, _localOnly: true });
+            writeLocalBrands(local);
+          }
+          loadBrandWatchList();
+          return;
+        }
+        throw new Error(data.error || r.statusText || 'Could not save brand');
       }
 
       function renderVulnerabilitiesPanel(vulnerabilities, brandName) {
@@ -2131,6 +2194,12 @@
             return;
           }
           el.textContent = 'Audit tool: ' + formatRuntimeText(data.runtime);
+          if (data.runtime.deployHost === 'vercel' && backendBannerEl) {
+            showBackendBanner(
+              'warn',
+              '<strong>Vercel live</strong> — Quick scan, <strong>performance matrix</strong>, and <strong>vulnerabilities</strong> work here. Real <strong>console errors</strong> (Playwright) need <code>npm run go-live:audit</code> on your PC or <strong>Render</strong>. Saving brands uses this browser; edit <code>go-live-audit/data/brands-watch.json</code> in Git for “Watch all” on Vercel.'
+            );
+          }
         } catch (e) {
           el.textContent = 'Scanner stack: request failed — ' + ((e && e.message) || String(e));
         }
@@ -2861,7 +2930,15 @@
           const data = await r.json().catch(function () {
             return {};
           });
-          alert(data.ok ? formatWatchResultMessage(data) : 'Watch failed: ' + (data.error || r.statusText));
+          if (!r.ok && !data.error) {
+            alert(
+              'Watch failed: HTTP ' +
+                r.status +
+                ' — redeploy after git push (needs api/watch/run.js). On Vercel, only brands in repo file are scanned.'
+            );
+          } else {
+            alert(data.ok ? formatWatchResultMessage(data) : 'Watch failed: ' + (data.error || r.statusText));
+          }
           loadBrandWatchList();
         } catch (e) {
           alert('Watch failed: ' + (e.message || String(e)));

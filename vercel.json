@@ -18,6 +18,13 @@
     },
     "api/email-status.js": {
       "memory": 128
+    },
+    "api/brands.js": {
+      "memory": 128
+    },
+    "api/watch/run.js": {
+      "maxDuration": 60,
+      "memory": 1024
     }
   }
 }

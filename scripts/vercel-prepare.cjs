@@ -24,7 +24,9 @@ if (!fs.existsSync(coreSrc)) {
   process.exit(1);
 }
 fs.copyFileSync(coreSrc, coreDest);
-console.log('Vercel: copied scripts/go-live-audit-core.js → api/_scan-core.js');
+const coreAlias = path.join(__dirname, '..', 'api', 'go-live-audit-core.js');
+fs.copyFileSync(coreSrc, coreAlias);
+console.log('Vercel: copied scripts/go-live-audit-core.js → api/_scan-core.js + api/go-live-audit-core.js');
 
 const emailSrc = path.join(__dirname, 'go-live-audit-email-notify.js');
 const emailDest = path.join(__dirname, '..', 'api', 'go-live-audit-email-notify.js');
@@ -80,6 +82,8 @@ for (const name of [
   'go-live-audit-security-threats.cjs',
   'go-live-audit-vulnerabilities.cjs',
   'go-live-audit-brand-watch.cjs',
+  'go-live-audit-brands-api.cjs',
+  'go-live-audit-watch-runner.cjs',
 ]) {
   const s = path.join(__dirname, name);
   const d = path.join(__dirname, '..', 'api', name);
