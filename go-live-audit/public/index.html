@@ -2139,7 +2139,7 @@
             : cap === 'playwright-empty' || cap === 'playwright-vercel-empty'
               ? 'Browser opened the site; no console errors or warnings logged.'
               : cap === 'playwright-failed' || cap === 'playwright-vercel-failed'
-                ? 'Browser could not open the page — retry scan or check Vercel function logs (needs 3008MB memory).'
+                ? 'Browser could not open the page — retry scan or check Vercel function logs (Hobby max 2048MB).'
                 : 'Run scan again — console capture uses Playwright when available.';
         if (!items.length) {
           panel.className = 'console-errors-panel console-clean';

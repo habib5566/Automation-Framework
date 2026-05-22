@@ -8,7 +8,7 @@
   "functions": {
     "api/scan.js": {
       "maxDuration": 60,
-      "memory": 3008
+      "memory": 2048
     },
     "api/ping.js": {
       "memory": 128
@@ -24,7 +24,7 @@
     },
     "api/watch/run.js": {
       "maxDuration": 60,
-      "memory": 3008
+      "memory": 2048
     }
   }
 }
