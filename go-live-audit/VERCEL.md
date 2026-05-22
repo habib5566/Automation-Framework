@@ -49,11 +49,21 @@ If the browser asks for **Vercel login** on preview URLs, **`POST /api/scan` is 
 
 Without this, the UI may load after you log in, but **Run quick scan** will still fail until the API is reachable without auth.
 
+## Console errors on live (Vercel)
+
+Scans use **@sparticuz/chromium** + **playwright-core** inside `api/scan` (2048 MB, 60s). Console capture runs **right after** the first page fetch so it is not cut off by follow-up pages.
+
+- **Trust local (`npm run go-live:audit`)** for the most accurate DevTools-style console list on your PC.
+- After deploy, the UI should show capture mode **`playwright-vercel`** (not `html-only` / `failed`). If live still shows **0 console errors** but local shows some, third-party scripts (e.g. Google tags) may not fail the same way on Vercel’s browser — compare both; local is the QA reference.
+
+Redeploy after pulling changes. `vercel.json` includes `serverExternalPackages` for Chromium.
+
 ## Environment variables (optional)
 
 | Variable | When |
 |----------|------|
 | `GO_LIVE_AUDIT_TLS_INSECURE=1` | Only if outbound scans hit TLS verify errors you accept (MITM risk on untrusted networks). |
+| `GO_LIVE_AUDIT_SMTP_*` + App Password | Email reports from live scans (see `EMAIL.md`). |
 
 ## After deploy
 

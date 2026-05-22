@@ -58,6 +58,8 @@ function enrichScanReportPayload(payload, ctx) {
     overallSummary: payload.overallSummary,
     pageIssues,
     siteStack: payload.siteStack,
+    requestedUrl: payload.requestedUrl,
+    finalUrl: payload.finalUrl,
   });
 
   const brandName = ctx.brandName || payload.brandName;
@@ -86,9 +88,10 @@ function enrichScanReportPayload(payload, ctx) {
     };
   }
   if (payload.security.shouldAlert) payload.securityAlert = true;
+  const { isServerlessChromiumRuntime } = require('./go-live-audit-playwright-console.cjs');
   payload.deployHints = {
     readOnlyData: process.env.VERCEL === '1',
-    consoleCapture: process.env.VERCEL === '1' ? 'playwright-vercel' : 'local-playwright',
+    serverlessChrome: isServerlessChromiumRuntime(),
   };
   payload.vulnerabilities = buildVulnerabilities({
     security: payload.security,
@@ -1281,45 +1284,64 @@ async function handleScan(req, res) {
       return;
     }
 
-    async function buildPageIssuesForScan(htmlBody, avail, sc, pageUrl) {
+    function applyPlaywrightConsoleResult(pw, lists, onServerless) {
+      let consoleCapture = 'html-only';
+      let consoleCaptureDetail = '';
+      const logs = Array.isArray(pw)
+        ? pw
+        : pw && Array.isArray(pw.logs)
+          ? pw.logs
+          : [];
+      const err = pw && pw.error ? String(pw.error) : '';
+
+      if (logs.length) {
+        lists.push(issuesFromPlaywrightConsole(logs));
+        consoleCapture = onServerless ? 'playwright-vercel' : 'playwright';
+        consoleCaptureDetail = logs.length + ' browser log line(s)';
+      } else if (err) {
+        consoleCapture = onServerless ? 'playwright-vercel-failed' : 'playwright-failed';
+        consoleCaptureDetail = err.slice(0, 200);
+        lists.push([
+          {
+            kind: 'console',
+            severity: 'warn',
+            message: 'Browser console capture failed on server: ' + err.slice(0, 160),
+          },
+        ]);
+      } else if (pw) {
+        consoleCapture = onServerless ? 'playwright-vercel-empty' : 'playwright-empty';
+        consoleCaptureDetail = onServerless
+          ? 'Browser ran on Vercel but logged no errors (tracking scripts may differ from your PC).'
+          : 'Browser opened; no console errors logged.';
+      }
+      return { consoleCapture, consoleCaptureDetail };
+    }
+
+    async function buildPageIssuesForScan(htmlBody, avail, sc, pageUrl, cachedPw) {
       const lists = [issuesFromAvailability(avail, sc), detectHtmlRuntimeIssues(htmlBody)];
       let consoleCapture = 'html-only';
+      let consoleCaptureDetail = '';
       const wantPw =
         json.captureConsole !== false &&
         process.env.GO_LIVE_AUDIT_NO_PLAYWRIGHT_CONSOLE !== '1' &&
         sc >= 200 &&
         sc < 400;
       if (wantPw) {
-        const onVercel = process.env.VERCEL === '1';
-        const pw = await captureBrowserConsole(pageUrl || requestedUrl, {
-          timeoutMs: onVercel ? 28_000 : 18_000,
-          waitAfterMs: onVercel ? 5500 : 3000,
-        });
-        if (Array.isArray(pw)) {
-          lists.push(issuesFromPlaywrightConsole(pw));
-          consoleCapture = pw.length
-            ? onVercel
-              ? 'playwright-vercel'
-              : 'playwright'
-            : onVercel
-              ? 'playwright-vercel-empty'
-              : 'playwright-empty';
-        } else if (pw && Array.isArray(pw.logs) && pw.logs.length) {
-          lists.push(issuesFromPlaywrightConsole(pw.logs));
-          consoleCapture = onVercel ? 'playwright-vercel' : 'playwright';
-        } else if (pw && pw.error) {
-          consoleCapture = onVercel ? 'playwright-vercel-failed' : 'playwright-failed';
-          lists.push([
-            {
-              kind: 'console',
-              severity: 'info',
-              message: 'Browser console capture skipped: ' + String(pw.error).slice(0, 160),
-            },
-          ]);
-        }
+        const { isServerlessChromiumRuntime } = require('./go-live-audit-playwright-console.cjs');
+        const onServerless = isServerlessChromiumRuntime();
+        const pw =
+          cachedPw !== undefined && cachedPw !== null
+            ? cachedPw
+            : await captureBrowserConsole(pageUrl || requestedUrl, {
+                timeoutMs: onServerless ? 35_000 : 18_000,
+                waitAfterMs: onServerless ? 8000 : 3000,
+              });
+        const applied = applyPlaywrightConsoleResult(pw, lists, onServerless);
+        consoleCapture = applied.consoleCapture;
+        consoleCaptureDetail = applied.consoleCaptureDetail;
       }
       const items = mergeIssues(lists);
-      return { items, summary: summarizeIssues(items), consoleCapture };
+      return { items, summary: summarizeIssues(items), consoleCapture, consoleCaptureDetail };
     }
 
     let bundle;
@@ -1377,6 +1399,22 @@ async function handleScan(req, res) {
     const { statusCode, headers, finalUrl, body, contentType } = bundle;
     const availability = summarizeHttpAvailability(statusCode, finalUrl);
 
+    const { isServerlessChromiumRuntime } = require('./go-live-audit-playwright-console.cjs');
+    const onServerlessDeploy = isServerlessChromiumRuntime();
+    let cachedConsolePw = null;
+    if (
+      onServerlessDeploy &&
+      json.captureConsole !== false &&
+      process.env.GO_LIVE_AUDIT_NO_PLAYWRIGHT_CONSOLE !== '1' &&
+      statusCode >= 200 &&
+      statusCode < 400
+    ) {
+      cachedConsolePw = await captureBrowserConsole(finalUrl || requestedUrl, {
+        timeoutMs: 35_000,
+        waitAfterMs: 8000,
+      });
+    }
+
     const html = analyzeHtml(body, finalUrl, contentType);
     html._contentType = contentType;
 
@@ -1390,10 +1428,10 @@ async function handleScan(req, res) {
     }
 
     let followUpSamples = [];
-    if (statusCode >= 200 && statusCode < 400 && html.isHtmlDocument) {
+    if (statusCode >= 200 && statusCode < 400 && html.isHtmlDocument && !onServerlessDeploy) {
       const fu = await fetchFollowUpSameOriginSamples(finalUrl, body, {
         maxPages: 2,
-        maxTotalMs: process.env.VERCEL === '1' ? 14_000 : 20_000,
+        maxTotalMs: 20_000,
       });
       followUpSamples = fu.samples;
     }
@@ -1471,11 +1509,17 @@ async function handleScan(req, res) {
         }
       : detectSiteStack(headers, bodySlice, finalUrl);
 
-    if (!skipCh.skip && siteStack && siteStack.items) {
+    if (!skipCh.skip && siteStack && siteStack.items && !onServerlessDeploy) {
       siteStack = await enrichSiteStackVersions(siteStack, bodySlice, finalUrl, fetchUrl);
     }
 
-    const pageIssues = await buildPageIssuesForScan(bodySlice, availability, statusCode, finalUrl);
+    const pageIssues = await buildPageIssuesForScan(
+      bodySlice,
+      availability,
+      statusCode,
+      finalUrl,
+      cachedConsolePw
+    );
     if (pageIssues.items.length) {
       for (const it of pageIssues.items) {
         if (it.severity === 'error' || it.severity === 'warn') {
@@ -1519,6 +1563,8 @@ async function handleScan(req, res) {
         followUpPagesFetched: followUpSamples.length,
         followUpPageUrls: followUpSamples.map((s) => s.finalUrl),
         consoleCapture: pageIssues.consoleCapture || 'unknown',
+        consoleCaptureDetail: pageIssues.consoleCaptureDetail || '',
+        scannedOnServerless: onServerlessDeploy,
       },
       disclaimer:
         'Scan uses the start URL and robots.txt, then may fetch up to two same-origin pages linked from that HTML (time-capped) to widen signals. Form delivery, Zendesk, CLS, and full-site crawling still need manual QA or Playwright.',

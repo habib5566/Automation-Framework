@@ -12,8 +12,38 @@ function pickNonConsoleIssues(pageIssues) {
   return { items, summary: summarizeIssues(items) };
 }
 
+function clampPct(n) {
+  return Math.min(100, Math.max(0, Math.round(Number(n) || 0)));
+}
+
+/** Site health from HTTP + console + availability (not checklist alone). */
+function computeSiteHealthPercent({ reachable, statusCode, availability, piSum, consoleSum }) {
+  if (!reachable) return 0;
+  const sc = Number(statusCode) || 0;
+  const avState = availability && availability.state ? String(availability.state) : '';
+  if (sc >= 500 || avState === 'server_error') return 8;
+  if (['dns_failed', 'connection_refused', 'timeout', 'unreachable'].includes(avState)) return 0;
+  if (sc >= 400) return 22;
+
+  let h = 90;
+  h -= Math.min(45, (piSum.errors || 0) * 10);
+  h -= Math.min(18, (piSum.warns || 0) * 3);
+  h -= Math.min(36, (consoleSum.errors || 0) * 7);
+  return clampPct(h);
+}
+
+function computeChecklistPercent(counts) {
+  const pass = counts.pass || 0;
+  const fail = counts.fail || 0;
+  const scored = pass + fail;
+  if (!scored) return null;
+  const raw = (pass / scored) * 100;
+  const penalized = raw - Math.min(35, fail * 4);
+  return clampPct(penalized);
+}
+
 /**
- * Brand performance matrix (% rate) from checklist + HTTP + page/console issues.
+ * Brand performance matrix — blends live site health + checklist (avoids false 0% when checklist rows fail).
  */
 function buildBrandMatrix({
   brandName,
@@ -23,6 +53,8 @@ function buildBrandMatrix({
   overallSummary,
   pageIssues,
   siteStack,
+  requestedUrl,
+  finalUrl,
 }) {
   const counts = (overallSummary && overallSummary.counts) || {
     pass: 0,
@@ -33,29 +65,22 @@ function buildBrandMatrix({
   const piSum = (pageIssues && pageIssues.summary) || { errors: 0, warns: 0, total: 0 };
   const consoleSum = pickConsoleIssues(pageIssues).summary;
   const sc = Number(statusCode) || 0;
-  const avState = availability && availability.state ? String(availability.state) : '';
 
-  const scored = (counts.pass || 0) + (counts.fail || 0);
-  let performancePercent = 0;
+  const siteHealth = computeSiteHealthPercent({
+    reachable,
+    statusCode,
+    availability,
+    piSum,
+    consoleSum,
+  });
+  const checklistPct = computeChecklistPercent(counts);
 
-  if (!reachable || sc >= 500 || avState === 'server_error' || ['dns_failed', 'connection_refused', 'timeout', 'unreachable'].includes(avState)) {
-    performancePercent = 0;
-  } else if (sc >= 400) {
-    performancePercent = 15;
-  } else if (scored > 0) {
-    const passRate = (counts.pass / scored) * 100;
-    performancePercent = Math.round(passRate);
-    performancePercent -= (counts.fail || 0) * 10;
-    performancePercent -= (piSum.errors || 0) * 12;
-    performancePercent -= (piSum.warns || 0) * 4;
-    performancePercent -= (consoleSum.errors || 0) * 8;
-  } else if (sc >= 200 && sc < 400) {
-    performancePercent = 75 - (piSum.errors || 0) * 15 - (consoleSum.errors || 0) * 10;
+  let performancePercent;
+  if (checklistPct != null) {
+    performancePercent = clampPct(siteHealth * 0.55 + checklistPct * 0.45);
   } else {
-    performancePercent = 40;
+    performancePercent = siteHealth;
   }
-
-  performancePercent = Math.min(100, Math.max(0, performancePercent));
 
   let grade = 'F';
   if (performancePercent >= 90) grade = 'A';
@@ -63,7 +88,10 @@ function buildBrandMatrix({
   else if (performancePercent >= 65) grade = 'C';
   else if (performancePercent >= 45) grade = 'D';
 
-  const passPct = scored > 0 ? Math.round((counts.pass / scored) * 100) : null;
+  const pass = counts.pass || 0;
+  const fail = counts.fail || 0;
+  const scored = pass + fail;
+  const passPct = scored > 0 ? Math.round((pass / scored) * 100) : null;
 
   const frameworks = (siteStack && siteStack.items ? siteStack.items : [])
     .filter((i) => ['framework', 'cms', 'runtime', 'frontend'].includes(i.category))
@@ -75,21 +103,36 @@ function buildBrandMatrix({
       category: i.category,
     }));
 
+  let host = '';
+  try {
+    host = new URL(finalUrl || requestedUrl || 'http://x').hostname;
+  } catch {
+    host = '';
+  }
+
   return {
     brandName: brandName || null,
+    scannedUrl: requestedUrl || null,
+    finalUrl: finalUrl || null,
+    host,
     performancePercent,
     performanceGrade: grade,
+    siteHealthPercent: siteHealth,
+    checklistPercent: checklistPct,
     passRatePercent: passPct,
     matrix: [
+      { key: 'url', label: 'Scanned URL', value: requestedUrl || '—' },
+      { key: 'final', label: 'Final URL', value: finalUrl || requestedUrl || '—' },
       { key: 'brand', label: 'Brand', value: brandName || '—' },
       { key: 'performance', label: 'Performance rate', value: performancePercent + '%' },
+      { key: 'siteHealth', label: 'Site health score', value: siteHealth + '%' },
       { key: 'grade', label: 'Grade', value: grade },
       {
         key: 'checklist',
         label: 'Checklist pass rate',
-        value: passPct != null ? passPct + '% (' + counts.pass + '/' + scored + ')' : '—',
+        value: passPct != null ? passPct + '% (' + pass + '/' + scored + ')' : '— (run scan with checklist)',
       },
-      { key: 'fail', label: 'Checklist fail', value: String(counts.fail || 0) },
+      { key: 'fail', label: 'Checklist fail', value: String(fail) },
       { key: 'errors', label: 'Site / HTTP errors', value: String(piSum.errors || 0) },
       { key: 'console', label: 'Console errors', value: String(consoleSum.errors || 0) },
       { key: 'http', label: 'HTTP status', value: sc ? String(sc) : '—' },

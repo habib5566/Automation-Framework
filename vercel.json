@@ -3,6 +3,7 @@
   "env": {
     "GO_LIVE_AUDIT_ALLOW_UI_SMTP": "1"
   },
+  "serverExternalPackages": ["@sparticuz/chromium", "playwright-core"],
   "installCommand": "npm install --omit=dev",
   "buildCommand": "npm run build",
   "functions": {

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-05-21T12:54:07.320Z",
+  "updatedAt": "2026-05-22T09:01:37.509Z",
   "brands": [
     {
       "name": "Example Brand",
@@ -82,13 +82,13 @@
       ]
     },
     {
-      "name": "Vetted",
-      "url": "https://websiteoptimax.com/",
+      "name": "vetted",
+      "url": "https://vettedlogos.com/",
       "enabled": true,
       "addedAt": "2026-05-20T10:47:30.962Z",
-      "lastScanAt": "2026-05-21T12:15:47.598Z",
+      "lastScanAt": "2026-05-22T08:10:24.713Z",
       "lastAlertLevel": "warn",
-      "lastUrl": "https://websiteoptimax.com/",
+      "lastUrl": "https://vettedlogos.com/",
       "baselineFingerprint": {
         "hash": "d7d331761416477a",
         "title": "Website Optimax | B2B Web Design &amp; Digital Marketing",
@@ -96,16 +96,64 @@
         "iframeCount": 0,
         "formCount": 0
       },
-      "baselineAt": "2026-05-21T12:07:38.211Z"
+      "baselineAt": "2026-05-21T12:07:38.211Z",
+      "lastAlertAt": "2026-05-22T08:10:24.713Z",
+      "alertHistory": [
+        {
+          "at": "2026-05-22T08:10:24.713Z",
+          "level": "warn",
+          "critical": 0,
+          "warns": 14
+        }
+      ]
     },
     {
       "name": "Centura",
       "url": "https://www.designcentura.com/",
       "enabled": true,
       "addedAt": "2026-05-21T12:54:06.667Z",
-      "lastScanAt": "2026-05-21T12:54:06.667Z",
+      "lastScanAt": "2026-05-22T08:37:04.883Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://www.designcentura.com/"
+    },
+    {
+      "name": "vett",
+      "url": "https://vettedlogos.com/",
+      "enabled": true,
+      "addedAt": "2026-05-22T07:25:29.286Z",
+      "lastScanAt": "2026-05-22T08:08:20.285Z",
+      "lastAlertLevel": "warn",
+      "lastUrl": "https://vettedlogos.com/"
+    },
+    {
+      "name": "vet",
+      "url": "https://vettedlogos.com/",
+      "enabled": true,
+      "addedAt": "2026-05-22T08:08:20.504Z"
+    },
+    {
+      "name": "designcent",
+      "url": "https://www.designcentura.com/",
+      "enabled": true,
+      "addedAt": "2026-05-22T08:37:05.276Z"
+    },
+    {
+      "name": "lorbit",
+      "url": "https://logoorbit.com/",
+      "enabled": true,
+      "addedAt": "2026-05-22T08:40:00.596Z",
+      "lastScanAt": "2026-05-22T08:40:00.596Z",
+      "lastAlertLevel": "warn",
+      "lastUrl": "https://www.logoorbit.com/"
+    },
+    {
+      "name": "Webopt",
+      "url": "https://websiteoptimax.com/",
+      "enabled": true,
+      "addedAt": "2026-05-22T09:01:36.987Z",
+      "lastScanAt": "2026-05-22T09:01:36.987Z",
+      "lastAlertLevel": "warn",
+      "lastUrl": "https://websiteoptimax.com/"
     }
   ]
 }

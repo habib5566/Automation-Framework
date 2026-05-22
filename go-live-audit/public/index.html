@@ -1528,6 +1528,17 @@
           );
         }
         if (r.includes('[GMAIL_SMTP_REQUIRED]') || /Mailpit captured/i.test(r)) {
+          const live =
+            typeof location !== 'undefined' &&
+            location.hostname &&
+            !/localhost|127\.0\.0\.1/.test(location.hostname);
+          if (live) {
+            return (
+              '<strong>Email not sent from Vercel.</strong> Add Gmail SMTP env vars in Vercel (App Password, not normal password) and redeploy. Target: <code>' +
+              escapeHtml(DEFAULT_ALERT_EMAIL) +
+              '</code>.'
+            );
+          }
           return (
             '<strong>Gmail App Password required.</strong> Report was <em>not</em> delivered to <code>' +
             escapeHtml(DEFAULT_ALERT_EMAIL) +
@@ -1586,8 +1597,22 @@
         return escapeHtml(m);
       }
 
-      function renderEmailReportBanner(er) {
-        if (!er || typeof er !== 'object') return '';
+      function renderEmailReportBanner(er, sendEmailWanted) {
+        if (!er || typeof er !== 'object') {
+          if (!sendEmailWanted) return '';
+          const onVercel =
+            typeof location !== 'undefined' &&
+            location.hostname &&
+            !/localhost|127\.0\.0\.1/.test(location.hostname);
+          const vercelHint = onVercel
+            ? '<div class="email-fallback-hint"><strong>Live site (Vercel):</strong> Project → Settings → Environment Variables → add <code>GO_LIVE_AUDIT_SMTP_PRESET=gmail</code>, <code>GO_LIVE_AUDIT_SMTP_USER</code>, <code>GO_LIVE_AUDIT_SMTP_PASS</code> (16-char App Password), <code>GO_LIVE_AUDIT_ALERT_EMAIL=habib.developer8899@gmail.com</code> → <strong>Redeploy</strong>.</div>'
+            : '<div class="email-fallback-hint">Local: run <code>npm run go-live:email-setup</code>, restart <code>npm run go-live:audit</code>, or paste App Password below.</div>';
+          return (
+            '<div class="scan-msg scan-msg-warn" style="margin-bottom:1rem"><strong>Email</strong> — no delivery status from server. ' +
+            vercelHint +
+            '</div>'
+          );
+        }
         if (er.mailpitOnly) {
           return (
             '<div class="scan-msg scan-msg-warn"><strong>Email NOT in Gmail inbox</strong> — message went to local Mailpit only. Paste <strong>Gmail App Password</strong> for <code>' +
@@ -1978,6 +2003,27 @@
         panel.innerHTML = html;
       }
 
+      function dashboardStaleBanner(data) {
+        if (!data || !siteEl) return '';
+        const cur = siteEl.value.trim();
+        const scanned = String(data.requestedUrl || data.finalUrl || '').trim();
+        if (!cur || !scanned) return '';
+        try {
+          const a = new URL(cur).href.replace(/\/$/, '');
+          const b = new URL(scanned).href.replace(/\/$/, '');
+          if (a !== b) {
+            return (
+              '<div class="scan-msg scan-msg-warn" style="margin-bottom:0.75rem"><strong>URL changed</strong> — dashboard is for <code>' +
+              escapeHtml(scanned) +
+              '</code>. Click <strong>Run quick scan</strong> for the URL in the box.</div>'
+            );
+          }
+        } catch (e) {
+          return '';
+        }
+        return '';
+      }
+
       function renderScanDashboard(data) {
         if (!data) {
           renderVulnerabilitiesPanel(null);
@@ -1991,7 +2037,7 @@
         renderVulnerabilitiesPanel(data.vulnerabilities, data.brandName);
         renderSecurityThreatsPanel(data.security, data.brandName);
         renderBrandMatrixPanel(data.brandMatrix, data.siteStack);
-        renderConsoleErrorsPanel(data.consoleIssues, data.brandName, data.scanMeta);
+        renderConsoleErrorsPanel(data.consoleIssues, data.brandName, data.scanMeta, data.deployHints);
         renderPageIssuesPanel(data.pageIssues, data.brandName, data.siteIssues);
         if (data.siteStack) renderSiteStackPanel(data.siteStack);
       }
@@ -2089,7 +2135,14 @@
           '%</div>' +
           '<div class="brand-matrix-grade">Performance rate · Grade ' +
           escapeHtml(brandMatrix.performanceGrade || '—') +
-          '</div></div>';
+          (brandMatrix.host ? ' · ' + escapeHtml(brandMatrix.host) : '') +
+          '</div></div></div>';
+        if (brandMatrix.scannedUrl) {
+          html +=
+            '<p class="site-stack-sub stack-empty-hint">Scanned: <code>' +
+            escapeHtml(brandMatrix.scannedUrl) +
+            '</code></p>';
+        }
         const fw =
           (brandMatrix.frameworks && brandMatrix.frameworks.length
             ? brandMatrix.frameworks
@@ -2125,22 +2178,34 @@
         panel.innerHTML = html;
       }
 
-      function renderConsoleErrorsPanel(consoleIssues, brandName, scanMeta) {
+      function renderConsoleErrorsPanel(consoleIssues, brandName, scanMeta, deployHints) {
         const panel = document.getElementById('consoleErrorsPanel');
         if (!panel) return;
         const items = consoleIssues && Array.isArray(consoleIssues.items) ? consoleIssues.items : [];
         const errCount = consoleIssues && consoleIssues.summary ? consoleIssues.summary.errors : 0;
         const cap = scanMeta && scanMeta.consoleCapture ? String(scanMeta.consoleCapture) : '';
+        const capDetail =
+          scanMeta && scanMeta.consoleCaptureDetail ? String(scanMeta.consoleCaptureDetail) : '';
         const capHint =
           cap === 'playwright' || cap === 'playwright-vercel'
             ? cap === 'playwright-vercel'
-              ? 'Captured with serverless Chromium on Vercel (same as local Playwright).'
-              : 'Captured with real browser (Playwright).'
+              ? 'Captured with serverless Chromium on Vercel (real browser, same engine as local).'
+              : 'Captured with real browser (Playwright) on your PC.'
             : cap === 'playwright-empty' || cap === 'playwright-vercel-empty'
-              ? 'Browser opened the site; no console errors or warnings logged.'
+              ? cap === 'playwright-vercel-empty'
+                ? 'Vercel browser ran but logged no console errors. Some sites load fewer trackers on serverless — compare with local scan; trust local for console QA.'
+                : 'Browser opened the site; no console errors or warnings logged.'
               : cap === 'playwright-failed' || cap === 'playwright-vercel-failed'
-                ? 'Browser could not open the page — retry scan or check Vercel function logs (Hobby max 2048MB).'
-                : 'Run scan again — console capture uses Playwright when available.';
+                ? 'Browser could not run — ' +
+                  (capDetail || 'check Vercel function logs (2048MB, 60s) or run npx playwright install chromium locally.')
+                : cap === 'html-only'
+                  ? 'Console not captured (page not 2xx HTML or Playwright off). Restart audit server after <code>npm install</code>.'
+                  : 'Run scan again — console capture uses Playwright when the page loads in a browser.';
+        const liveNote =
+          (scanMeta && scanMeta.scannedOnServerless) ||
+          (deployHints && deployHints.serverlessChrome)
+            ? '<p class="site-stack-sub stack-empty-hint"><strong>Live vs local:</strong> For console errors (DevTools-style), trust <strong>localhost:3940</strong> scan first. After deploy, live should show <code>playwright-vercel</code> in the hint below — if it says <code>html-only</code> or <code>failed</code>, redeploy with latest code.</p>'
+            : '';
         if (!items.length) {
           panel.className = 'console-errors-panel console-clean';
           panel.innerHTML =
@@ -2148,8 +2213,10 @@
             (brandName ? ' · ' + escapeHtml(brandName) : '') +
             '</p>' +
             '<p class="site-stack-headline">No console errors detected</p>' +
+            liveNote +
             '<p class="site-stack-sub stack-empty-hint">' +
             escapeHtml(capHint) +
+            (capDetail ? ' — ' + escapeHtml(capDetail) : '') +
             '</p>';
           return;
         }
@@ -2736,14 +2803,8 @@
             '<div class="scan-msg scan-msg-warn">Scan API base must be a full URL like <code>https://xxxx.ngrok-free.app</code> (no path).</div>';
           return;
         }
-        let scanEmailWarnHtml = '';
-        if (sendEmailEl && sendEmailEl.checked) {
-          const appPassPre = gmailAppPasswordEl ? gmailAppPasswordEl.value.trim().replace(/\s+/g, '') : '';
-          if (appPassPre.length < 8) {
-            scanEmailWarnHtml =
-              '<div class="scan-msg scan-msg-warn" style="margin-bottom:0.75rem"><strong>Email may not send</strong> — paste Gmail App Password below, or turn off Email scan summary. <strong>Scan will still run.</strong></div>';
-          }
-        }
+        lastScanPayload = null;
+        renderScanDashboard(null);
         let stepTimer = null;
         const scanStarted = Date.now();
         btn.disabled = true;
@@ -2783,7 +2844,12 @@
             scanBody.gmailAppPassword = appPassSend;
             scanBody.gmailUser = DEFAULT_ALERT_EMAIL;
           } else if (sendEmailEl && sendEmailEl.checked && appPassSend.length > 0) {
-            console.warn('[go-live-audit] Gmail App Password must be 16 characters (no @) — email may fail until fixed.');
+            console.warn(
+              '[go-live-audit] Gmail App Password must be 16 characters (no @). Server will try .env SMTP if configured.'
+            );
+          }
+          if (sendEmailEl && sendEmailEl.checked) {
+            scanBody.emailReport = true;
           }
           const notifyTokEl = document.getElementById('notifyTokenInput');
           const notifyTok = notifyTokEl && notifyTokEl.value.trim();
@@ -2792,13 +2858,17 @@
           const res = await fetch(scanEndpoint(), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            cache: 'no-store',
             body: JSON.stringify(scanBody),
           });
           const data = await res.json().catch(() => ({}));
           if (!res.ok || data.ok === false) {
             out.hidden = false;
             clearAutoFilledRows();
-            const mailBanner = renderEmailReportBanner(data.emailReport);
+            const mailBanner = renderEmailReportBanner(
+              data.emailReport,
+              sendEmailEl && sendEmailEl.checked
+            );
             const oa = data.overallSummary ? renderOverallSummary(data.overallSummary) : '';
             renderScanDashboard(data);
             if (data.availability) {
@@ -2917,8 +2987,8 @@
             l.startsWith('<') ? l : '<div class="scan-line">' + escapeHtml(l) + '</div>'
           );
           out.innerHTML =
-            scanEmailWarnHtml +
-            renderEmailReportBanner(data.emailReport) +
+            dashboardStaleBanner(data) +
+            renderEmailReportBanner(data.emailReport, sendEmailEl && sendEmailEl.checked) +
             overallBlock +
             availBlock +
             renderChecklistSkippedBanner(data) +
