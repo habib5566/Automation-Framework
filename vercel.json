@@ -3,12 +3,12 @@
   "env": {
     "GO_LIVE_AUDIT_ALLOW_UI_SMTP": "1"
   },
-  "installCommand": "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install --omit=dev --ignore-scripts",
+  "installCommand": "npm install --omit=dev",
   "buildCommand": "npm run build",
   "functions": {
     "api/scan.js": {
       "maxDuration": 60,
-      "memory": 1024
+      "memory": 3008
     },
     "api/ping.js": {
       "memory": 128
@@ -24,7 +24,7 @@
     },
     "api/watch/run.js": {
       "maxDuration": 60,
-      "memory": 1024
+      "memory": 3008
     }
   }
 }

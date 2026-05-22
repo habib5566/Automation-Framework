@@ -120,7 +120,7 @@ function getRuntimeInfoSync() {
     dotenv: stripRange(dev.dotenv),
     deployHost: process.env.VERCEL === '1' ? 'vercel' : 'local',
     readOnlyData: process.env.VERCEL === '1',
-    consoleOnDeploy: process.env.VERCEL === '1' ? 'html-only' : 'playwright-when-local',
+    consoleOnDeploy: process.env.VERCEL === '1' ? 'playwright-serverless' : 'playwright-local',
   };
 }
 

@@ -2132,15 +2132,15 @@
         const errCount = consoleIssues && consoleIssues.summary ? consoleIssues.summary.errors : 0;
         const cap = scanMeta && scanMeta.consoleCapture ? String(scanMeta.consoleCapture) : '';
         const capHint =
-          cap === 'playwright'
-            ? 'Captured with real browser (Playwright).'
-            : cap === 'playwright-empty'
+          cap === 'playwright' || cap === 'playwright-vercel'
+            ? cap === 'playwright-vercel'
+              ? 'Captured with serverless Chromium on Vercel (same as local Playwright).'
+              : 'Captured with real browser (Playwright).'
+            : cap === 'playwright-empty' || cap === 'playwright-vercel-empty'
               ? 'Browser opened the site; no console errors or warnings logged.'
-              : cap === 'playwright-failed'
-                ? 'Playwright could not open the page — install browsers: npx playwright install chromium'
-                : cap === 'unavailable-on-vercel'
-                  ? 'Console capture needs local npm run go-live:audit (not Vercel-only deploy).'
-                  : 'Run scan on localhost:3940 for full console capture.';
+              : cap === 'playwright-failed' || cap === 'playwright-vercel-failed'
+                ? 'Browser could not open the page — retry scan or check Vercel function logs (needs 3008MB memory).'
+                : 'Run scan again — console capture uses Playwright when available.';
         if (!items.length) {
           panel.className = 'console-errors-panel console-clean';
           panel.innerHTML =
@@ -2275,7 +2275,7 @@
           if (data.runtime.deployHost === 'vercel' && backendBannerEl) {
             showBackendBanner(
               'warn',
-              '<strong>Vercel live</strong> — Quick scan, <strong>performance matrix</strong>, and <strong>vulnerabilities</strong> work here. Real <strong>console errors</strong> (Playwright) need <code>npm run go-live:audit</code> on your PC or <strong>Render</strong>. Saving brands uses this browser; edit <code>go-live-audit/data/brands-watch.json</code> in Git for “Watch all” on Vercel.'
+              '<strong>Vercel live</strong> — Full scan uses serverless Chromium for <strong>console errors</strong> (may take 30–50s). First deploy after this update needs <code>playwright-core</code> + redeploy. Saving brands uses this browser; edit <code>go-live-audit/data/brands-watch.json</code> in Git for “Watch all”.'
             );
           }
         } catch (e) {

@@ -88,7 +88,7 @@ function enrichScanReportPayload(payload, ctx) {
   if (payload.security.shouldAlert) payload.securityAlert = true;
   payload.deployHints = {
     readOnlyData: process.env.VERCEL === '1',
-    consoleCapture: process.env.VERCEL === '1' ? 'unavailable-on-vercel' : 'local-playwright',
+    consoleCapture: process.env.VERCEL === '1' ? 'playwright-vercel' : 'local-playwright',
   };
   payload.vulnerabilities = buildVulnerabilities({
     security: payload.security,
@@ -1289,26 +1289,34 @@ async function handleScan(req, res) {
         process.env.GO_LIVE_AUDIT_NO_PLAYWRIGHT_CONSOLE !== '1' &&
         sc >= 200 &&
         sc < 400;
-      if (wantPw && process.env.VERCEL !== '1') {
-        const pw = await captureBrowserConsole(pageUrl || requestedUrl);
+      if (wantPw) {
+        const onVercel = process.env.VERCEL === '1';
+        const pw = await captureBrowserConsole(pageUrl || requestedUrl, {
+          timeoutMs: onVercel ? 28_000 : 18_000,
+          waitAfterMs: onVercel ? 5500 : 3000,
+        });
         if (Array.isArray(pw)) {
           lists.push(issuesFromPlaywrightConsole(pw));
-          consoleCapture = pw.length ? 'playwright' : 'playwright-empty';
+          consoleCapture = pw.length
+            ? onVercel
+              ? 'playwright-vercel'
+              : 'playwright'
+            : onVercel
+              ? 'playwright-vercel-empty'
+              : 'playwright-empty';
         } else if (pw && Array.isArray(pw.logs) && pw.logs.length) {
           lists.push(issuesFromPlaywrightConsole(pw.logs));
-          consoleCapture = 'playwright';
+          consoleCapture = onVercel ? 'playwright-vercel' : 'playwright';
         } else if (pw && pw.error) {
-          consoleCapture = 'playwright-failed';
+          consoleCapture = onVercel ? 'playwright-vercel-failed' : 'playwright-failed';
           lists.push([
             {
               kind: 'console',
               severity: 'info',
-              message: 'Browser console capture skipped: ' + String(pw.error).slice(0, 120),
+              message: 'Browser console capture skipped: ' + String(pw.error).slice(0, 160),
             },
           ]);
         }
-      } else if (process.env.VERCEL === '1') {
-        consoleCapture = 'unavailable-on-vercel';
       }
       const items = mergeIssues(lists);
       return { items, summary: summarizeIssues(items), consoleCapture };
@@ -1383,7 +1391,10 @@ async function handleScan(req, res) {
 
     let followUpSamples = [];
     if (statusCode >= 200 && statusCode < 400 && html.isHtmlDocument) {
-      const fu = await fetchFollowUpSameOriginSamples(finalUrl, body, { maxPages: 2, maxTotalMs: 20_000 });
+      const fu = await fetchFollowUpSameOriginSamples(finalUrl, body, {
+        maxPages: 2,
+        maxTotalMs: process.env.VERCEL === '1' ? 14_000 : 20_000,
+      });
       followUpSamples = fu.samples;
     }
 
