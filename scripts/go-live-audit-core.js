@@ -1333,8 +1333,8 @@ async function handleScan(req, res) {
           cachedPw !== undefined && cachedPw !== null
             ? cachedPw
             : await captureBrowserConsole(pageUrl || requestedUrl, {
-                timeoutMs: onServerless ? 35_000 : 18_000,
-                waitAfterMs: onServerless ? 8000 : 3000,
+                timeoutMs: onServerless ? 28_000 : 18_000,
+                waitAfterMs: onServerless ? 6000 : 3000,
               });
         const applied = applyPlaywrightConsoleResult(pw, lists, onServerless);
         consoleCapture = applied.consoleCapture;
@@ -1402,28 +1402,35 @@ async function handleScan(req, res) {
     const { isServerlessChromiumRuntime } = require('./go-live-audit-playwright-console.cjs');
     const onServerlessDeploy = isServerlessChromiumRuntime();
     let cachedConsolePw = null;
-    if (
+    const wantConsoleOnServerless =
       onServerlessDeploy &&
       json.captureConsole !== false &&
       process.env.GO_LIVE_AUDIT_NO_PLAYWRIGHT_CONSOLE !== '1' &&
       statusCode >= 200 &&
-      statusCode < 400
-    ) {
-      cachedConsolePw = await captureBrowserConsole(finalUrl || requestedUrl, {
-        timeoutMs: 35_000,
-        waitAfterMs: 8000,
-      });
-    }
+      statusCode < 400;
 
     const html = analyzeHtml(body, finalUrl, contentType);
     html._contentType = contentType;
 
     let robotsInfo = { fetched: false, status: null, hasSitemapLine: false, error: '', preview: '' };
     if (statusCode && statusCode < 500) {
-      try {
-        robotsInfo = await fetchRobotsTxt(finalUrl);
-      } catch (e) {
-        robotsInfo.error = String(e.message || e);
+      if (wantConsoleOnServerless) {
+        try {
+          const [robots, pw] = await Promise.all([
+            fetchRobotsTxt(finalUrl),
+            captureBrowserConsole(finalUrl || requestedUrl, { timeoutMs: 28_000, waitAfterMs: 6000 }),
+          ]);
+          robotsInfo = robots;
+          cachedConsolePw = pw;
+        } catch (e) {
+          robotsInfo.error = String(e.message || e);
+        }
+      } else {
+        try {
+          robotsInfo = await fetchRobotsTxt(finalUrl);
+        } catch (e) {
+          robotsInfo.error = String(e.message || e);
+        }
       }
     }
 

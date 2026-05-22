@@ -30,19 +30,25 @@ async function captureWithLocalPlaywright(url, opts) {
 }
 
 async function captureWithServerlessChromium(url, opts) {
-  const timeoutMs = opts.timeoutMs || 35_000;
-  const waitAfterMs = opts.waitAfterMs != null ? opts.waitAfterMs : 8000;
+  const timeoutMs = opts.timeoutMs || 28_000;
+  const waitAfterMs = opts.waitAfterMs != null ? opts.waitAfterMs : 6000;
   const chromiumPack = require('@sparticuz/chromium');
+  const pack = chromiumPack.default || chromiumPack;
   const { chromium } = require('playwright-core');
 
-  chromiumPack.setGraphicsMode = false;
+  if (typeof pack.setGraphicsMode === 'function') {
+    pack.setGraphicsMode(false);
+  }
 
-  const executablePath = await chromiumPack.executablePath();
+  const executablePath = await pack.executablePath();
+  if (!executablePath) {
+    throw new Error('@sparticuz/chromium executablePath() returned empty — redeploy with includeFiles for chromium');
+  }
+
   const browser = await chromium.launch({
-    args: chromiumPack.args,
+    args: pack.args || [],
     executablePath,
     headless: true,
-    ignoreHTTPSErrors: true,
   });
   try {
     return await collectConsoleLogs(browser, url, { timeoutMs, waitAfterMs });
@@ -122,11 +128,15 @@ async function collectConsoleLogs(browser, url, opts) {
   return logs;
 }
 
-/** True only on Vercel/AWS Lambda — not `vercel dev` or random VERCEL_ENV in .env */
+/** Vercel / Lambda — use @sparticuz/chromium, never ms-playwright cache */
 function isServerlessChromiumRuntime() {
   if (process.env.GO_LIVE_AUDIT_FORCE_LOCAL_PLAYWRIGHT === '1') return false;
   if (process.env.GO_LIVE_AUDIT_USE_SERVERLESS_CHROMIUM === '1') return true;
-  return !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+  if (process.env.VERCEL === '1') return true;
+  if (process.env.AWS_LAMBDA_FUNCTION_NAME) return true;
+  if (process.env.AWS_EXECUTION_ENV) return true;
+  if (process.env.LAMBDA_TASK_ROOT) return true;
+  return false;
 }
 
 async function captureBrowserConsole(url, opts = {}) {
@@ -135,8 +145,8 @@ async function captureBrowserConsole(url, opts = {}) {
 
   const serverless = isServerlessChromiumRuntime();
   const merged = {
-    timeoutMs: opts.timeoutMs != null ? opts.timeoutMs : serverless ? 35_000 : 18_000,
-    waitAfterMs: opts.waitAfterMs != null ? opts.waitAfterMs : serverless ? 8000 : 3000,
+    timeoutMs: opts.timeoutMs != null ? opts.timeoutMs : serverless ? 28_000 : 18_000,
+    waitAfterMs: opts.waitAfterMs != null ? opts.waitAfterMs : serverless ? 6000 : 3000,
   };
 
   try {

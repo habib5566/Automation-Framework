@@ -1,14 +1,16 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "env": {
-    "GO_LIVE_AUDIT_ALLOW_UI_SMTP": "1"
+    "GO_LIVE_AUDIT_ALLOW_UI_SMTP": "1",
+    "GO_LIVE_AUDIT_USE_SERVERLESS_CHROMIUM": "1"
   },
   "installCommand": "npm install --omit=dev",
   "buildCommand": "npm run build",
   "functions": {
     "api/scan.js": {
       "maxDuration": 60,
-      "memory": 2048
+      "memory": 2048,
+      "includeFiles": "node_modules/@sparticuz/chromium/**"
     },
     "api/ping.js": {
       "memory": 128
@@ -24,7 +26,8 @@
     },
     "api/watch/run.js": {
       "maxDuration": 60,
-      "memory": 2048
+      "memory": 2048,
+      "includeFiles": "node_modules/@sparticuz/chromium/**"
     }
   }
 }

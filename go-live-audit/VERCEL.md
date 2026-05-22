@@ -51,12 +51,16 @@ Without this, the UI may load after you log in, but **Run quick scan** will stil
 
 ## Console errors on live (Vercel)
 
-Scans use **@sparticuz/chromium** + **playwright-core** inside `api/scan` (2048 MB, 60s). Console capture runs **right after** the first page fetch so it is not cut off by follow-up pages.
+Live must use **@sparticuz/chromium** (not the `ms-playwright` folder on your PC). `vercel.json` sets:
 
-- **Trust local (`npm run go-live:audit`)** for the most accurate DevTools-style console list on your PC.
-- After deploy, the UI should show capture mode **`playwright-vercel`** (not `html-only` / `failed`). If live still shows **0 console errors** but local shows some, third-party scripts (e.g. Google tags) may not fail the same way on Vercel’s browser — compare both; local is the QA reference.
+- `GO_LIVE_AUDIT_USE_SERVERLESS_CHROMIUM=1`
+- `includeFiles` for `node_modules/@sparticuz/chromium/**` on `api/scan.js`
 
-Redeploy after pulling changes. Chromium ships via `@sparticuz/chromium` + `playwright-core` in `package.json` dependencies (no extra `vercel.json` keys needed).
+If live shows `playwright-failed` and “Executable doesn't exist … ms-playwright”, redeploy after `git push` — old deploy was still using local Playwright paths.
+
+After a good deploy, `scanMeta.consoleCapture` should be **`playwright-vercel`** (or `playwright-vercel-empty`), not `playwright-failed`.
+
+**Local PC:** do not put `VERCEL=1` in `.env` unless you intend serverless mode locally. Use `npm run go-live:audit` without that, or set `GO_LIVE_AUDIT_FORCE_LOCAL_PLAYWRIGHT=1`.
 
 ## Environment variables (optional)
 
