@@ -2941,7 +2941,17 @@
               lines.push('  — ' + u);
             });
           } else if (data.scanMeta) {
-            lines.push('Follow-up pages: none fetched (no suitable links or time budget).');
+            lines.push(
+              'Follow-up pages: none fetched (no suitable links or time budget).' +
+                (data.scanMeta.scannedOnServerless
+                  ? ' Redeploy latest code if live detail still looks thinner than local.'
+                  : '')
+            );
+          }
+          if (data.scanMeta && data.scanMeta.scanDetailMode === 'vercel-full') {
+            lines.push(
+              'Scan depth: full (Vercel) — robots.txt + up to 2 linked pages + browser console in parallel.'
+            );
           }
           lines.push(
             'X-Robots-Tag: ' + (data.xRobotsTag || '—'),

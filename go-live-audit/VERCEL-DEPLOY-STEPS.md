@@ -11,7 +11,7 @@
 | Brand performance matrix | ✅ | |
 | **Email** report | ✅ | Vercel **Environment Variables** + Gmail App Password |
 | HTML hints (page errors) | ✅ | |
-| **Real browser console errors** (Playwright) | ❌ | Serverless par Chromium nahi — **localhost** ya **Render** use karo |
+| **Real browser console errors** (Playwright) | ✅ | `@sparticuz/chromium` + env `GO_LIVE_AUDIT_USE_SERVERLESS_CHROMIUM=1` |
 | **Save brand watch** + **Run watch now** | ❌ | Sirf full server (`npm run go-live:audit` / **Render**) |
 | **Watch har 30 min** (daemon) | ❌ | Always-on server chahiye |
 
@@ -30,9 +30,22 @@ Sirf `index.html` folder **nahi** — poora `Automation-Framework` repo:
 
 ---
 
+## Error: “Git Repository cannot be connected to more than 10 Projects”
+
+Vercel allows **only 10 projects** per Git repo. **Naya project mat banao** agar pehle se live URL hai (e.g. `automation-checklists.vercel.app`).
+
+**Kya karein:**
+
+1. [vercel.com/dashboard](https://vercel.com/dashboard) → purana project kholo (same repo wala).
+2. **Deployments** → latest commit par **Redeploy**, ya `git push` ke baad auto deploy.
+3. Agar naya project zaroori ho: dashboard se **purane / unused** projects delete karo jo isi repo se linked hon (10 se kam karo), phir import dubara try karo.
+
+---
+
 ## Step 2 — Vercel project settings (404 se bachne ke liye)
 
-[vercel.com/new](https://vercel.com/new) → repo import.
+**Pehli dafa:** [vercel.com/new](https://vercel.com/new) → repo import.  
+**Update / fix:** existing project use karo — Step 2 settings wahi project par check karo.
 
 | Setting | Value |
 |---------|--------|

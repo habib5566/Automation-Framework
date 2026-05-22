@@ -1211,6 +1211,7 @@ function mergeHtmlSignals(primary, mainBody, extras) {
 async function fetchFollowUpSameOriginSamples(finalUrl, mainBody, opts = {}) {
   const maxPages = opts.maxPages != null ? opts.maxPages : 2;
   const maxTotalMs = opts.maxTotalMs != null ? opts.maxTotalMs : 20_000;
+  const perPageTimeoutMs = opts.perPageTimeoutMs != null ? opts.perPageTimeoutMs : 10_000;
   const deadline = Date.now() + maxTotalMs;
   const urls = collectSameOriginPageUrls(finalUrl, mainBody, maxPages);
   /** @type {Array<{ body: string; finalUrl: string; contentType: string }>} */
@@ -1218,7 +1219,7 @@ async function fetchFollowUpSameOriginSamples(finalUrl, mainBody, opts = {}) {
   for (const href of urls) {
     if (Date.now() > deadline) break;
     try {
-      const b = await fetchUrl(href, 3, { timeoutMs: 10_000 });
+      const b = await fetchUrl(href, 3, { timeoutMs: perPageTimeoutMs });
       if (b.statusCode >= 200 && b.statusCode < 400 && b.body) {
         const ct = String(b.contentType || '');
         if (/html|text\/plain/i.test(ct) || /<html[\s>]/i.test(b.body.slice(0, 2500))) {
@@ -1413,34 +1414,53 @@ async function handleScan(req, res) {
     html._contentType = contentType;
 
     let robotsInfo = { fetched: false, status: null, hasSitemapLine: false, error: '', preview: '' };
+    let followUpSamples = [];
+
     if (statusCode && statusCode < 500) {
-      if (wantConsoleOnServerless) {
-        try {
-          const [robots, pw] = await Promise.all([
-            fetchRobotsTxt(finalUrl),
-            captureBrowserConsole(finalUrl || requestedUrl, { timeoutMs: 28_000, waitAfterMs: 6000 }),
-          ]);
-          robotsInfo = robots;
-          cachedConsolePw = pw;
-        } catch (e) {
-          robotsInfo.error = String(e.message || e);
-        }
+      if (onServerlessDeploy) {
+        const followPromise =
+          statusCode >= 200 && statusCode < 400 && html.isHtmlDocument
+            ? fetchFollowUpSameOriginSamples(finalUrl, body, {
+                maxPages: 2,
+                maxTotalMs: 12_000,
+                perPageTimeoutMs: 6_000,
+              }).then((fu) => fu.samples)
+            : Promise.resolve([]);
+
+        const robotsPromise = fetchRobotsTxt(finalUrl).catch((e) => ({
+          fetched: false,
+          status: null,
+          hasSitemapLine: false,
+          error: String(e.message || e),
+          preview: '',
+        }));
+
+        const consolePromise = wantConsoleOnServerless
+          ? captureBrowserConsole(finalUrl || requestedUrl, { timeoutMs: 26_000, waitAfterMs: 5000 })
+          : Promise.resolve(null);
+
+        const [robots, followUps, pw] = await Promise.all([
+          robotsPromise,
+          followPromise,
+          consolePromise,
+        ]);
+        robotsInfo = robots;
+        followUpSamples = Array.isArray(followUps) ? followUps : [];
+        cachedConsolePw = pw;
       } else {
         try {
           robotsInfo = await fetchRobotsTxt(finalUrl);
         } catch (e) {
           robotsInfo.error = String(e.message || e);
         }
+        if (statusCode >= 200 && statusCode < 400 && html.isHtmlDocument) {
+          const fu = await fetchFollowUpSameOriginSamples(finalUrl, body, {
+            maxPages: 2,
+            maxTotalMs: 20_000,
+          });
+          followUpSamples = fu.samples;
+        }
       }
-    }
-
-    let followUpSamples = [];
-    if (statusCode >= 200 && statusCode < 400 && html.isHtmlDocument && !onServerlessDeploy) {
-      const fu = await fetchFollowUpSameOriginSamples(finalUrl, body, {
-        maxPages: 2,
-        maxTotalMs: 20_000,
-      });
-      followUpSamples = fu.samples;
     }
 
     const mergedHtml =
@@ -1516,7 +1536,7 @@ async function handleScan(req, res) {
         }
       : detectSiteStack(headers, bodySlice, finalUrl);
 
-    if (!skipCh.skip && siteStack && siteStack.items && !onServerlessDeploy) {
+    if (!skipCh.skip && siteStack && siteStack.items) {
       siteStack = await enrichSiteStackVersions(siteStack, bodySlice, finalUrl, fetchUrl);
     }
 
@@ -1572,6 +1592,8 @@ async function handleScan(req, res) {
         consoleCapture: pageIssues.consoleCapture || 'unknown',
         consoleCaptureDetail: pageIssues.consoleCaptureDetail || '',
         scannedOnServerless: onServerlessDeploy,
+        scanDetailMode: onServerlessDeploy ? 'vercel-full' : 'local-full',
+        parallelEnrichment: onServerlessDeploy,
       },
       disclaimer:
         'Scan uses the start URL and robots.txt, then may fetch up to two same-origin pages linked from that HTML (time-capped) to widen signals. Form delivery, Zendesk, CLS, and full-site crawling still need manual QA or Playwright.',
