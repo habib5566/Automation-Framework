@@ -1,0 +1,2881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Website Go-Live Master Checklist — Audit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-deep: #05070c;
+      --bg: #0a0e14;
+      --surface: #121826;
+      --surface-2: #181f2e;
+      --elevated: #1e2738;
+      --text: #f6f8fb;
+      --text-secondary: #d2dae5;
+      --muted: #94a3b8;
+      --muted-2: #64748b;
+      --accent: #38bdf8;
+      --accent-2: #818cf8;
+      --accent-dim: rgba(56, 189, 248, 0.12);
+      --accent-hover: #7dd3fc;
+      --pass: #4ade80;
+      --fail: #fb7185;
+      --warn: #fbbf24;
+      --border: rgba(248, 250, 252, 0.1);
+      --border-strong: rgba(248, 250, 252, 0.18);
+      --radius-sm: 10px;
+      --radius-md: 14px;
+      --radius-lg: 22px;
+      --radius-xl: 28px;
+      --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.35);
+      --shadow-md: 0 12px 48px rgba(0, 0, 0, 0.55);
+      --shadow-xl: 0 24px 80px rgba(0, 0, 0, 0.55);
+      --shadow-glow: 0 0 0 4px rgba(56, 189, 248, 0.15), 0 0 40px rgba(56, 189, 248, 0.08);
+      --font: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+      --font-display: "Outfit", var(--font);
+      --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-font-smoothing: antialiased; }
+    .bg-mesh {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      overflow: hidden;
+      background: var(--bg-deep);
+    }
+    .bg-mesh::before {
+      content: "";
+      position: absolute;
+      inset: -20%;
+      background:
+        radial-gradient(ellipse 50% 45% at 30% 15%, rgba(56, 189, 248, 0.22), transparent 55%),
+        radial-gradient(ellipse 45% 40% at 85% 25%, rgba(129, 140, 248, 0.18), transparent 50%),
+        radial-gradient(ellipse 40% 50% at 10% 70%, rgba(74, 222, 128, 0.08), transparent 45%),
+        radial-gradient(ellipse 60% 60% at 70% 90%, rgba(56, 189, 248, 0.06), transparent 55%);
+      animation: meshDrift 22s ease-in-out infinite alternate;
+    }
+    .bg-mesh::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.5;
+      mix-blend-mode: overlay;
+    }
+    @keyframes meshDrift {
+      0% { transform: scale(1) translate(0, 0) rotate(0deg); }
+      100% { transform: scale(1.07) translate(-3%, 2%) rotate(1deg); }
+    }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      font-size: 1.0625rem;
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .site-header {
+      padding: clamp(2rem, 5vw, 3rem) clamp(1.5rem, 5vw, 3.5rem) clamp(1.75rem, 4vw, 2.5rem);
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(18, 24, 38, 0.92) 0%, rgba(10, 14, 20, 0.55) 100%);
+      backdrop-filter: blur(20px) saturate(1.2);
+    }
+    .eyebrow {
+      display: inline-block;
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.65rem;
+      animation: eyebrowGlow 4s ease-in-out infinite;
+    }
+    @keyframes eyebrowGlow {
+      0%, 100% { filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.35)); }
+      50% { filter: drop-shadow(0 0 16px rgba(129, 140, 248, 0.45)); }
+    }
+    h1 {
+      font-family: var(--font-display);
+      margin: 0 0 0.85rem;
+      font-size: clamp(1.85rem, 4.5vw, 2.65rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.12;
+      color: var(--text);
+      background: linear-gradient(135deg, #fff 0%, #cbd5e1 55%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .sub {
+      color: var(--muted);
+      font-size: clamp(0.95rem, 1.8vw, 1.08rem);
+      max-width: 58rem;
+      line-height: 1.75;
+    }
+    .sub code {
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      padding: 0.12rem 0.4rem;
+      border-radius: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    .sub strong { color: var(--text-secondary); font-weight: 600; }
+    @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+      h1 {
+        color: var(--text);
+        background: none;
+      }
+    }
+    .app-main {
+      flex: 1;
+      padding: clamp(1.75rem, 4vw, 3rem) clamp(1.25rem, 4vw, 2.5rem) clamp(3rem, 6vw, 5rem);
+      max-width: min(92rem, 100%);
+      margin: 0 auto;
+      width: 100%;
+    }
+    .rise-in {
+      animation: riseIn 0.85s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    }
+    .rise-in-delay {
+      animation-delay: 0.1s;
+    }
+    @keyframes riseIn {
+      from {
+        opacity: 0;
+        transform: translateY(28px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    .panel {
+      position: relative;
+      background: linear-gradient(165deg, rgba(30, 39, 56, 0.65) 0%, rgba(18, 24, 38, 0.95) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: clamp(1.75rem, 3vw, 2.5rem) clamp(1.5rem, 3vw, 2.25rem);
+      margin-bottom: clamp(1.75rem, 3vw, 2.5rem);
+      box-shadow: var(--shadow-xl);
+      overflow: hidden;
+    }
+    .panel::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent));
+      background-size: 200% 100%;
+      animation: borderShine 5s linear infinite;
+    }
+    @keyframes borderShine {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+    .panel-head {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.15rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-title {
+      font-family: var(--font-display);
+      margin: 0;
+      font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .panel-desc {
+      margin: 0.5rem 0 0;
+      font-size: clamp(0.9rem, 1.5vw, 1rem);
+      color: var(--muted);
+      line-height: 1.65;
+    }
+    /* Full-width URL row — never squeeze beside buttons (was breaking at 900px+ grid). */
+    .toolbar-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .field-block {
+      width: 100%;
+      min-width: 0;
+    }
+    .field-block label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.55rem;
+    }
+    .label-hint {
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+      color: var(--muted-2);
+      font-size: 0.68rem;
+    }
+    input[type="url"],
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      min-height: 3.35rem;
+      padding: 0.85rem 1.15rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-strong);
+      background: rgba(5, 8, 14, 0.75);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 1.0625rem;
+      line-height: 1.45;
+      transition: border-color 0.2s ease, box-shadow 0.25s ease, transform 0.2s ease;
+      color-scheme: dark;
+    }
+    input[type="url"]::placeholder,
+    input[type="text"]::placeholder,
+    input[type="email"]::placeholder,
+    input[type="password"]::placeholder {
+      color: var(--muted-2);
+    }
+    input[type="url"]:hover,
+    input[type="text"]:hover,
+    input[type="email"]:hover,
+    input[type="password"]:hover {
+      border-color: rgba(88, 166, 255, 0.35);
+    }
+    input[type="url"]:focus,
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: var(--shadow-glow);
+      transform: translateY(-1px);
+    }
+    /* Hide ugly default number spinners if any number inputs are added */
+    input[type="number"] {
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .scan-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 0.75rem 1rem;
+      padding-top: 0.15rem;
+    }
+    .scan-actions .chk-wrap {
+      flex: 1 1 14rem;
+      min-width: 0;
+    }
+    .email-options {
+      flex: 1 1 100%;
+      width: 100%;
+      max-width: 32rem;
+      padding: 1rem 1.15rem 1.1rem;
+      border-radius: var(--radius-md);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .email-options .field-block {
+      margin: 0;
+    }
+    .email-options .field-block label {
+      margin-bottom: 0.45rem;
+    }
+    .email-help {
+      margin: 0;
+      font-size: 0.8125rem;
+      line-height: 1.55;
+      color: var(--muted-2);
+      border-top: 1px solid var(--border);
+      padding-top: 0.85rem;
+    }
+    .email-help strong {
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .email-help-details {
+      margin: 0.75rem 0 0;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8125rem;
+      line-height: 1.55;
+      color: var(--muted-2);
+    }
+    .email-help-details summary {
+      cursor: pointer;
+      color: var(--muted);
+      font-weight: 600;
+      user-select: none;
+      list-style-position: outside;
+    }
+    .email-help-details summary:hover {
+      color: var(--text);
+    }
+    .email-help-details[open] summary {
+      margin-bottom: 0.5rem;
+    }
+    .email-help-details p {
+      margin: 0.35rem 0 0;
+    }
+    .scan-actions .btn-group {
+      flex: 1 1 auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      justify-content: flex-start;
+    }
+    @media (min-width: 640px) {
+      .scan-actions .btn-group { justify-content: flex-end; }
+    }
+    .chk-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      user-select: none;
+      margin-right: 0.25rem;
+    }
+    .chk-wrap input[type="checkbox"] {
+      width: 1.15rem;
+      height: 1.15rem;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    button {
+      padding: 0.78rem 1.45rem;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, opacity 0.15s ease;
+    }
+    button:not(.secondary) {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #38bdf8 0%, #2563eb 50%, #4f46e5 100%);
+      background-size: 200% 100%;
+      color: #fff;
+      box-shadow: 0 6px 28px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      animation: btnGradient 6s ease infinite;
+    }
+    @keyframes btnGradient {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    button:not(.secondary):hover:not(:disabled) {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 12px 40px rgba(56, 189, 248, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+    button:not(.secondary)::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.18) 50%, transparent 65%);
+      transform: translateX(-120%);
+      transition: transform 0.65s ease;
+      pointer-events: none;
+    }
+    button:not(.secondary):hover:not(:disabled)::after {
+      transform: translateX(120%);
+    }
+    button:not(.secondary):active:not(:disabled) { transform: translateY(0) scale(1); }
+    button.secondary {
+      background: rgba(248, 250, 252, 0.04);
+      border-color: var(--border-strong);
+      color: var(--accent-hover);
+      box-shadow: none;
+    }
+    button.secondary:hover:not(:disabled) {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.45);
+      transform: translateY(-2px);
+    }
+    button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+    .scan-out {
+      margin-top: 1.35rem;
+      font-size: 0.95rem;
+      color: var(--muted);
+      word-break: break-word;
+    }
+    .overall-summary {
+      margin-bottom: 1rem;
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.2rem;
+      border: 1px solid var(--border);
+      font-size: 0.95rem;
+      line-height: 1.55;
+    }
+    .overall-summary strong {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 1.08rem;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.45rem;
+      color: var(--text);
+    }
+    .overall-sub {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-bottom: 0.55rem;
+    }
+    .overall-tally {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted-2);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .overall-summary.overall-good {
+      border-color: rgba(63, 185, 80, 0.35);
+      background: rgba(63, 185, 80, 0.07);
+    }
+    .overall-summary.overall-good strong { color: #7ee787; }
+    .overall-summary.overall-caution {
+      border-color: rgba(227, 179, 65, 0.45);
+      background: rgba(227, 179, 65, 0.08);
+    }
+    .overall-summary.overall-caution strong { color: #e3b341; }
+    .overall-summary.overall-concern {
+      border-color: rgba(248, 131, 73, 0.45);
+      background: rgba(248, 131, 73, 0.07);
+    }
+    .overall-summary.overall-concern strong { color: #fb923c; }
+    .overall-summary.overall-bad {
+      border-color: rgba(248, 81, 73, 0.45);
+      background: rgba(248, 81, 73, 0.08);
+    }
+    .overall-summary.overall-bad strong { color: #ff7b72; }
+    .scan-out strong { color: var(--text); }
+    .scan-scroll {
+      margin-top: 1rem;
+      max-height: min(58vh, 36rem);
+      overflow-y: auto;
+      padding: 1.15rem 1.35rem;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      background: rgba(5, 8, 14, 0.65);
+      box-shadow: inset 0 2px 24px rgba(0, 0, 0, 0.35);
+    }
+    .scan-scroll::-webkit-scrollbar { width: 8px; }
+    .scan-scroll::-webkit-scrollbar-thumb {
+      background: var(--border-strong);
+      border-radius: 8px;
+    }
+    .scan-line {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(248, 250, 252, 0.06);
+      font-size: 0.92rem;
+      line-height: 1.55;
+      color: var(--text-secondary);
+    }
+    .scan-line:last-child { border-bottom: none; }
+    .scan-loading {
+      padding: 1.75rem 1.25rem;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      background: rgba(5, 8, 14, 0.7);
+    }
+    .scan-loading-top {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.15rem;
+    }
+    .scan-orbit {
+      position: relative;
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+    }
+    .scan-orbit span {
+      position: absolute;
+      inset: 0;
+      border: 3px solid transparent;
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: orbitSpin 1.1s linear infinite;
+    }
+    .scan-orbit span:nth-child(2) {
+      inset: 6px;
+      border-top-color: var(--accent-2);
+      animation-duration: 1.6s;
+      animation-direction: reverse;
+    }
+    .scan-orbit span:nth-child(3) {
+      inset: 12px;
+      border-top-color: rgba(56, 189, 248, 0.35);
+      animation-duration: 0.85s;
+    }
+    @keyframes orbitSpin {
+      to { transform: rotate(360deg); }
+    }
+    .scan-loading-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .scan-loading-sub {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+    .scan-loading-bar {
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(248, 250, 252, 0.08);
+      overflow: hidden;
+    }
+    .scan-loading-bar-fill {
+      height: 100%;
+      width: 35%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      animation: barSweep 2.1s ease-in-out infinite;
+    }
+    @keyframes barSweep {
+      0% { transform: translateX(-100%); width: 40%; }
+      50% { width: 65%; }
+      100% { transform: translateX(280%); width: 40%; }
+    }
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.85); }
+    }
+    .scan-msg {
+      padding: 0.85rem 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+    .scan-msg-warn { color: var(--warn); border-color: rgba(227, 179, 65, 0.35); background: rgba(227, 179, 65, 0.06); }
+    .scan-msg-ok { color: var(--pass); border-color: rgba(74, 222, 128, 0.35); background: rgba(74, 222, 128, 0.08); }
+    .backend-banner {
+      margin-top: 1rem;
+      padding: 1rem 1.15rem;
+      border-radius: var(--radius-lg);
+      font-size: 0.92rem;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .backend-banner strong { color: var(--text); }
+    .backend-banner.backend-bad {
+      border-color: rgba(248, 81, 73, 0.45);
+      background: rgba(248, 81, 73, 0.08);
+    }
+    .backend-banner.backend-warn {
+      border-color: rgba(227, 179, 65, 0.45);
+      background: rgba(227, 179, 65, 0.08);
+    }
+    .backend-banner code { font-size: 0.85em; }
+    .scan-msg code {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .pulse-dot,
+      .scan-orbit span,
+      .scan-loading-bar-fill,
+      .bg-mesh::before,
+      .panel::before,
+      .eyebrow,
+      button:not(.secondary) { animation: none; }
+      .rise-in { animation: none !important; opacity: 1 !important; transform: none !important; }
+      button { transition: none; }
+    }
+    .avail-banner {
+      margin-bottom: 1rem;
+      padding: 1.25rem 1.35rem;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      border-left-width: 5px;
+      background: rgba(5, 8, 14, 0.75);
+      box-shadow: var(--shadow-sm);
+    }
+    .avail-banner strong {
+      font-family: var(--font-display);
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: var(--text);
+      display: block;
+      letter-spacing: -0.02em;
+    }
+    .avail-banner.avail-good { border-left-color: var(--pass); background: rgba(63, 185, 80, 0.06); }
+    .avail-banner.avail-bad { border-left-color: var(--fail); background: rgba(248, 81, 73, 0.06); }
+    .avail-banner.avail-warn { border-left-color: var(--warn); background: rgba(227, 179, 65, 0.06); }
+    .avail-banner .avail-detail { font-size: 0.95rem; color: var(--muted); margin-top: 0.45rem; line-height: 1.6; }
+    .avail-banner .avail-tech { font-size: 0.72rem; color: var(--muted-2); margin-top: 0.6rem; font-family: var(--font-mono); word-break: break-all; line-height: 1.45; }
+    .checklist-section {
+      margin-top: 0.5rem;
+      opacity: 1;
+    }
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.65rem 1.25rem;
+      margin-bottom: 1.35rem;
+    }
+    .section-head-text {
+      flex: 1 1 min(100%, 46rem);
+      min-width: 0;
+    }
+    .status-legend {
+      margin: 0.5rem 0 0;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 52rem;
+    }
+    .status-legend strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      margin: 0;
+      font-size: clamp(1.35rem, 2.8vw, 1.85rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+    .section-meta {
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--muted);
+      padding: 0.45rem 1rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(248, 250, 252, 0.04);
+    }
+    #checklist {
+      background: linear-gradient(165deg, rgba(30, 39, 56, 0.5) 0%, rgba(18, 24, 38, 0.92) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: clamp(1.5rem, 2.5vw, 2.25rem) clamp(1.35rem, 2.5vw, 2rem);
+      box-shadow: var(--shadow-xl);
+    }
+    .cat {
+      font-family: var(--font-display);
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--accent-hover);
+      margin: 2rem 0 1rem;
+      padding-bottom: 0.65rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .cat:first-child { margin-top: 0; }
+    .check-row {
+      display: grid;
+      grid-template-columns: 1fr minmax(13.5rem, 18rem);
+      gap: 1.35rem 1.5rem;
+      align-items: start;
+      padding: 1.35rem 1.35rem;
+      margin-bottom: 0.85rem;
+      background: rgba(30, 39, 56, 0.55);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      border-left: 5px solid var(--muted-2);
+      transition: box-shadow 0.28s ease, border-color 0.2s ease, transform 0.25s ease;
+    }
+    .check-row:hover {
+      box-shadow: var(--shadow-sm);
+      border-color: rgba(56, 189, 248, 0.22);
+      transform: translateY(-2px);
+    }
+    .check-row.row-pass { border-left-color: var(--pass); }
+    .check-row.row-fail { border-left-color: var(--fail); }
+    .check-row.row-pending { border-left-color: var(--warn); }
+    .check-row.row-na { border-left-color: #6e7681; }
+    .check-main { min-width: 0; }
+    .id-title-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 0.5rem 0.75rem;
+      margin-bottom: 0.4rem;
+    }
+    .id-chip {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      padding: 0.22rem 0.5rem;
+      border-radius: 6px;
+      background: rgba(88, 166, 255, 0.12);
+      color: var(--accent-hover);
+      border: 1px solid rgba(88, 166, 255, 0.22);
+      flex-shrink: 0;
+    }
+    .check-text { margin: 0; font-size: clamp(0.98rem, 1.5vw, 1.06rem); font-weight: 500; line-height: 1.55; flex: 1; min-width: 12rem; color: var(--text-secondary); }
+    .hint-row { margin: 0.4rem 0 0.6rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+    .badge {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      background: rgba(240, 246, 252, 0.06);
+      color: var(--muted);
+      line-height: 1.35;
+      border: 1px solid var(--border);
+    }
+    .badge.auto {
+      background: rgba(63, 185, 80, 0.12);
+      color: #56d364;
+      border-color: rgba(63, 185, 80, 0.28);
+    }
+    .check-aside {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      align-self: stretch;
+      justify-content: flex-start;
+    }
+    .field-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+    select.status-select,
+    textarea {
+      padding: 0.65rem 0.75rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-strong);
+      background: rgba(5, 8, 14, 0.85);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 1rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      color-scheme: dark;
+    }
+    select.status-select {
+      width: 100%;
+      max-width: 100%;
+      font-family: var(--font-display);
+      font-weight: 700;
+      cursor: pointer;
+      min-height: 3.1rem;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238899aa' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.65rem center;
+      padding-right: 2rem;
+    }
+    select.status-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: var(--shadow-glow);
+    }
+    .status-micro {
+      font-size: 0.62rem;
+      color: var(--muted-2);
+      line-height: 1.35;
+      margin-top: 0.15rem;
+    }
+    .check-row.row-pass select.status-select { border-color: rgba(63, 185, 80, 0.38); }
+    .check-row.row-fail select.status-select { border-color: rgba(248, 81, 73, 0.4); }
+    .check-row.row-pending select.status-select { border-color: rgba(227, 179, 65, 0.4); }
+    .check-row.row-na select.status-select { border-color: rgba(110, 118, 129, 0.45); }
+    textarea {
+      width: 100%;
+      min-height: 5rem;
+      max-height: 14rem;
+      margin-top: 0;
+      resize: none;
+      overflow-y: auto;
+      scrollbar-gutter: stable;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(100, 116, 139, 0.75) rgba(15, 23, 42, 0.5);
+      font-size: 0.95rem;
+      line-height: 1.55;
+    }
+    textarea::-webkit-scrollbar {
+      width: 8px;
+    }
+    textarea::-webkit-scrollbar-track {
+      background: rgba(5, 8, 14, 0.5);
+      border-radius: 6px;
+      margin: 4px 0;
+    }
+    textarea::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.65);
+      border-radius: 6px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+    textarea::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.85);
+      background-clip: padding-box;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: var(--shadow-glow);
+    }
+    textarea::placeholder { color: var(--muted-2); }
+    @media (max-width: 720px) {
+      .check-row { grid-template-columns: 1fr; }
+      .check-aside { width: 100%; max-width: 100%; }
+    }
+    .site-footer {
+      padding: clamp(1.5rem, 3vw, 2.25rem) clamp(1.25rem, 4vw, 2rem);
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.92rem;
+      text-align: center;
+      line-height: 1.75;
+      background: rgba(5, 7, 12, 0.85);
+      backdrop-filter: blur(12px);
+    }
+    .site-footer code {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+    .email-fallback-hint {
+      margin-top: 0.65rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: var(--muted-2);
+    }
+    .email-fallback-hint code {
+      font-size: 0.82em;
+    }
+    a.email-dl-link {
+      font-weight: 700;
+      color: var(--accent-hover);
+    }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; text-underline-offset: 3px; }
+    .site-stack-panel {
+      margin: 0 clamp(1.5rem, 5vw, 3.5rem) 1.25rem;
+      padding: 1rem 1.15rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      max-width: min(1100px, 100%);
+      border-left: 4px solid var(--muted-2);
+      box-shadow: var(--shadow-sm);
+    }
+    .site-stack-panel.stack-good { border-left-color: var(--pass); }
+    .site-stack-panel.stack-warn { border-left-color: var(--warn); }
+    .site-stack-panel.stack-bad { border-left-color: var(--fail); }
+    .site-stack-panel.stack-neutral { border-left-color: var(--muted-2); }
+    .site-stack-title {
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin: 0 0 0.35rem;
+    }
+    .site-stack-headline {
+      margin: 0 0 0.25rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .site-stack-sub {
+      margin: 0 0 0.85rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .stack-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-bottom: 0.65rem;
+    }
+    .stack-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.3rem 0.7rem;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text-secondary);
+    }
+    .stack-chip.alert-good { border-color: rgba(74, 222, 128, 0.45); background: rgba(74, 222, 128, 0.1); color: #bbf7d0; }
+    .stack-chip.alert-warn { border-color: rgba(251, 191, 36, 0.5); background: rgba(251, 191, 36, 0.12); color: #fde68a; }
+    .stack-chip.alert-bad { border-color: rgba(251, 113, 133, 0.5); background: rgba(251, 113, 133, 0.12); color: #fecdd3; }
+    .stack-chip.alert-info { border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.1); color: #bae6fd; }
+    .stack-chip-cat {
+      font-size: 0.65rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.75;
+    }
+    .brand-matrix-panel {
+      margin: 0 clamp(1.5rem, 5vw, 3.5rem) 1.25rem;
+      padding: 1.1rem 1.2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      max-width: min(1100px, 100%);
+      border-left: 4px solid var(--accent);
+      box-shadow: var(--shadow-sm);
+    }
+    .brand-matrix-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .brand-matrix-pct-wrap { flex: 0 0 auto; }
+    .brand-matrix-pct {
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 6vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1;
+      color: var(--pass);
+    }
+    .brand-matrix-pct.pct-good { color: var(--pass); }
+    .brand-matrix-pct.pct-bad { color: var(--fail); }
+    .brand-matrix-pct.pct-warn { color: var(--warn); }
+    .brand-matrix-pct.pct-mid { color: var(--warn); }
+    .brand-matrix-grade {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+    .brand-matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    .brand-matrix-table th,
+    .brand-matrix-table td {
+      padding: 0.45rem 0.65rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand-matrix-table th {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .brand-matrix-table td:last-child { font-weight: 600; color: var(--text); }
+    .console-errors-panel {
+      margin: 0 clamp(1.5rem, 5vw, 3.5rem) 1.25rem;
+      padding: 1rem 1.15rem;
+      background: rgba(251, 113, 133, 0.06);
+      border: 1px solid rgba(251, 113, 133, 0.35);
+      border-radius: var(--radius-md);
+      max-width: min(1100px, 100%);
+      border-left: 4px solid var(--fail);
+    }
+    .console-errors-panel.console-clean {
+      background: var(--surface);
+      border-color: var(--border);
+      border-left-color: var(--pass);
+    }
+    .console-error-line {
+      padding: 0.55rem 0.75rem;
+      margin-bottom: 0.4rem;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.45;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(251, 113, 133, 0.25);
+      color: #fecdd3;
+      word-break: break-word;
+    }
+    .console-error-line.sev-warn {
+      border-color: rgba(251, 191, 36, 0.35);
+      color: #fde68a;
+    }
+    .console-sev-tag {
+      font-size: 0.7rem;
+      opacity: 0.85;
+      margin-right: 0.35rem;
+    }
+    .vulnerabilities-panel {
+      margin: 0 0 1rem;
+      padding: 1rem 1.1rem;
+      border-radius: 10px;
+      background: rgba(12, 18, 28, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-left: 4px solid var(--accent);
+    }
+    .vulnerabilities-panel.vuln-critical { border-left-color: #f87171; }
+    .vulnerabilities-panel.vuln-warn { border-left-color: var(--warn); }
+    .vuln-line { margin: 0.35rem 0; font-size: 0.88rem; line-height: 1.45; }
+    .vuln-line.sev-critical { color: #fca5a5; }
+    .vuln-line.sev-high { color: #fdba74; }
+    .vuln-line.sev-medium { color: #fde047; }
+    .vuln-line.sev-low { color: #a5b4fc; }
+    .security-threats-panel {
+      margin: 0 clamp(1.5rem, 5vw, 3.5rem) 1.25rem;
+      padding: 1rem 1.15rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      max-width: min(1100px, 100%);
+      border-left: 4px solid var(--pass);
+      box-shadow: var(--shadow-sm);
+    }
+    .security-threats-panel.sec-critical {
+      border-left-color: var(--fail);
+      background: rgba(251, 113, 133, 0.06);
+    }
+    .security-threats-panel.sec-warn { border-left-color: var(--warn); }
+    .threat-line {
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 0.35rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.84rem;
+      border: 1px solid var(--border);
+    }
+    .threat-line.sev-critical { border-color: rgba(251, 113, 133, 0.45); color: #fecdd3; }
+    .threat-line.sev-warn { border-color: rgba(251, 191, 36, 0.4); color: #fde68a; }
+    .brand-watch-panel {
+      margin-top: 0.75rem;
+      padding: 0.85rem;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+    }
+    .brand-watch-list { margin: 0.5rem 0 0; padding-left: 1.2rem; }
+    .stack-alerts { display: flex; flex-direction: column; gap: 0.45rem; }
+    .stack-alert-line {
+      padding: 0.55rem 0.75rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.84rem;
+      line-height: 1.45;
+      border: 1px solid var(--border);
+    }
+    .stack-alert-line.level-warn {
+      background: rgba(251, 191, 36, 0.1);
+      border-color: rgba(251, 191, 36, 0.35);
+      color: #fde68a;
+    }
+    .stack-alert-line.level-bad {
+      background: rgba(251, 113, 133, 0.1);
+      border-color: rgba(251, 113, 133, 0.4);
+      color: #fecdd3;
+    }
+    .stack-empty-hint {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin: 0;
+    }
+    .scanner-meta-details {
+      margin: 0 clamp(1.5rem, 5vw, 3.5rem) 1rem;
+      max-width: min(1100px, 100%);
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .scanner-meta-details summary {
+      cursor: pointer;
+      color: var(--muted-2);
+      font-weight: 600;
+    }
+    .scanner-meta-details summary:hover { color: var(--accent); }
+    .scanner-runtime {
+      margin: 0.5rem 0 0;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      line-height: 1.55;
+    }
+    .overall-fail-list {
+      margin-top: 0.65rem;
+      padding: 0.55rem 0.7rem;
+      background: rgba(251, 113, 133, 0.08);
+      border: 1px solid rgba(251, 113, 133, 0.35);
+      border-radius: var(--radius-sm);
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+    .overall-fail-list strong { color: #fecdd3; }
+    .overall-fail-row {
+      margin-top: 0.35rem;
+      color: var(--text-secondary);
+    }
+    .overall-fail-row code {
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      color: var(--fail);
+    }
+    .email-config-status {
+      margin: 0.5rem 0 0.75rem;
+      padding: 0.65rem 0.85rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      line-height: 1.5;
+      border: 1px solid var(--border);
+    }
+    .email-config-status.email-good {
+      background: rgba(74, 222, 128, 0.1);
+      border-color: rgba(74, 222, 128, 0.4);
+      color: #bbf7d0;
+    }
+    .email-config-status.email-bad {
+      background: rgba(251, 191, 36, 0.1);
+      border-color: rgba(251, 191, 36, 0.45);
+      color: #fde68a;
+    }
+    .email-config-status ol {
+      margin: 0.45rem 0 0 1.1rem;
+      padding: 0;
+    }
+    .email-config-status li { margin: 0.2rem 0; }
+  </style>
+</head>
+<body>
+  <div class="bg-mesh" aria-hidden="true"></div>
+  <header class="site-header">
+    <span class="eyebrow">Release QA</span>
+    <h1>Go-Live Master Checklist</h1>
+    <p class="sub">
+      Use <strong>Run quick scan</strong> (same host as this app serves the API—locally that is often <code>http://localhost:3940</code>). Each row can show <strong>Pass</strong> or <strong>Fail</strong> when the signal is clear;
+      <strong>Manual review</strong> when the scan will not auto-set Pass or Fail—you verify, then choose Pass or Fail.
+      <strong>N/A</strong> when the scan cannot auto-verify that row here, or when the checklist item truly does not apply to this release.
+      Notes with <strong>[auto]</strong> come from the scan. The panel shows <strong>reachability</strong> (up, DNS, timeout, TLS, HTTP 5xx). Deep QA (forms to inbox, Zendesk, full crawl) stays manual or Playwright.
+    </p>
+  </header>
+  <div id="vulnerabilitiesPanel" class="vulnerabilities-panel" aria-live="polite">
+    <p class="site-stack-title">Vulnerabilities &amp; risks</p>
+    <p class="site-stack-headline">Run a scan first</p>
+    <p class="site-stack-sub stack-empty-hint">
+      Combined list: security threats, outdated Laravel/PHP/WordPress, HTTP/down issues. Included in email to <strong>habib.developer8899@gmail.com</strong>.
+    </p>
+  </div>
+  <div id="securityThreatsPanel" class="security-threats-panel" aria-live="polite">
+    <p class="site-stack-title">Security monitor (virus · hack · injection)</p>
+    <p class="site-stack-headline">Run a scan first</p>
+    <p class="site-stack-sub stack-empty-hint">
+      Automatic checks for malware miners, web shells, defacement, leaked secrets, site down, and page changes vs last clean scan. Alerts email <strong>habib.developer8899@gmail.com</strong>.
+    </p>
+  </div>
+  <div id="brandMatrixPanel" class="brand-matrix-panel" aria-live="polite">
+    <p class="site-stack-title">Brand performance matrix</p>
+    <p class="site-stack-headline">Run a scan first</p>
+    <p class="site-stack-sub stack-empty-hint">Brand name, performance % rate, framework versions, and checklist scores appear here after scan.</p>
+  </div>
+  <div id="consoleErrorsPanel" class="console-errors-panel console-clean" aria-live="polite">
+    <p class="site-stack-title">Website console errors</p>
+    <p class="site-stack-headline">Run a scan first</p>
+    <p class="site-stack-sub stack-empty-hint">Browser <code>console.error</code> and page errors from the live site (local scan uses Playwright).</p>
+  </div>
+  <div id="siteStackPanel" class="site-stack-panel stack-neutral" aria-live="polite">
+    <p class="site-stack-title">Site technology stack</p>
+    <p class="site-stack-headline">Run a scan first</p>
+    <p class="site-stack-sub stack-empty-hint">
+      After <strong>Run quick scan</strong>, we detect the <em>website’s</em> stack (Laravel, WordPress, Next.js, PHP, nginx, etc.) from HTTP headers and HTML — not this audit tool’s Node version.
+    </p>
+  </div>
+  <div id="pageIssuesPanel" class="site-stack-panel stack-neutral" aria-live="polite">
+    <p class="site-stack-title">Site issues (down · HTTP)</p>
+    <p class="site-stack-headline">Run a scan first</p>
+    <p class="site-stack-sub stack-empty-hint">
+      Per-brand alerts: downtime, HTTP 5xx, and browser console errors appear here and in the email to <strong>habib.developer8899@gmail.com</strong>.
+    </p>
+  </div>
+  <details class="scanner-meta-details">
+    <summary>Audit tool runtime (this scanner app — optional)</summary>
+    <p id="scannerRuntime" class="scanner-runtime">Loading…</p>
+  </details>
+  <main class="app-main">
+    <section class="panel rise-in" aria-labelledby="scan-heading">
+      <div class="panel-head">
+        <h2 class="panel-title" id="scan-heading">Quick scan</h2>
+        <p class="panel-desc">
+          Fetches the start page, <code>robots.txt</code>, then up to <strong>two</strong> linked same-origin HTML pages when the scan finds them (extra pass, time-limited). Same host as this page → leave <strong>Scan API base</strong> empty.
+          Static / Vercel-only UI → run <code>npm run go-live:audit:tunnel</code> locally and paste the tunnel <code>https://…</code> below.
+          <span class="label-hint">Office TLS errors on every URL?</span> Stop the server, then run <code>npm run go-live:audit:insecure-tls</code> (trusted network only) — see <code>go-live-audit/TUNNEL.md</code>.
+        </p>
+      </div>
+      <div class="toolbar-grid">
+        <div class="field-block">
+          <label for="brandNameInput">Brand name <span class="label-hint">(for alerts)</span></label>
+          <input
+            id="brandNameInput"
+            type="text"
+            list="brandNameList"
+            placeholder="e.g. Optimax, AutobotX"
+            autocomplete="organization"
+            spellcheck="false"
+          />
+          <datalist id="brandNameList"></datalist>
+        </div>
+        <div class="field-block">
+          <label for="siteUrl">Site URL</label>
+          <input id="siteUrl" type="url" placeholder="https://example.com" autocomplete="url" />
+        </div>
+        <div class="field-block">
+          <label for="auditApiBase">Scan API base <span class="label-hint">(tunnel — optional)</span></label>
+          <input
+            id="auditApiBase"
+            type="url"
+            placeholder="https://xxxx.ngrok-free.app — empty if this site serves /api/scan"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+        <div class="scan-actions">
+          <label class="chk-wrap">
+            <input type="checkbox" id="autoApply" checked />
+            <span>Auto-fill checklist after scan</span>
+          </label>
+          <label class="chk-wrap">
+            <input type="checkbox" id="sendEmailAfterScan" checked />
+            <span>Email scan summary <span class="label-hint">(alerts → habib.developer8899@gmail.com)</span></span>
+          </label>
+          <label class="chk-wrap">
+            <input type="checkbox" id="addToBrandWatch" checked />
+            <span>Save brand for automatic security watch</span>
+          </label>
+          <div class="brand-watch-panel" id="brandWatchPanel">
+            <strong>Automatic watch</strong> — all saved brands scanned on schedule (<code>npm run go-live:watch:daemon</code>).
+            <ul class="brand-watch-list" id="brandWatchList"></ul>
+            <button type="button" class="secondary" id="btnWatchAll" style="margin-top:0.5rem">Run watch now (all brands)</button>
+          </div>
+          <div class="email-options" aria-label="Email report options">
+            <div id="emailConfigStatus" class="email-config-status email-bad" role="status" aria-live="polite">
+              Checking whether Gmail SMTP is configured on this server…
+            </div>
+            <div class="field-block">
+              <label for="reportEmailInput">Alert email <span class="label-hint">(fixed)</span></label>
+              <input
+                id="reportEmailInput"
+                type="email"
+                inputmode="email"
+                autocomplete="email"
+                spellcheck="false"
+                readonly
+                value="habib.developer8899@gmail.com"
+              />
+            </div>
+            <div class="field-block">
+              <label for="gmailAppPasswordInput">Gmail App Password <span class="label-hint">(send report to Gmail)</span></label>
+              <input
+                id="gmailAppPasswordInput"
+                type="password"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="16-character Google App Password"
+              />
+              <span class="label-hint" style="display:block;margin-top:0.35rem">
+                Not your normal Gmail password. Google Account → Security → App passwords. Stored only in this browser.
+              </span>
+            </div>
+            <div class="field-block">
+              <label for="notifyTokenInput">Notify token <span class="label-hint">(optional)</span></label>
+              <input
+                id="notifyTokenInput"
+                type="password"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="Usually leave empty"
+              />
+            </div>
+            <p class="email-help">
+              <strong>Simple:</strong> Turn on <strong>Email scan summary</strong>, enter <strong>Brand name</strong>, paste <strong>Gmail App Password</strong> (for sending), run scan — full report with site/console issues goes to <strong>habib.developer8899@gmail.com</strong>.
+            </p>
+            <details class="email-help-details">
+              <summary>More — Mailpit, <code>.env</code> lines, notify token</summary>
+              <p>
+                <strong>Local test (Mailpit):</strong> default SMTP is this PC only. Start mail: <code>npm run go-live:mailpit:install</code> once, then <code>npm run go-live:mailpit</code> in another terminal; open <code>http://localhost:8025</code>. Or one command: <code>npm run go-live:audit:with-mailpit</code>.
+              </p>
+              <p>
+                <strong>Real Gmail in inbox:</strong> in project root <code>.env</code> add e.g. <code>GO_LIVE_AUDIT_SMTP_PRESET=gmail</code>, <code>GO_LIVE_AUDIT_SMTP_USER</code>, <code>GO_LIVE_AUDIT_SMTP_PASS</code> (Google App Password), <code>GO_LIVE_AUDIT_EMAIL_FROM</code>, restart the server. Full steps: <code>go-live-audit/EMAIL.md</code>.
+              </p>
+              <p>
+                <strong>Notify token:</strong> only if your team set <code>GO_LIVE_AUDIT_NOTIFY_TOKEN</code> on the server — then paste the same secret here. Otherwise leave <strong>empty</strong>.
+              </p>
+            </details>
+          </div>
+          <div class="btn-group">
+            <button type="button" id="btnScan">Run quick scan</button>
+            <button type="button" class="secondary" id="btnApply" title="Re-apply results from the last successful scan">Apply last scan</button>
+            <button type="button" class="secondary" id="btnExport">Export CSV</button>
+            <button type="button" class="secondary" id="btnClear">Clear saved</button>
+          </div>
+        </div>
+      </div>
+      <div id="backendBanner" class="backend-banner" hidden role="status" aria-live="polite"></div>
+      <div id="scanResult" class="scan-out" hidden></div>
+    </section>
+
+    <section class="checklist-section" aria-labelledby="checklist-heading">
+      <div class="section-head">
+        <div class="section-head-text">
+          <h2 class="section-title" id="checklist-heading">Checklist</h2>
+          <p class="status-legend" id="statusLegend">
+            <strong>Manual review</strong> — scan did not set Pass or Fail (usually manual QA). After you verify, pick <strong>Pass</strong> or <strong>Fail</strong> and add proof in notes.
+            <strong>N/A</strong> — scan marked “not auto-testable” for that row, or the item does not apply to this release (read the [auto] note, then choose Pass/Fail when you have evidence).
+          </p>
+        </div>
+        <span class="section-meta" id="checklistCount" aria-live="polite">— items</span>
+      </div>
+      <div id="checklist"></div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    This page: <strong id="selfLink"></strong>. Tunneled scan API: <code>npm run go-live:audit:tunnel</code> (see <code>go-live-audit/TUNNEL.md</code>). Full stack on Vercel: <code>go-live-audit/VERCEL.md</code>.
+  </footer>
+  <script>
+    (function () {
+      const STORAGE_KEY = 'goLiveAudit_v1';
+      const LAST_SCAN_KEY = 'goLiveAudit_lastScan_v1';
+      const DEFAULT_ALERT_EMAIL = 'habib.developer8899@gmail.com';
+      const selfLinkEl = document.getElementById('selfLink');
+      if (selfLinkEl) selfLinkEl.textContent = window.location.origin;
+
+      const ITEMS = [
+        { id: 'C01', cat: 'Content', text: 'No dummy content, placeholder text, or temporary images anywhere.', hint: 'manual + scan flags for common dummy phrases / lorem' },
+        { id: 'F01', cat: 'Forms', text: 'All forms fully functional and properly tested.', hint: 'manual + Playwright' },
+        { id: 'F02', cat: 'Forms', text: 'All forms include proper field validations.', hint: 'manual' },
+        { id: 'F03', cat: 'Forms', text: 'Form inputs sanitized / secured against malicious or invalid data.', hint: 'manual / security review' },
+        { id: 'F04', cat: 'Forms', text: 'Form submissions delivered correctly to email inbox or backend workflow.', hint: 'manual end-to-end' },
+        { id: 'E01', cat: 'Contact', text: 'One approved email used consistently across the entire website.', hint: 'manual count' },
+        { id: 'E02', cat: 'Contact', text: 'One approved phone number used consistently across the entire website.', hint: 'manual count' },
+        { id: 'E03', cat: 'Contact', text: 'Phone numbers have proper tel: links where applicable.', hint: 'scan: tel: count' },
+        { id: 'S01', cat: 'Security', text: 'All required security measures implemented.', hint: 'manual / security headers scan (not included here)' },
+        { id: 'S02', cat: 'Rendering', text: 'SSR properly implemented where required.', hint: 'architecture review' },
+        { id: 'SEO1', cat: 'Indexing', text: 'Site remains noindex / nofollow until final stakeholder approval.', hint: 'scan: meta robots + X-Robots-Tag' },
+        { id: 'R01', cat: 'Responsive', text: 'Fully responsive on mobile, tablet, iPad, laptop, desktop.', hint: 'manual + Playwright viewports' },
+        { id: 'U01', cat: 'UI / UX', text: 'All buttons clickable and route correctly.', hint: 'manual + Playwright' },
+        { id: 'U02', cat: 'UI / UX', text: 'All internal links work — no broken routing.', hint: 'link crawler / Playwright' },
+        { id: 'U03', cat: 'UI / UX', text: 'Images placed, aligned, optimized, displayed correctly.', hint: 'manual + scan: img/alt counts (rough)' },
+        { id: 'U04', cat: 'Typography', text: 'Heading, paragraph, button font sizes consistent sitewide.', hint: 'manual design QA' },
+        { id: 'Z01', cat: 'Zendesk', text: 'Zendesk chat integrated and fully tested.', hint: 'manual' },
+        { id: 'Z02', cat: 'Zendesk', text: 'Zendesk popup code installed and working.', hint: 'manual' },
+        { id: 'C02', cat: 'CTA', text: 'All CTAs function and lead to intended outcome.', hint: 'manual' },
+        { id: 'C03', cat: 'Contact', text: 'Contact details (email, phone, address) updated everywhere.', hint: 'manual' },
+        { id: 'M01', cat: 'Meta', text: 'Meta titles, meta descriptions, and favicon correctly added.', hint: 'scan: title, description, favicon link' },
+        { id: 'M02', cat: 'Brand', text: 'Logo properly placed and linked where required.', hint: 'manual' },
+        { id: 'P01', cat: 'Performance', text: 'Page speed optimized across the entire website.', hint: 'Lighthouse / WebPageTest' },
+        { id: 'P02', cat: 'Performance', text: 'Images and assets compressed and optimized.', hint: 'manual / build pipeline' },
+        { id: 'P03', cat: 'Quality', text: 'No broken images, major layout shifts, or UI issues.', hint: 'manual + monitoring' },
+        { id: 'B01', cat: 'Browsers', text: 'Cross-browser testing (Chrome, Safari, Edge, Firefox if required).', hint: 'Playwright projects' },
+        { id: 'L01', cat: 'Layout', text: 'Sections visually aligned with consistent spacing.', hint: 'manual' },
+        { id: 'L02', cat: 'Layout', text: 'Header and footer complete and working on all pages.', hint: 'manual' },
+        { id: 'L03', cat: 'Legal', text: 'Privacy Policy, Terms, and other legal pages added (if applicable).', hint: 'manual' },
+        { id: 'L04', cat: 'Flows', text: 'Thank you pages, success messages, and error states tested.', hint: 'manual' },
+        { id: 'L05', cat: 'Redirects', text: 'Redirects working properly where required.', hint: 'manual / scan sees final URL' },
+        { id: 'I01', cat: 'Infrastructure', text: 'SSL active — site loads on HTTPS.', hint: 'scan: final URL scheme' },
+        { id: 'I02', cat: 'Indexing', text: 'Sitemap and robots.txt configured before indexing enabled.', hint: 'scan: robots.txt + Sitemap: line (rough)' },
+        { id: 'I03', cat: 'Analytics', text: 'Analytics, tracking codes, and third-party scripts tested.', hint: 'manual' },
+        { id: 'I04', cat: 'Integrations', text: 'Chat, CRM, webhook, and email automation verified.', hint: 'manual' },
+      ];
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function humanizeEmailSkipReason(reason) {
+        const r = String(reason || '');
+        if (/App Password \(16|NOT_APP_PASSWORD|normal Gmail password/i.test(r)) {
+          return (
+            '<strong>Use Google App Password, not normal Gmail password.</strong> Update <code>.env</code> via <code>npm run go-live:email-setup</code> or paste the 16-character App Password below, then restart <code>npm run go-live:audit</code>.'
+          );
+        }
+        if (r.includes('[GMAIL_SMTP_REQUIRED]') || /Mailpit captured/i.test(r)) {
+          return (
+            '<strong>Gmail App Password required.</strong> Report was <em>not</em> delivered to <code>' +
+            escapeHtml(DEFAULT_ALERT_EMAIL) +
+            '</code>. Paste the 16-character Google App Password in the field below (same account), or run <code>npm run go-live:email-setup</code>, then restart <code>npm run go-live:audit</code>.'
+          );
+        }
+        if (/GO_LIVE_AUDIT_SMTP_HOST/i.test(r)) {
+          return (
+            'The audit server has no SMTP host configured. If you run <code>npm run go-live:audit</code> locally, it should default to Mailpit at <code>127.0.0.1:1025</code> — start Mailpit, then retry. Otherwise add <code>GO_LIVE_AUDIT_SMTP_HOST</code> to <code>.env</code> — see <code>go-live-audit/EMAIL.md</code>.'
+          );
+        }
+        if (/ECONNREFUSED|connect ECONNREFUSED|Connection refused/i.test(r)) {
+          return (
+            'Could not reach the SMTP server (often Mailpit not running). Start Mailpit on <code>127.0.0.1:1025</code> or fix <code>GO_LIVE_AUDIT_SMTP_HOST</code> in <code>.env</code>.'
+          );
+        }
+        if (/nodemailer/i.test(r)) {
+          return 'Dependency missing: in the project folder run <code>npm install</code> (needs <code>nodemailer</code>).';
+        }
+        return escapeHtml(r);
+      }
+
+      function humanizeEmailSendError(msg) {
+        const m = String(msg || '');
+        if (m.includes('[GMAIL_SMTP_REQUIRED]') || /go-live:email-setup/i.test(m)) {
+          return (
+            '<strong>Gmail not set up on this PC.</strong> In the project folder run <code>npm run go-live:email-setup</code>, enter Gmail + App Password, then <code>npm run go-live:audit</code> again. See <code>go-live-audit/EMAIL.md</code>.'
+          );
+        }
+        if (/Invalid login|535|EAUTH|authentication failed/i.test(m)) {
+          return (
+            '<strong>Gmail rejected the password.</strong> Use a Google <strong>App Password</strong> (16 characters, no <code>@</code>) — not your normal Gmail sign-in password. Update <code>.env</code> with <code>npm run go-live:email-setup</code> or paste App Password in the form, then restart <code>npm run go-live:audit</code>.'
+          );
+        }
+        if (/App Password \(16|NOT_APP_PASSWORD|normal Gmail password/i.test(m)) {
+          return (
+            '<strong>Wrong password type in .env.</strong> <code>GO_LIVE_AUDIT_SMTP_PASS</code> must be a Google <strong>App Password</strong>, not your regular Gmail password. Run <code>npm run go-live:email-setup</code>, restart the server, scan again.'
+          );
+        }
+        if (/certificate|UNABLE_TO_VERIFY|self signed/i.test(m)) {
+          return (
+            '<strong>TLS error sending to Gmail.</strong> Restart <code>npm run go-live:audit</code>. If still failing, add to <code>.env</code>: <code>GO_LIVE_AUDIT_SMTP_TLS_INSECURE=1</code> and restart the server.'
+          );
+        }
+        if (/ECONNREFUSED|Connection refused/i.test(m) && /1025|127\.0\.0\.1/.test(m)) {
+          return (
+            '<strong>Mailpit is not running.</strong> Nothing is listening on <code>127.0.0.1:1025</code>. Open a <strong>second</strong> terminal in the project folder and run <code>npm run go-live:mailpit</code> (needs Docker), wait until it starts, then run the scan again. Web UI: <code>http://localhost:8025</code>. No Docker? Install Mailpit or set <code>GO_LIVE_AUDIT_SMTP_*</code> in <code>.env</code> to your real SMTP.'
+          );
+        }
+        if (/ECONNREFUSED|Connection refused/i.test(m)) {
+          return (
+            'Could not connect to the SMTP server. Check <code>GO_LIVE_AUDIT_SMTP_HOST</code> / port in <code>.env</code> or start the mail catcher (e.g. Mailpit). Raw: ' +
+            escapeHtml(m)
+          );
+        }
+        return escapeHtml(m);
+      }
+
+      function renderEmailReportBanner(er) {
+        if (!er || typeof er !== 'object') return '';
+        if (er.mailpitOnly) {
+          return (
+            '<div class="scan-msg scan-msg-warn"><strong>Email NOT in Gmail inbox</strong> — message went to local Mailpit only. Paste <strong>Gmail App Password</strong> for <code>' +
+            escapeHtml(DEFAULT_ALERT_EMAIL) +
+            '</code>, or run <code>npm run go-live:email-setup</code>, restart <code>npm run go-live:audit</code>, scan again.</div>'
+          );
+        }
+        if (er.sent) {
+          const toHtml = er.sentTo
+            ? ' to <code>' + escapeHtml(String(er.sentTo)) + '</code>'
+            : er.recipientMode === 'ui'
+              ? ' to the address you entered'
+              : er.recipientMode === 'env'
+                ? ' to the server default inbox'
+                : '';
+          const hint =
+            er.deliveryHint && String(er.deliveryHint).trim()
+              ? '<div class="email-fallback-hint">' + escapeHtml(String(er.deliveryHint)) + '</div>'
+              : '';
+          return '<div class="scan-msg scan-msg-ok"><strong>Email</strong> — scan summary sent' + toHtml + '.' + hint + '</div>';
+        }
+        if (er.savedLocal && er.downloadPath) {
+          const dl = escapeHtml(String(er.downloadPath));
+          const hint = er.hint
+            ? '<div class="email-fallback-hint">' + escapeHtml(er.hint) + '</div>'
+            : '';
+          return (
+            '<div class="scan-msg scan-msg-ok"><strong>Report saved</strong> — could not reach Mailpit/SMTP; full scan text was saved on this machine. ' +
+            '<a class="email-dl-link" href="' +
+            dl +
+            '" download>Download <code>last-scan-email-report.txt</code></a>' +
+            hint +
+            '<div class="email-fallback-hint">Next time: <code>npm run go-live:audit:with-mailpit</code> (Docker Mailpit + this server in one go).</div>' +
+            '<div class="email-fallback-hint"><strong>Real inbox (Gmail etc.)</strong> — Mailpit never sends mail to the internet. On the PC that runs <code>npm run go-live:audit</code>, add to <code>.env</code>: <code>GO_LIVE_AUDIT_SMTP_PRESET=gmail</code>, <code>GO_LIVE_AUDIT_SMTP_USER=you@gmail.com</code>, <code>GO_LIVE_AUDIT_SMTP_PASS</code> (Google App Password), <code>GO_LIVE_AUDIT_EMAIL_FROM=you@gmail.com</code>, restart the server, scan again. See <code>go-live-audit/EMAIL.md</code> → <strong>Real inbox (Gmail)</strong>.</div></div>'
+          );
+        }
+        if (er.error)
+          return (
+            '<div class="scan-msg scan-msg-warn"><strong>Email</strong> — send failed:<br/>' +
+            humanizeEmailSendError(er.error) +
+            '</div>'
+          );
+        if (er.skipped && er.reason)
+          return (
+            '<div class="scan-msg scan-msg-warn"><strong>Email</strong> — skipped: ' +
+            humanizeEmailSkipReason(er.reason) +
+            '</div>'
+          );
+        return '';
+      }
+
+      function loadState() {
+        try {
+          return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        } catch {
+          return {};
+        }
+      }
+      function saveState(state) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+
+      let state = loadState();
+      if (typeof state.sendEmailAfterScan !== 'boolean') state.sendEmailAfterScan = true;
+      let lastScanPayload = null;
+      try {
+        lastScanPayload = JSON.parse(localStorage.getItem(LAST_SCAN_KEY) || 'null');
+      } catch {
+        lastScanPayload = null;
+      }
+      const siteEl = document.getElementById('siteUrl');
+      const brandNameEl = document.getElementById('brandNameInput');
+      const brandNameListEl = document.getElementById('brandNameList');
+      const apiBaseEl = document.getElementById('auditApiBase');
+      const sendEmailEl = document.getElementById('sendEmailAfterScan');
+      const reportEmailEl = document.getElementById('reportEmailInput');
+      const gmailAppPasswordEl = document.getElementById('gmailAppPasswordInput');
+      if (!Array.isArray(state.savedBrands)) state.savedBrands = [];
+      if (siteEl) siteEl.value = state.siteUrl || '';
+      if (brandNameEl) brandNameEl.value = state.brandName || '';
+      if (apiBaseEl) apiBaseEl.value = state.apiBaseUrl || '';
+      if (sendEmailEl) sendEmailEl.checked = !!state.sendEmailAfterScan;
+      if (reportEmailEl) reportEmailEl.value = DEFAULT_ALERT_EMAIL;
+      if (gmailAppPasswordEl) gmailAppPasswordEl.value = state.gmailAppPassword || '';
+
+      function refreshBrandDatalist() {
+        if (!brandNameListEl) return;
+        brandNameListEl.innerHTML = '';
+        (state.savedBrands || []).forEach(function (name) {
+          const o = document.createElement('option');
+          o.value = name;
+          brandNameListEl.appendChild(o);
+        });
+      }
+      refreshBrandDatalist();
+
+      function normalizeScanApiBase(raw) {
+        const s = String(raw || '').trim();
+        if (!s) return '';
+        try {
+          const u = new URL(s);
+          const host = (u.hostname || '').toLowerCase();
+          if (
+            host === 'xxxx.ngrok-free.app' ||
+            host.startsWith('xxxx.') ||
+            /^example\.(com|org|net)$/i.test(host)
+          ) {
+            return '';
+          }
+          return u.origin;
+        } catch {
+          return '';
+        }
+      }
+
+      function scanEndpoint() {
+        const base = normalizeScanApiBase(state.apiBaseUrl);
+        if (base) return base + '/api/scan';
+        return '/api/scan';
+      }
+
+      function runtimeEndpoint() {
+        const base = normalizeScanApiBase(state.apiBaseUrl);
+        if (base) return base + '/api/runtime';
+        return '/api/runtime';
+      }
+
+      function emailStatusEndpoint() {
+        const base = normalizeScanApiBase(state.apiBaseUrl);
+        if (base) return base + '/api/email-status';
+        return '/api/email-status';
+      }
+
+      async function loadEmailConfigStatus() {
+        const el = document.getElementById('emailConfigStatus');
+        if (!el) return;
+        try {
+          const sig =
+            typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+              ? AbortSignal.timeout(8000)
+              : undefined;
+          const r = await fetch(emailStatusEndpoint(), { method: 'GET', signal: sig });
+          const data = await r.json().catch(function () {
+            return {};
+          });
+          const em = data.email;
+          if (!r.ok || !em) {
+            el.className = 'email-config-status email-bad';
+            el.innerHTML =
+              '<strong>Email setup unknown.</strong> Restart <code>npm run go-live:audit</code>, then run <code>npm run go-live:email-setup</code> in the project folder.';
+            return;
+          }
+          el.className = 'email-config-status ' + (em.ready ? 'email-good' : 'email-bad');
+          let html = '<strong>' + escapeHtml(em.headline) + '</strong> — ' + escapeHtml(em.detail);
+          if (!em.ready && em.steps && em.steps.length) {
+            html += '<ol>' + em.steps.map(function (s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('') + '</ol>';
+          }
+          el.innerHTML = html;
+        } catch (e) {
+          el.className = 'email-config-status email-bad';
+          el.textContent = 'Could not check email config: ' + (e.message || String(e));
+        }
+      }
+
+      function formatRuntimeText(rt) {
+        if (!rt || typeof rt !== 'object') return '—';
+        const parts = [];
+        parts.push('Node ' + (rt.node || '—'));
+        if (rt.nodeLatestLts) {
+          parts.push(
+            'current LTS line ' +
+              rt.nodeLatestLts +
+              (rt.nodeLatestLtsCodename ? ' (' + rt.nodeLatestLtsCodename + ')' : '')
+          );
+        }
+        if (rt.npm) parts.push('npm ' + rt.npm);
+        else parts.push('npm — (not in npm child process; run server with npm run go-live:audit to show npm)');
+        if (rt.packageName && rt.packageVersion) parts.push(String(rt.packageName) + ' v' + rt.packageVersion);
+        if (rt.enginesNode) parts.push('package engines ' + rt.enginesNode);
+        const deps = [];
+        if (rt.playwright) deps.push('@playwright/test ' + rt.playwright);
+        if (rt.nodemailer) deps.push('nodemailer ' + rt.nodemailer);
+        if (rt.dotenv) deps.push('dotenv ' + rt.dotenv);
+        if (deps.length) parts.push(deps.join(' · '));
+        parts.push(String(rt.platform || '') + '/' + String(rt.arch || ''));
+        return parts.join(' · ');
+      }
+
+      function brandsEndpoint() {
+        const base = normalizeScanApiBase(state.apiBaseUrl);
+        if (base) return base + '/api/brands';
+        return '/api/brands';
+      }
+
+      function watchRunEndpoint() {
+        const base = normalizeScanApiBase(state.apiBaseUrl);
+        if (base) return base + '/api/watch/run';
+        return '/api/watch/run';
+      }
+
+      async function loadBrandWatchList() {
+        const ul = document.getElementById('brandWatchList');
+        if (!ul) return;
+        try {
+          const r = await fetch(brandsEndpoint(), { method: 'GET' });
+          const data = await r.json().catch(function () {
+            return {};
+          });
+          const brands = data.brands || [];
+          if (!brands.length) {
+            ul.innerHTML = '<li>No brands saved yet — scan with <strong>Save brand for automatic security watch</strong> on.</li>';
+            return;
+          }
+          ul.innerHTML = brands
+            .map(function (b) {
+              return (
+                '<li><strong>' +
+                escapeHtml(b.name) +
+                '</strong> — ' +
+                escapeHtml(b.url) +
+                (b.enabled === false ? ' (paused)' : '') +
+                '</li>'
+              );
+            })
+            .join('');
+        } catch (e) {
+          ul.innerHTML = '<li>Could not load watch list (run server locally).</li>';
+        }
+      }
+
+      async function saveBrandToWatch(name, url) {
+        await fetch(brandsEndpoint(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name, url: url, enabled: true }),
+        });
+        loadBrandWatchList();
+      }
+
+      function renderVulnerabilitiesPanel(vulnerabilities, brandName) {
+        const panel = document.getElementById('vulnerabilitiesPanel');
+        if (!panel) return;
+        if (!vulnerabilities || !vulnerabilities.items || !vulnerabilities.items.length) {
+          panel.className = 'vulnerabilities-panel';
+          panel.innerHTML =
+            '<p class="site-stack-title">Vulnerabilities &amp; risks' +
+            (brandName ? ' · ' + escapeHtml(brandName) : '') +
+            '</p><p class="site-stack-headline">' +
+            escapeHtml((vulnerabilities && vulnerabilities.headline) || 'No vulnerabilities flagged') +
+            '</p><p class="site-stack-sub stack-empty-hint">Run scan on a live URL. Outdated frameworks and hack signatures appear here and in email.</p>';
+          return;
+        }
+        const s = vulnerabilities.summary || {};
+        const hasCrit = (s.critical || 0) > 0;
+        const hasHigh = (s.high || 0) > 0;
+        panel.className =
+          'vulnerabilities-panel' + (hasCrit ? ' vuln-critical' : hasHigh ? ' vuln-warn' : '');
+        let html =
+          '<p class="site-stack-title">Vulnerabilities &amp; risks' +
+          (brandName ? ' · ' + escapeHtml(brandName) : '') +
+          '</p><p class="site-stack-headline">' +
+          escapeHtml(vulnerabilities.headline || 'Findings') +
+          '</p><p class="site-stack-sub">Critical: ' +
+          (s.critical || 0) +
+          ' · High: ' +
+          (s.high || 0) +
+          ' · Medium: ' +
+          (s.medium || 0) +
+          ' · Low: ' +
+          (s.low || 0) +
+          '</p>';
+        vulnerabilities.items.forEach(function (item) {
+          html +=
+            '<div class="vuln-line sev-' +
+            escapeHtml(item.severity || 'medium') +
+            '"><strong>[' +
+            escapeHtml((item.severity || '').toUpperCase()) +
+            ']</strong> ' +
+            escapeHtml(item.category || '') +
+            ' — ' +
+            escapeHtml(item.title || '') +
+            (item.detail ? '<br/><span class="site-stack-sub">' + escapeHtml(item.detail) + '</span>' : '') +
+            '</div>';
+        });
+        panel.innerHTML = html;
+      }
+
+      function renderSecurityThreatsPanel(security, brandName) {
+        const panel = document.getElementById('securityThreatsPanel');
+        if (!panel) return;
+        if (!security) {
+          panel.className = 'security-threats-panel';
+          panel.innerHTML =
+            '<p class="site-stack-title">Security monitor</p><p class="site-stack-headline">Run a scan first</p>';
+          return;
+        }
+        const lvl = security.alertLevel || 'ok';
+        panel.className =
+          'security-threats-panel' + (lvl === 'critical' ? ' sec-critical' : lvl === 'warn' ? ' sec-warn' : '');
+        let html =
+          '<p class="site-stack-title">Security monitor' +
+          (brandName ? ' · ' + escapeHtml(brandName) : '') +
+          '</p><p class="site-stack-headline">' +
+          escapeHtml(security.headline || '—') +
+          '</p>';
+        if (security.baselineDrift && security.baselineDrift.changed) {
+          html +=
+            '<p class="site-stack-sub">Page changed vs last clean scan — review for defacement or unexpected deploy.</p>';
+        }
+        const threats = security.threats || [];
+        if (threats.length) {
+          threats.forEach(function (t) {
+            html +=
+              '<div class="threat-line sev-' +
+              escapeHtml(t.severity || 'warn') +
+              '"><strong>' +
+              escapeHtml((t.kind || 'threat').toUpperCase()) +
+              '</strong> — ' +
+              escapeHtml(t.message || '') +
+              '</div>';
+          });
+        } else {
+          html += '<p class="site-stack-sub stack-empty-hint">No malware / hack signatures in this pass.</p>';
+        }
+        panel.innerHTML = html;
+      }
+
+      function renderScanDashboard(data) {
+        if (!data) {
+          renderVulnerabilitiesPanel(null);
+          renderSecurityThreatsPanel(null);
+          renderBrandMatrixPanel(null);
+          renderConsoleErrorsPanel(null);
+          renderPageIssuesPanel(null);
+          renderSiteStackPanel(null);
+          return;
+        }
+        renderVulnerabilitiesPanel(data.vulnerabilities, data.brandName);
+        renderSecurityThreatsPanel(data.security, data.brandName);
+        renderBrandMatrixPanel(data.brandMatrix, data.siteStack);
+        renderConsoleErrorsPanel(data.consoleIssues, data.brandName, data.scanMeta);
+        renderPageIssuesPanel(data.pageIssues, data.brandName, data.siteIssues);
+        if (data.siteStack) renderSiteStackPanel(data.siteStack);
+      }
+
+      function renderSiteStackPanel(siteStack) {
+        const panel = document.getElementById('siteStackPanel');
+        if (!panel) return;
+        if (!siteStack) {
+          panel.className = 'site-stack-panel stack-neutral';
+          panel.innerHTML =
+            '<p class="site-stack-title">Site technology stack</p>' +
+            '<p class="site-stack-headline">Run a scan first</p>' +
+            '<p class="site-stack-sub stack-empty-hint">Enter a URL and run <strong>Run quick scan</strong> to detect Laravel, WordPress, PHP, Next.js, and more.</p>';
+          return;
+        }
+        const tone = ['good', 'warn', 'bad', 'neutral'].includes(siteStack.panelTone)
+          ? siteStack.panelTone
+          : 'neutral';
+        panel.className = 'site-stack-panel stack-' + tone;
+        let html =
+          '<p class="site-stack-title">Site technology stack' +
+          (siteStack.host ? ' · ' + escapeHtml(siteStack.host) : '') +
+          '</p>' +
+          '<p class="site-stack-headline">' +
+          escapeHtml(siteStack.headline || 'Detected stack') +
+          '</p>';
+        if (siteStack.subline) {
+          html += '<p class="site-stack-sub">' + escapeHtml(siteStack.subline) + '</p>';
+        }
+        const items = Array.isArray(siteStack.items) ? siteStack.items : [];
+        if (items.length) {
+          html += '<div class="stack-chips">';
+          items.forEach(function (it) {
+            const al = ['good', 'warn', 'bad', 'info'].includes(it.alert) ? it.alert : 'info';
+            html +=
+              '<span class="stack-chip alert-' +
+              al +
+              '" title="' +
+              escapeHtml((it.detail || '') + ' · source: ' + (it.source || '')) +
+              '">' +
+              '<span>' +
+              escapeHtml(it.label) +
+              (it.version ? ' <strong>' + escapeHtml(it.version) + '</strong>' : '') +
+              '</span>' +
+              '<span class="stack-chip-cat">' +
+              escapeHtml(it.category || '') +
+              '</span>' +
+              '</span>';
+          });
+          html += '</div>';
+        } else {
+          html +=
+            '<p class="stack-empty-hint">No Laravel / WordPress / Next.js / PHP signals in this response. The site may be static, heavily cached, or blocking fingerprint headers.</p>';
+        }
+        const alerts = Array.isArray(siteStack.alerts) ? siteStack.alerts : [];
+        if (alerts.length) {
+          html += '<div class="stack-alerts" role="alert">';
+          alerts.forEach(function (a) {
+            const lv = a.level === 'bad' ? 'bad' : 'warn';
+            html +=
+              '<div class="stack-alert-line level-' +
+              lv +
+              '">' +
+              (lv === 'bad' ? '⚠ ' : '◆ ') +
+              escapeHtml(a.message || '') +
+              '</div>';
+          });
+          html += '</div>';
+        }
+        panel.innerHTML = html;
+      }
+
+      function renderBrandMatrixPanel(brandMatrix, siteStack) {
+        const panel = document.getElementById('brandMatrixPanel');
+        if (!panel) return;
+        if (!brandMatrix) {
+          panel.innerHTML =
+            '<p class="site-stack-title">Brand performance matrix</p>' +
+            '<p class="site-stack-headline">Run a scan first</p>' +
+            '<p class="site-stack-sub stack-empty-hint">Enter brand + URL, then scan.</p>';
+          return;
+        }
+        const pct = brandMatrix.performancePercent != null ? brandMatrix.performancePercent : 0;
+        const pctClass = pct >= 80 ? 'pct-good' : pct >= 50 ? 'pct-mid' : 'pct-bad';
+        let html =
+          '<p class="site-stack-title">Brand performance matrix' +
+          (brandMatrix.brandName ? ' · ' + escapeHtml(brandMatrix.brandName) : '') +
+          '</p>' +
+          '<div class="brand-matrix-top">' +
+          '<div class="brand-matrix-pct-wrap">' +
+          '<div class="brand-matrix-pct ' +
+          pctClass +
+          '">' +
+          escapeHtml(String(pct)) +
+          '%</div>' +
+          '<div class="brand-matrix-grade">Performance rate · Grade ' +
+          escapeHtml(brandMatrix.performanceGrade || '—') +
+          '</div></div>';
+        const fw =
+          (brandMatrix.frameworks && brandMatrix.frameworks.length
+            ? brandMatrix.frameworks
+            : siteStack && siteStack.items
+              ? siteStack.items.filter(function (i) {
+                  return ['framework', 'cms', 'runtime'].indexOf(i.category) >= 0;
+                })
+              : []) || [];
+        if (fw.length) {
+          html += '<div class="stack-chips">';
+          fw.forEach(function (f) {
+            html +=
+              '<span class="stack-chip alert-info"><span>' +
+              escapeHtml(f.label) +
+              (f.version
+                ? ' <strong>' + escapeHtml(f.version) + '</strong>'
+                : ' <em style="opacity:0.85">(version hidden on site)</em>') +
+              '</span></span>';
+          });
+          html += '</div>';
+        }
+        html += '</div>';
+        html += '<table class="brand-matrix-table"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>';
+        (brandMatrix.matrix || []).forEach(function (row) {
+          html +=
+            '<tr><td>' +
+            escapeHtml(row.label) +
+            '</td><td>' +
+            escapeHtml(row.value) +
+            '</td></tr>';
+        });
+        html += '</tbody></table>';
+        panel.innerHTML = html;
+      }
+
+      function renderConsoleErrorsPanel(consoleIssues, brandName, scanMeta) {
+        const panel = document.getElementById('consoleErrorsPanel');
+        if (!panel) return;
+        const items = consoleIssues && Array.isArray(consoleIssues.items) ? consoleIssues.items : [];
+        const errCount = consoleIssues && consoleIssues.summary ? consoleIssues.summary.errors : 0;
+        const cap = scanMeta && scanMeta.consoleCapture ? String(scanMeta.consoleCapture) : '';
+        const capHint =
+          cap === 'playwright'
+            ? 'Captured with real browser (Playwright).'
+            : cap === 'playwright-empty'
+              ? 'Browser opened the site; no console errors or warnings logged.'
+              : cap === 'playwright-failed'
+                ? 'Playwright could not open the page — install browsers: npx playwright install chromium'
+                : cap === 'unavailable-on-vercel'
+                  ? 'Console capture needs local npm run go-live:audit (not Vercel-only deploy).'
+                  : 'Run scan on localhost:3940 for full console capture.';
+        if (!items.length) {
+          panel.className = 'console-errors-panel console-clean';
+          panel.innerHTML =
+            '<p class="site-stack-title">Website console errors' +
+            (brandName ? ' · ' + escapeHtml(brandName) : '') +
+            '</p>' +
+            '<p class="site-stack-headline">No console errors detected</p>' +
+            '<p class="site-stack-sub stack-empty-hint">' +
+            escapeHtml(capHint) +
+            '</p>';
+          return;
+        }
+        panel.className = 'console-errors-panel';
+        let html =
+          '<p class="site-stack-title">Website console errors' +
+          (brandName ? ' · ' + escapeHtml(brandName) : '') +
+          '</p>' +
+          '<p class="site-stack-headline">' +
+          errCount +
+          ' error(s) in console</p><p class="site-stack-sub">' +
+          escapeHtml(capHint) +
+          '</p>';
+        items.forEach(function (it) {
+          const sev = it.severity === 'warn' ? 'warn' : 'error';
+          html +=
+            '<div class="console-error-line sev-' +
+            sev +
+            '"><span class="console-sev-tag">' +
+            escapeHtml((it.severity || 'error').toUpperCase()) +
+            '</span> ' +
+            escapeHtml(it.message || '') +
+            '</div>';
+        });
+        panel.innerHTML = html;
+      }
+
+      function scrollToScanResultsPanels(data) {
+        if (!data) return;
+        const targets = [];
+        if (data.consoleIssues && data.consoleIssues.items && data.consoleIssues.items.length) {
+          targets.push('consoleErrorsPanel');
+        }
+        if (data.vulnerabilities && data.vulnerabilities.items && data.vulnerabilities.items.length) {
+          targets.push('vulnerabilitiesPanel');
+        } else if (data.security && data.security.threats && data.security.threats.length) {
+          targets.push('securityThreatsPanel');
+        }
+        const id = targets[0] || 'vulnerabilitiesPanel';
+        const el = document.getElementById(id);
+        if (el && el.scrollIntoView) {
+          window.setTimeout(function () {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 400);
+        }
+      }
+
+      function renderPageIssuesPanel(pageIssues, brandName, siteIssues) {
+        const panel = document.getElementById('pageIssuesPanel');
+        if (!panel) return;
+        const src = siteIssues && siteIssues.items ? siteIssues : pageIssues;
+        if (!src || !Array.isArray(src.items)) {
+          panel.className = 'site-stack-panel stack-neutral';
+          panel.innerHTML =
+            '<p class="site-stack-title">Brand issues (site down · HTTP · console)</p>' +
+            '<p class="site-stack-headline">Run a scan first</p>' +
+            '<p class="site-stack-sub stack-empty-hint">Enter <strong>Brand name</strong> and URL, then scan.</p>';
+          return;
+        }
+        const sum = src.summary || { errors: 0, warns: 0, total: 0 };
+        const items = src.items;
+        const tone = sum.errors > 0 ? 'bad' : sum.warns > 0 ? 'warn' : items.length ? 'good' : 'neutral';
+        panel.className = 'site-stack-panel stack-' + tone;
+        let html =
+          '<p class="site-stack-title">Brand issues' +
+          (brandName ? ' · ' + escapeHtml(brandName) : '') +
+          '</p>';
+        html +=
+          '<p class="site-stack-headline">' +
+          (sum.errors > 0
+            ? sum.errors + ' error(s) need attention'
+            : items.length
+              ? 'No critical errors'
+              : 'No issues detected') +
+          '</p>';
+        html +=
+          '<p class="site-stack-sub">' +
+          escapeHtml(sum.errors + ' error · ' + sum.warns + ' warn · ' + (sum.total || 0) + ' total') +
+          ' — emailed to ' +
+          escapeHtml(DEFAULT_ALERT_EMAIL) +
+          '</p>';
+        if (items.length) {
+          html += '<div class="stack-alerts" role="alert">';
+          items.forEach(function (it) {
+            const lv = it.severity === 'error' ? 'bad' : it.severity === 'warn' ? 'warn' : 'info';
+            html +=
+              '<div class="stack-alert-line level-' +
+              lv +
+              '">[' +
+              escapeHtml(it.kind || 'issue') +
+              '] ' +
+              escapeHtml(it.message || '') +
+              '</div>';
+          });
+          html += '</div>';
+        } else {
+          html += '<p class="stack-empty-hint">HTTP OK and no console/runtime hints in HTML. Local scans also try Playwright console capture.</p>';
+        }
+        panel.innerHTML = html;
+      }
+
+      async function loadScannerRuntime() {
+        const el = document.getElementById('scannerRuntime');
+        if (!el) return;
+        el.textContent = 'Loading audit tool runtime…';
+        const sig =
+          typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+            ? AbortSignal.timeout(12000)
+            : undefined;
+        try {
+          const r = await fetch(runtimeEndpoint(), { method: 'GET', signal: sig });
+          const data = await r.json().catch(function () {
+            return {};
+          });
+          if (!r.ok || !data.ok || !data.runtime) {
+            el.textContent =
+              'Scanner stack: could not load (HTTP ' +
+              r.status +
+              '). Use the same host as the scan API or set Scan API base; deploy needs api/runtime.js (npm run build).';
+            return;
+          }
+          el.textContent = 'Audit tool: ' + formatRuntimeText(data.runtime);
+        } catch (e) {
+          el.textContent = 'Scanner stack: request failed — ' + ((e && e.message) || String(e));
+        }
+      }
+
+      /** Short labels so the closed select box does not truncate (tooltip + notes carry full meaning). */
+      const STATUS_LABELS = {
+        pending: 'Manual review',
+        pass: 'Pass',
+        fail: 'Fail',
+        na: 'N/A',
+      };
+      function availabilityTone(state) {
+        if (state === 'up') return 'avail-good';
+        if (
+          [
+            'server_error',
+            'dns_failed',
+            'connection_refused',
+            'unreachable',
+            'connection_reset',
+            'timeout',
+          ].includes(state)
+        )
+          return 'avail-bad';
+        return 'avail-warn';
+      }
+
+      function renderAvailabilityBanner(av, techNote) {
+        if (!av || !av.headline) return '';
+        const tone = availabilityTone(av.state);
+        const tech = techNote
+          ? '<div class="avail-tech">Technical: ' + escapeHtml(techNote) + '</div>'
+          : '';
+        return (
+          '<div class="avail-banner ' +
+          tone +
+          '"><strong>' +
+          escapeHtml(av.headline) +
+          '</strong><div class="avail-detail">' +
+          escapeHtml(av.detail || '') +
+          '</div>' +
+          tech +
+          '</div>'
+        );
+      }
+
+      function renderOverallSummary(s) {
+        if (!s || !s.headline) return '';
+        const lvl = ['good', 'caution', 'concern', 'bad'].includes(s.level) ? s.level : 'caution';
+        const tone = 'overall-' + lvl;
+        const c = s.counts || {};
+        const tallyParts = [];
+        if (typeof c.pass === 'number') tallyParts.push('Pass ' + c.pass);
+        if (typeof c.fail === 'number') tallyParts.push('Fail ' + c.fail);
+        if (typeof c.pending === 'number') tallyParts.push('Manual review ' + c.pending);
+        if (typeof c.notScored === 'number' && c.notScored > 0)
+          tallyParts.push('N/A ' + c.notScored);
+        const tally =
+          tallyParts.length > 0
+            ? '<div class="overall-tally">' +
+              tallyParts.map(function (t) { return escapeHtml(t); }).join(' · ') +
+              '</div>'
+            : '';
+        return (
+          '<div class="overall-summary ' +
+          tone +
+          '" role="status">' +
+          '<strong>' +
+          escapeHtml(s.headline) +
+          '</strong>' +
+          (s.subline
+            ? '<div class="overall-sub">' + escapeHtml(s.subline) + '</div>'
+            : '') +
+          (function () {
+            const failed = Array.isArray(s.failedItems) ? s.failedItems : [];
+            if (!failed.length) return '';
+            const itemById = {};
+            ITEMS.forEach(function (it) {
+              itemById[it.id] = it;
+            });
+            return (
+              '<div class="overall-fail-list"><strong>Failed checklist rows</strong>' +
+              failed
+                .map(function (f) {
+                  const meta = itemById[f.id];
+                  const title = meta ? meta.cat + ': ' + meta.text : f.id;
+                  return (
+                    '<div class="overall-fail-row"><code>' +
+                    escapeHtml(f.id) +
+                    '</code> — ' +
+                    escapeHtml(title) +
+                    (f.note ? '<br/><span style="opacity:0.85">' + escapeHtml(f.note) + '</span>' : '') +
+                    '</div>'
+                  );
+                })
+                .join('') +
+              '</div>'
+            );
+          })() +
+          tally +
+          '</div>'
+        );
+      }
+
+      const STATUS_HINTS = {
+        pending:
+          'Scan did not set Pass or Fail — verify yourself, then choose Pass or Fail (read [auto] note).',
+        pass: 'Automated checks passed for this row (see [auto] notes).',
+        fail: 'Automated checks reported an issue — see notes.',
+        na: 'The scan cannot pass/fail this row automatically — use Pass/Fail when you have real evidence, or choose Not scored only if the row truly does not apply.',
+      };
+
+      function applyAutoChecks(autoChecks) {
+        if (!Array.isArray(autoChecks)) return;
+        if (!state.items) state.items = {};
+        for (const ac of autoChecks) {
+          if (!ac || !ac.id) continue;
+          state.items[ac.id] = {
+            status: ac.status || 'pending',
+            note: ac.note || '',
+            auto: true,
+          };
+        }
+        saveState(state);
+        render();
+      }
+
+      /** Remove stale [auto] rows when a scan did not produce checklist updates (failed fetch or skipped HTTP). */
+      function clearAutoFilledRows() {
+        if (!state.items) return;
+        let changed = false;
+        Object.keys(state.items).forEach(function (id) {
+          const st = state.items[id];
+          if (st && st.auto) {
+            state.items[id] = { status: 'pending', note: '', auto: false };
+            changed = true;
+          }
+        });
+        if (changed) {
+          saveState(state);
+          render();
+        }
+      }
+
+      function renderChecklistSkippedBanner(data) {
+        if (!data || !data.contentAutoChecksSkipped) return '';
+        const r = data.contentAutoChecksSkipReason || 'Automated checklist was skipped for this response.';
+        return (
+          '<div class="scan-msg scan-msg-warn" role="status"><strong>Checklist auto-fill skipped.</strong> ' +
+          escapeHtml(r) +
+          ' Previous scan Pass/Fail from <span class="badge auto">Auto from scan</span> was cleared so rows are not misleading.</div>'
+        );
+      }
+
+      function render() {
+        const countBadge = document.getElementById('checklistCount');
+        if (countBadge) countBadge.textContent = ITEMS.length + ' items';
+        const host = document.getElementById('checklist');
+        if (!host) return;
+        let lastCat = '';
+        const frag = document.createDocumentFragment();
+        ITEMS.forEach((it) => {
+          if (it.cat !== lastCat) {
+            lastCat = it.cat;
+            const h = document.createElement('div');
+            h.className = 'cat';
+            h.textContent = it.cat;
+            frag.appendChild(h);
+          }
+          const row = document.createElement('div');
+          const st = state.items && state.items[it.id] ? state.items[it.id] : { status: 'pending', note: '' };
+          const rawStatus = st.status || 'pending';
+          const statusKey = ['pending', 'pass', 'fail', 'na'].includes(rawStatus) ? rawStatus : 'pending';
+          row.className = 'check-row row-' + statusKey;
+          const autoBadge = st.auto ? '<span class="badge auto">Auto from scan</span>' : '';
+          row.innerHTML =
+            '<div class="check-main">' +
+            '<div class="id-title-line"><span class="id-chip">' +
+            escapeHtml(it.id) +
+            '</span><p class="check-text">' +
+            escapeHtml(it.text) +
+            '</p></div>' +
+            '<div class="hint-row">' +
+            autoBadge +
+            (autoBadge ? ' ' : '') +
+            '<span class="badge">' +
+            escapeHtml(it.hint) +
+            '</span></div>' +
+            '<textarea data-id="' +
+            it.id +
+            '" placeholder="Notes, ticket link, evidence…">' +
+            escapeHtml(st.note || '') +
+            '</textarea></div>' +
+            '<aside class="check-aside"><span class="field-label">Status</span>' +
+            (st.auto
+              ? statusKey === 'pending'
+                ? '<span class="status-micro">Scan filled the [auto] note — <strong>Manual review</strong> until you pick Pass/Fail (some rows cannot be decided from one URL fetch alone).</span>'
+                : '<span class="status-micro">Scan set this status — hover the dropdown for details</span>'
+              : '') +
+            '<select class="status-select" data-id="' +
+            it.id +
+            '" title="' +
+            escapeHtml(STATUS_HINTS[statusKey] || '') +
+            '">' +
+            ['pending', 'pass', 'fail', 'na']
+              .map(
+                (v) =>
+                  '<option value="' +
+                  v +
+                  '"' +
+                  (statusKey === v ? ' selected' : '') +
+                  ' title="' +
+                  escapeHtml(STATUS_HINTS[v] || '') +
+                  '">' +
+                  escapeHtml(STATUS_LABELS[v] || v) +
+                  '</option>'
+              )
+              .join('') +
+            '</select></aside>';
+          frag.appendChild(row);
+        });
+        host.innerHTML = '';
+        host.appendChild(frag);
+
+        host.querySelectorAll('select[data-id]').forEach((sel) => {
+          sel.addEventListener('change', () => {
+            if (!state.items) state.items = {};
+            state.items[sel.dataset.id] = state.items[sel.dataset.id] || {};
+            state.items[sel.dataset.id].status = sel.value;
+            state.items[sel.dataset.id].note =
+              host.querySelector('textarea[data-id="' + sel.dataset.id + '"]').value;
+            state.items[sel.dataset.id].auto = false;
+            saveState(state);
+            const rowEl = sel.closest('.check-row');
+            if (rowEl) {
+              const v = ['pending', 'pass', 'fail', 'na'].includes(sel.value) ? sel.value : 'pending';
+              rowEl.className = 'check-row row-' + v;
+            }
+            sel.title = STATUS_HINTS[sel.value] || '';
+          });
+        });
+        host.querySelectorAll('textarea[data-id]').forEach((ta) => {
+          ta.addEventListener('input', () => {
+            if (!state.items) state.items = {};
+            state.items[ta.dataset.id] = state.items[ta.dataset.id] || {};
+            state.items[ta.dataset.id].note = ta.value;
+            state.items[ta.dataset.id].status =
+              host.querySelector('select[data-id="' + ta.dataset.id + '"]').value;
+            state.items[ta.dataset.id].auto = false;
+            saveState(state);
+          });
+        });
+      }
+
+      const backendBannerEl = document.getElementById('backendBanner');
+
+      function hideBackendBanner() {
+        if (!backendBannerEl) return;
+        backendBannerEl.hidden = true;
+        backendBannerEl.className = 'backend-banner';
+        backendBannerEl.textContent = '';
+      }
+
+      function showBackendBanner(kind, html) {
+        if (!backendBannerEl) return;
+        backendBannerEl.hidden = false;
+        backendBannerEl.className = 'backend-banner ' + (kind === 'warn' ? 'backend-warn' : 'backend-bad');
+        backendBannerEl.innerHTML = html;
+      }
+
+      async function probeScanBackend() {
+        if (!backendBannerEl) return;
+        const ep = scanEndpoint();
+        const sig =
+          typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+            ? AbortSignal.timeout(12000)
+            : undefined;
+        try {
+          const r = await fetch(ep, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: '' }),
+            signal: sig,
+          });
+          const ct = (r.headers.get('content-type') || '').toLowerCase();
+          const data = ct.includes('application/json') ? await r.json().catch(function () { return {}; }) : {};
+
+          if (r.status === 401 || r.status === 403) {
+            showBackendBanner(
+              'warn',
+              '<strong>Login / deployment protection is blocking the API.</strong> In Vercel: Project → <strong>Settings → Deployment Protection</strong> → turn off for this project (or use the <strong>Production</strong> domain without preview protection). Until then, <code>POST /api/scan</code> cannot run from the browser.'
+            );
+            return;
+          }
+
+          if (r.status === 400 && data && String(data.error || '').toLowerCase().includes('missing')) {
+            hideBackendBanner();
+            return;
+          }
+
+          if (data && data.ok === false && String(data.error || '').toLowerCase().includes('missing')) {
+            hideBackendBanner();
+            return;
+          }
+
+          if (!ct.includes('application/json')) {
+            showBackendBanner(
+              'bad',
+              '<strong>No scan backend on this host.</strong> This URL only serves static files — there is no <code>POST /api/scan</code>. Fix: deploy the <strong>full GitHub repo</strong> to Vercel (needs <code>api/scan.js</code> + <code>npm run build</code>) — see <code>go-live-audit/VERCEL.md</code>. Or run <code>npm run go-live:audit:tunnel</code> on your PC and paste the tunnel URL into <strong>Scan API base</strong> (<code>TUNNEL.md</code>).'
+            );
+            return;
+          }
+
+          if (r.status === 404) {
+            showBackendBanner(
+              'bad',
+              '<strong>Scan API not found (404).</strong> Redeploy with serverless <code>api/scan.js</code> or set <strong>Scan API base</strong> to a running tunnel / Render URL.'
+            );
+            return;
+          }
+
+          hideBackendBanner();
+        } catch (e) {
+          showBackendBanner(
+            'bad',
+            '<strong>Cannot reach scan API.</strong> Tried <code>' +
+              escapeHtml(ep) +
+              '</code>. Check <strong>Scan API base</strong>, your network, or run locally: <code>npm run go-live:audit</code> → <code>http://localhost:3940</code>.<br/><br/><small>' +
+              escapeHtml(e.message || String(e)) +
+              '</small>'
+          );
+        }
+      }
+
+      document.getElementById('btnClear').addEventListener('click', () => {
+        if (!confirm('Clear saved checklist + URL from this browser?')) return;
+        state = {};
+        if (siteEl) siteEl.value = '';
+        lastScanPayload = null;
+        localStorage.removeItem(LAST_SCAN_KEY);
+        saveState(state);
+        document.getElementById('scanResult').hidden = true;
+        document.getElementById('backendBanner').hidden = true;
+        document.getElementById('backendBanner').textContent = '';
+        if (apiBaseEl) apiBaseEl.value = '';
+        if (brandNameEl) brandNameEl.value = '';
+        if (reportEmailEl) reportEmailEl.value = DEFAULT_ALERT_EMAIL;
+        if (gmailAppPasswordEl) gmailAppPasswordEl.value = '';
+        if (sendEmailEl) sendEmailEl.checked = true;
+        render();
+        renderScanDashboard(null);
+        refreshBrandDatalist();
+        probeScanBackend();
+      });
+
+      document.getElementById('btnApply').addEventListener('click', () => {
+        try {
+          lastScanPayload = JSON.parse(localStorage.getItem(LAST_SCAN_KEY) || 'null');
+        } catch {
+          lastScanPayload = null;
+        }
+        if (lastScanPayload && Array.isArray(lastScanPayload.autoChecks)) {
+          applyAutoChecks(lastScanPayload.autoChecks);
+          renderScanDashboard(lastScanPayload);
+        } else {
+          alert('Run a successful quick scan first, then use Apply last scan.');
+        }
+      });
+
+      document.getElementById('btnExport').addEventListener('click', () => {
+        const rows = [['ID', 'Category', 'Item', 'Status', 'Notes', 'Site URL']];
+        const url = siteEl ? siteEl.value.trim() : '';
+        ITEMS.forEach((it) => {
+          const st = (state.items && state.items[it.id]) || { status: 'pending', note: '' };
+          const raw = st.status || 'pending';
+          const label = STATUS_LABELS[raw] || raw;
+          rows.push([it.id, it.cat, it.text, label, (st.note || '').replace(/\r?\n/g, ' '), url]);
+        });
+        const csv = rows.map((r) => r.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'go-live-audit-export.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+
+      if (siteEl) {
+        siteEl.addEventListener('change', () => {
+          state.siteUrl = siteEl.value.trim();
+          saveState(state);
+        });
+      }
+
+      if (apiBaseEl) {
+        apiBaseEl.addEventListener('change', () => {
+          state.apiBaseUrl = apiBaseEl.value.trim();
+          saveState(state);
+          probeScanBackend();
+          loadScannerRuntime();
+          loadEmailConfigStatus();
+        });
+      }
+
+      if (sendEmailEl) {
+        sendEmailEl.addEventListener('change', () => {
+          state.sendEmailAfterScan = sendEmailEl.checked;
+          saveState(state);
+        });
+      }
+
+      if (brandNameEl) {
+        brandNameEl.addEventListener('change', () => {
+          state.brandName = brandNameEl.value.trim();
+          saveState(state);
+        });
+      }
+      if (gmailAppPasswordEl) {
+        gmailAppPasswordEl.addEventListener('change', () => {
+          state.gmailAppPassword = gmailAppPasswordEl.value.trim();
+          saveState(state);
+        });
+      }
+
+      document.getElementById('btnScan').addEventListener('click', async () => {
+        const url = siteEl ? siteEl.value.trim() : '';
+        state.siteUrl = url;
+        state.apiBaseUrl = apiBaseEl ? apiBaseEl.value.trim() : '';
+        if (brandNameEl) {
+          const bn = brandNameEl.value.trim();
+          state.brandName = bn;
+          if (bn) {
+            const list = state.savedBrands || [];
+            if (!list.includes(bn)) {
+              list.unshift(bn);
+              state.savedBrands = list.slice(0, 24);
+              refreshBrandDatalist();
+            }
+          }
+        }
+        if (gmailAppPasswordEl) state.gmailAppPassword = gmailAppPasswordEl.value.trim();
+        saveState(state);
+        const out = document.getElementById('scanResult');
+        const btn = document.getElementById('btnScan');
+        if (!url) {
+          out.hidden = false;
+          out.innerHTML =
+            '<div class="scan-msg scan-msg-warn">Enter a site URL (include <code>https://</code>).</div>';
+          return;
+        }
+        const baseRaw = (state.apiBaseUrl || '').trim();
+        if (baseRaw && !normalizeScanApiBase(baseRaw)) {
+          out.hidden = false;
+          out.innerHTML =
+            '<div class="scan-msg scan-msg-warn">Scan API base must be a full URL like <code>https://xxxx.ngrok-free.app</code> (no path).</div>';
+          return;
+        }
+        let scanEmailWarnHtml = '';
+        if (sendEmailEl && sendEmailEl.checked) {
+          const appPassPre = gmailAppPasswordEl ? gmailAppPasswordEl.value.trim().replace(/\s+/g, '') : '';
+          if (appPassPre.length < 8) {
+            scanEmailWarnHtml =
+              '<div class="scan-msg scan-msg-warn" style="margin-bottom:0.75rem"><strong>Email may not send</strong> — paste Gmail App Password below, or turn off Email scan summary. <strong>Scan will still run.</strong></div>';
+          }
+        }
+        let stepTimer = null;
+        const scanStarted = Date.now();
+        btn.disabled = true;
+        out.hidden = false;
+        const loadingSteps = [
+          'Connecting and downloading the start page…',
+          'Fetching robots.txt…',
+          'Sampling up to two same-origin pages linked from that HTML…',
+          'Merging HTML signals for checklist rows…',
+          'Checking console / runtime issues (local Playwright when available)…',
+        ];
+        let stepIdx = 0;
+        out.innerHTML =
+          '<div class="scan-loading">' +
+          '<div class="scan-loading-top">' +
+          '<div class="scan-orbit" aria-hidden="true"><span></span><span></span><span></span></div>' +
+          '<div><div class="scan-loading-title">Scanning…</div>' +
+          '<div class="scan-loading-sub" id="scanLoadingSub">' +
+          escapeHtml(loadingSteps[0]) +
+          '</div></div></div>' +
+          '<div class="scan-loading-bar"><div class="scan-loading-bar-fill"></div></div></div>';
+        stepTimer = window.setInterval(function () {
+          stepIdx = (stepIdx + 1) % loadingSteps.length;
+          const el = document.getElementById('scanLoadingSub');
+          if (el) el.textContent = loadingSteps[stepIdx];
+        }, 2200);
+        try {
+          const scanBody = { url, captureConsole: true };
+          const brandScan = brandNameEl ? brandNameEl.value.trim() : '';
+          if (brandScan) scanBody.brandName = brandScan;
+          if (sendEmailEl && sendEmailEl.checked) scanBody.sendEmail = true;
+          scanBody.reportEmail = DEFAULT_ALERT_EMAIL;
+          const appPassSend = gmailAppPasswordEl ? gmailAppPasswordEl.value.trim().replace(/\s+/g, '') : '';
+          if (appPassSend.length >= 16 && !appPassSend.includes('@')) {
+            scanBody.smtpUser = DEFAULT_ALERT_EMAIL;
+            scanBody.smtpPass = appPassSend;
+            scanBody.gmailAppPassword = appPassSend;
+            scanBody.gmailUser = DEFAULT_ALERT_EMAIL;
+          } else if (sendEmailEl && sendEmailEl.checked && appPassSend.length > 0) {
+            console.warn('[go-live-audit] Gmail App Password must be 16 characters (no @) — email may fail until fixed.');
+          }
+          const notifyTokEl = document.getElementById('notifyTokenInput');
+          const notifyTok = notifyTokEl && notifyTokEl.value.trim();
+          if (notifyTok) scanBody.notifyToken = notifyTok;
+
+          const res = await fetch(scanEndpoint(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(scanBody),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || data.ok === false) {
+            out.hidden = false;
+            clearAutoFilledRows();
+            const mailBanner = renderEmailReportBanner(data.emailReport);
+            const oa = data.overallSummary ? renderOverallSummary(data.overallSummary) : '';
+            renderScanDashboard(data);
+            if (data.availability) {
+              out.innerHTML = mailBanner + oa + renderAvailabilityBanner(data.availability, data.error || '');
+            } else if (oa) {
+              out.innerHTML = mailBanner + oa;
+            } else {
+              out.innerHTML =
+                mailBanner +
+                '<div class="scan-msg scan-msg-warn">Error: ' +
+                escapeHtml(data.error || res.statusText || String(res.status)) +
+                '</div>';
+            }
+            return;
+          }
+          lastScanPayload = data;
+          localStorage.setItem(LAST_SCAN_KEY, JSON.stringify(data));
+          renderScanDashboard(data);
+          scrollToScanResultsPanels(data);
+          loadEmailConfigStatus();
+          const addWatchEl = document.getElementById('addToBrandWatch');
+          if (addWatchEl && addWatchEl.checked && brandScan && url) {
+            saveBrandToWatch(brandScan, url).catch(function () {});
+          }
+
+          if (data.contentAutoChecksSkipped) {
+            clearAutoFilledRows();
+          }
+
+          const h = data.htmlSignals || {};
+          const overallBlock = data.overallSummary
+            ? renderOverallSummary(data.overallSummary)
+            : '';
+          const availBlock = data.availability
+            ? renderAvailabilityBanner(data.availability, null)
+            : '';
+          const lines = [];
+          if (data.contentAutoChecksSkipped) {
+            lines.push(
+              'Automated checklist rows: skipped — ' +
+                (data.contentAutoChecksSkipReason || 'response was not a normal 2xx HTML page.')
+            );
+          }
+          if (data.siteStack && data.siteStack.items && data.siteStack.items.length) {
+            lines.push('Site stack: ' + (data.siteStack.subline || data.siteStack.headline || ''));
+            data.siteStack.items.forEach(function (it) {
+              lines.push(
+                '  · ' +
+                  it.label +
+                  (it.version ? ' ' + it.version : '') +
+                  ' (' +
+                  (it.category || '') +
+                  ', ' +
+                  (it.confidence || '') +
+                  ')'
+              );
+            });
+          }
+          lines.push(
+            'Final URL: ' + data.finalUrl,
+            'Content-Type: ' + (data.contentType || '—'),
+            'HTTP status: ' + data.statusCode,
+            'HTTPS: ' + (h.hasHttps ? 'yes' : 'no')
+          );
+          if (data.scanMeta && data.scanMeta.followUpPagesFetched > 0) {
+            lines.push(
+              'Follow-up pages merged: ' + data.scanMeta.followUpPagesFetched + ' (same-origin sample).'
+            );
+            (data.scanMeta.followUpPageUrls || []).forEach(function (u) {
+              lines.push('  — ' + u);
+            });
+          } else if (data.scanMeta) {
+            lines.push('Follow-up pages: none fetched (no suitable links or time budget).');
+          }
+          lines.push(
+            'X-Robots-Tag: ' + (data.xRobotsTag || '—'),
+            'HTML robots meta (noindex/nofollow): ' + (h.robotsMetaNoindex ? 'yes' : 'no'),
+            'tel: links: ' + (h.telCount != null ? h.telCount : '—') + ' | mailto: links: ' + (h.mailtoCount != null ? h.mailtoCount : '—'),
+            '<form> count: ' + (h.formCount != null ? h.formCount : '—'),
+            'Viewport meta: ' + (h.hasViewport ? 'yes' : 'no') + ' | charset meta: ' + (h.hasCharset ? 'yes' : 'no'),
+            'Title length: ' + (h.titleLength != null ? h.titleLength : '—') + ' | meta description length: ' + (h.metaDescriptionLength != null ? h.metaDescriptionLength : '—'),
+            'Favicon link hint: ' + (h.hasFaviconLink ? 'yes' : 'no'),
+            'Zendesk-like script strings: ' + (h.zendeskSnippetDetected ? 'found (verify manually)' : 'not detected'),
+            'Lorem ipsum: ' + (h.loremIpsumDetected ? 'FOUND' : 'not found'),
+            '“Coming soon” / placeholder phrases: ' +
+              (h.comingSoonDetected || h.placeholderPhrasesDetected ? 'FLAG' : 'not flagged'),
+            '<img> tags: ' + (h.imageTags != null ? h.imageTags : '—') + ' | missing/empty alt (rough): ' + (h.imagesMissingOrEmptyAlt != null ? h.imagesMissingOrEmptyAlt : '—'),
+          );
+          if (data.robotsTxt && data.robotsTxt.fetched) {
+            lines.push(
+              'robots.txt HTTP: ' +
+                data.robotsTxt.status +
+                ' | Sitemap: line: ' +
+                (data.robotsTxt.hasSitemapLine ? 'yes' : 'no')
+            );
+            if (data.robotsTxt.preview) lines.push('robots.txt preview: ' + data.robotsTxt.preview.slice(0, 220).replace(/\n/g, ' '));
+          }
+          if (data.scanWarnings && data.scanWarnings.length) {
+            lines.push('Warnings:');
+            data.scanWarnings.forEach((w) => lines.push('— ' + w.message));
+          }
+          if (Array.isArray(data.autoChecks) && data.autoChecks.length) {
+            lines.push('', 'Auto checklist rows (' + data.autoChecks.length + '):');
+            data.autoChecks.forEach((ac) => lines.push(ac.id + ' → ' + ac.status + ' — ' + ac.note));
+          }
+          lines.push('', data.disclaimer);
+          if (document.getElementById('autoApply').checked && Array.isArray(data.autoChecks) && data.autoChecks.length) {
+            lines.splice(
+              1,
+              0,
+              '✓ Checklist updated from scan — scroll to review each row’s status and [auto] notes.'
+            );
+            applyAutoChecks(data.autoChecks);
+          }
+          const detailLines = lines.map((l) =>
+            l.startsWith('<') ? l : '<div class="scan-line">' + escapeHtml(l) + '</div>'
+          );
+          out.innerHTML =
+            scanEmailWarnHtml +
+            renderEmailReportBanner(data.emailReport) +
+            overallBlock +
+            availBlock +
+            renderChecklistSkippedBanner(data) +
+            (detailLines.length
+              ? '<div class="scan-scroll">' + detailLines.join('') + '</div>'
+              : '');
+          hideBackendBanner();
+        } catch (e) {
+          const hint =
+            (state.apiBaseUrl || '').trim() === ''
+              ? ' If this UI is on a static host, run <code>npm run go-live:audit:tunnel</code> and set <strong>Scan API base</strong> to the tunnel URL.'
+              : ' Check that the tunnel is running and the URL matches <strong>Scan API base</strong> (CORS is enabled on the API).';
+          out.innerHTML =
+            '<div class="scan-msg scan-msg-warn"><strong>Request failed</strong> — same-origin needs the audit server (e.g. <code>http://localhost:3940</code>), or use a tunnel + Scan API base.' +
+            hint +
+            '<br/><br/>Error: ' +
+            escapeHtml(e.message) +
+            '</div>';
+        } finally {
+          if (stepTimer) window.clearInterval(stepTimer);
+          const wait = Math.max(0, 3200 - (Date.now() - scanStarted));
+          await new Promise(function (resolve) {
+            window.setTimeout(resolve, wait);
+          });
+          btn.disabled = false;
+        }
+      });
+
+      render();
+      if (lastScanPayload) {
+        renderScanDashboard(lastScanPayload);
+      }
+      function formatWatchResultMessage(data) {
+        const s = (data && data.summary) || {};
+        const to = s.alertEmail || DEFAULT_ALERT_EMAIL;
+        const lines = [
+          'Watch complete: ' + (s.scanned || 0) + ' brand(s), ' + (s.alerts || 0) + ' security alert(s).',
+          '',
+          'Report inbox: ' + to,
+        ];
+        if (s.emailsSent > 0) {
+          lines.push('Email sent: ' + s.emailsSent + ' report(s) to ' + to + '. Check inbox + spam.');
+        } else {
+          lines.push('Email NOT sent to ' + to + '.');
+          if (s.emailsSkipped > 0 || s.emailsFailed > 0) {
+            lines.push(
+              'Skipped: ' + (s.emailsSkipped || 0) + ', failed: ' + (s.emailsFailed || 0) + '.'
+            );
+          }
+          lines.push('Fix: paste Gmail App Password (16 chars) in the form OR run npm run go-live:email-setup, restart npm run go-live:audit.');
+        }
+        if (Array.isArray(s.brands)) {
+          for (const b of s.brands) {
+            if (!b || !b.email) continue;
+            const em = b.email;
+            if (em.status === 'sent') continue;
+            if (em.status === 'skipped' && em.reason) {
+              lines.push(b.name + ': ' + em.reason.slice(0, 100));
+              break;
+            }
+            if (em.status === 'failed' && em.error) {
+              lines.push(b.name + ': ' + em.error.slice(0, 100));
+              break;
+            }
+          }
+        }
+        return lines.join('\n');
+      }
+
+      document.getElementById('btnWatchAll').addEventListener('click', async function () {
+        const btn = document.getElementById('btnWatchAll');
+        btn.disabled = true;
+        btn.textContent = 'Watching all brands…';
+        try {
+          const watchBody = { reportEmail: DEFAULT_ALERT_EMAIL };
+          const appPassWatch = gmailAppPasswordEl ? gmailAppPasswordEl.value.trim().replace(/\s+/g, '') : '';
+          if (appPassWatch.length >= 16 && !appPassWatch.includes('@')) {
+            watchBody.smtpUser = DEFAULT_ALERT_EMAIL;
+            watchBody.smtpPass = appPassWatch;
+            watchBody.gmailAppPassword = appPassWatch;
+          }
+          const r = await fetch(watchRunEndpoint(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(watchBody),
+          });
+          const data = await r.json().catch(function () {
+            return {};
+          });
+          alert(data.ok ? formatWatchResultMessage(data) : 'Watch failed: ' + (data.error || r.statusText));
+          loadBrandWatchList();
+        } catch (e) {
+          alert('Watch failed: ' + (e.message || String(e)));
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Run watch now (all brands)';
+        }
+      });
+
+      probeScanBackend();
+      loadScannerRuntime();
+      loadEmailConfigStatus();
+      loadBrandWatchList();
+    })();
+  </script>
+</body>
+</html>

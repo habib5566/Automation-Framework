@@ -1,4 +1,6 @@
 node_modules/
+# Duplicate nested repo — do not track as submodule (breaks Vercel clone)
+Auto-frame/
 # Root-only (plain public/ would ignore go-live-audit/public)
 /public/
 api/_scan-core.js
