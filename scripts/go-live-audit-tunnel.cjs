@@ -16,7 +16,10 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const port = String(process.env.GO_LIVE_AUDIT_PORT || 3940);
-const mode = (process.env.GO_LIVE_AUDIT_TUNNEL || 'ngrok').toLowerCase();
+const mode = (
+  process.env.GO_LIVE_AUDIT_TUNNEL ||
+  (process.platform === 'win32' ? 'localtunnel' : 'ngrok')
+).toLowerCase();
 
 /** If ComSpec points at something odd (e.g. ffmpeg), shell:true breaks spawn('npx', …). */
 function childEnv() {
@@ -24,6 +27,11 @@ function childEnv() {
   if (process.platform === 'win32') {
     const cmd = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'cmd.exe');
     e.ComSpec = cmd;
+  }
+  const [maj, min] = process.versions.node.split('.').map(Number);
+  if (maj > 20 || (maj === 20 && min >= 6)) {
+    const extra = '--use-system-ca';
+    e.NODE_OPTIONS = e.NODE_OPTIONS ? e.NODE_OPTIONS + ' ' + extra : extra;
   }
   return e;
 }
@@ -52,16 +60,19 @@ function spawnNpxTunnel(commandLine) {
 
 // eslint-disable-next-line no-console
 console.log(
-  '\n=== FREE full scan with Vercel (same as localhost:3940) ===\n' +
-    '1) Wait for https:// URL below (ngrok or localtunnel)\n' +
+  '\n=== Tunnel for Vercel (optional — same scan as localhost:3940) ===\n' +
+    '1) Wait for the https:// URL below\n' +
     '2) Open your Vercel checklist page\n' +
-    '3) Paste URL into "Scan API base" (no trailing slash)\n' +
-    '4) Run quick scan — keep this terminal open\n' +
-    'Guide: go-live-audit/VERCEL-FREE-URDU.md\n'
+    '3) Paste that URL into "Scan API base" (no trailing slash)\n' +
+    '4) Run quick scan — keep this window open\n' +
+    'Windows default: localtunnel (avoids ngrok npm TLS errors). Override: set GO_LIVE_AUDIT_TUNNEL=ngrok\n'
 );
 
 const serverScript = path.join(root, 'scripts', 'go-live-audit-run.cjs');
-const server = spawn(process.execPath, [serverScript], {
+const [maj, min] = process.versions.node.split('.').map(Number);
+const systemCaOk = maj > 20 || (maj === 20 && min >= 6);
+const serverArgs = [...(systemCaOk ? ['--use-system-ca'] : []), serverScript];
+const server = spawn(process.execPath, serverArgs, {
   cwd: root,
   stdio: 'inherit',
   env: childEnv(),

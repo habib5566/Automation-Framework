@@ -65,6 +65,8 @@ After deploy, `scanMeta.consoleCapture` should be **`playwright-vercel`** when l
 
 **Local PC:** do not put `VERCEL=1` in `.env` unless you intend serverless mode locally. Use `npm run go-live:audit` without that, or set `GO_LIVE_AUDIT_FORCE_LOCAL_PLAYWRIGHT=1`.
 
+**Local shows “site down” but Vercel shows “up”?** Your PC may block HTTPS (corporate antivirus: `UNABLE_TO_VERIFY_LEAF_SIGNATURE`). The scanner auto-retries once with relaxed TLS on localhost so results match Vercel. Permanent local fix: `npm run go-live:audit:insecure-tls` (trusted network only).
+
 ## Environment variables (optional)
 
 | Variable | When |

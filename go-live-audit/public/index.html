@@ -1363,9 +1363,10 @@
             autocomplete="off"
             spellcheck="false"
           />
-          <div id="vercelFreeTunnelCard" class="scan-msg scan-msg-ok" style="display:none;margin-top:0.65rem;font-size:0.92rem">
-            <strong>Vercel scan</strong> — <strong>Scan API base khali</strong> = server Chromium + deep HTTP console (redeploy after git push).<br />
-            <strong>Optional:</strong> tunnel URL yahan → Vercel proxy karega (PC par <code>npm run go-live:audit:tunnel</code>). <code>VERCEL.md</code>
+          <div id="vercelFreeTunnelCard" class="scan-msg scan-msg-ok" style="display:none;margin-top:0.65rem;font-size:0.92rem;line-height:1.5">
+            <strong>How to scan on Vercel</strong><br />
+            <strong>Leave Scan API base empty</strong> — scan runs on Vercel (Chromium + deep HTTP console). After you <code>git push</code>, click <strong>Redeploy</strong> on Vercel once.<br />
+            <strong>Optional — same as your PC:</strong> run <code>npm run go-live:audit:tunnel</code>, copy the <code>https://…</code> URL, paste it here. Vercel will proxy the scan to your machine (keep the terminal open). See <code>go-live-audit/VERCEL.md</code>.
           </div>
         </div>
         <div class="scan-actions">

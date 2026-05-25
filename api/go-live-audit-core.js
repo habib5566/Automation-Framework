@@ -17,6 +17,23 @@ const HTTPS_AGENT =
     ? new https.Agent({ rejectUnauthorized: false })
     : undefined;
 
+let TLS_RELAX_AGENT;
+function getInsecureHttpsAgent() {
+  if (!TLS_RELAX_AGENT) TLS_RELAX_AGENT = new https.Agent({ rejectUnauthorized: false });
+  return TLS_RELAX_AGENT;
+}
+
+function isTlsFetchError(err) {
+  const code = err && err.code ? String(err.code) : '';
+  const msg = String((err && err.message) || err || '');
+  return (
+    code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' ||
+    code === 'CERT_HAS_EXPIRED' ||
+    code === 'DEPTH_ZERO_SELF_SIGNED_CERT' ||
+    /certificate|ssl|tls|unable to verify/i.test(msg)
+  );
+}
+
 function sendJson(res, status, obj) {
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
@@ -164,7 +181,7 @@ function isBlockedHost(hostname) {
   return false;
 }
 
-function fetchUrl(targetUrl, maxRedirects = 5, fetchOpts = {}) {
+function fetchUrlOnce(targetUrl, maxRedirects = 5, fetchOpts = {}) {
   const timeoutMs =
     typeof fetchOpts === 'object' &&
     fetchOpts != null &&
@@ -172,6 +189,7 @@ function fetchUrl(targetUrl, maxRedirects = 5, fetchOpts = {}) {
     Number.isFinite(Number(fetchOpts.timeoutMs))
       ? Math.min(60_000, Math.max(3000, Number(fetchOpts.timeoutMs)))
       : 18_000;
+  const forceInsecure = !!(fetchOpts && fetchOpts.forceInsecure);
   return new Promise((resolve, reject) => {
     const tryOnce = (urlStr, redirectsLeft) => {
       let u;
@@ -202,7 +220,10 @@ function fetchUrl(targetUrl, maxRedirects = 5, fetchOpts = {}) {
         },
         timeout: timeoutMs,
       };
-      if (u.protocol === 'https:' && HTTPS_AGENT) opts.agent = HTTPS_AGENT;
+      if (u.protocol === 'https:') {
+        if (HTTPS_AGENT) opts.agent = HTTPS_AGENT;
+        else if (forceInsecure) opts.agent = getInsecureHttpsAgent();
+      }
 
       const req = lib.request(opts, (res) => {
         const loc = res.headers.location;
@@ -226,6 +247,7 @@ function fetchUrl(targetUrl, maxRedirects = 5, fetchOpts = {}) {
             finalUrl: u.href,
             body,
             contentType: ct,
+            tlsRelaxed: forceInsecure,
           });
         });
       });
@@ -239,6 +261,23 @@ function fetchUrl(targetUrl, maxRedirects = 5, fetchOpts = {}) {
     };
 
     tryOnce(targetUrl, maxRedirects);
+  });
+}
+
+/**
+ * Fetch with one automatic TLS-relaxed retry (local PC + corporate SSL inspection).
+ * Vercel/AWS usually does not need this — fixes “site down on localhost, up on live”.
+ */
+function fetchUrl(targetUrl, maxRedirects = 5, fetchOpts = {}) {
+  const opts = typeof fetchOpts === 'object' && fetchOpts != null ? fetchOpts : {};
+  return fetchUrlOnce(targetUrl, maxRedirects, opts).catch((err) => {
+    if (opts.forceInsecure || opts.allowInsecureRetry === false || HTTPS_AGENT) throw err;
+    if (!isTlsFetchError(err)) throw err;
+    return fetchUrlOnce(targetUrl, maxRedirects, {
+      ...opts,
+      forceInsecure: true,
+      allowInsecureRetry: false,
+    });
   });
 }
 
@@ -1526,6 +1565,15 @@ async function handleScan(req, res) {
     const { statusCode, headers, finalUrl, body, contentType } = bundle;
     const availability = summarizeHttpAvailability(statusCode, finalUrl);
 
+    /** @type {Array<{ message: string }>} */
+    const tlsRelaxedWarnings = [];
+    if (bundle.tlsRelaxed) {
+      tlsRelaxedWarnings.push({
+        message:
+          '[auto] TLS certificate could not be verified from this PC (common with office antivirus/proxy). Scan retried with relaxed HTTPS verify so availability matches Vercel. For a permanent local fix: npm run go-live:audit:insecure-tls (trusted network only).',
+      });
+    }
+
     const { isServerlessChromiumRuntime } = require('./go-live-audit-playwright-console.cjs');
     const onServerlessDeploy = isServerlessChromiumRuntime();
     let cachedConsolePw = null;
@@ -1636,6 +1684,10 @@ async function handleScan(req, res) {
       );
       autoChecks = built.autoChecks;
       scanWarnings = built.scanWarnings;
+    }
+
+    if (tlsRelaxedWarnings.length) {
+      scanWarnings = [...tlsRelaxedWarnings, ...(scanWarnings || [])];
     }
 
     if (statusCode >= 500 && !skipCh.skip) {
