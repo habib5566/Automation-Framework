@@ -469,6 +469,10 @@ function resolveTransport(requestJson, to) {
   const envApp = looksLikeGoogleAppPassword(envPass);
   const uiApp = ui ? looksLikeGoogleAppPassword(ui.pass) : false;
 
+  if (ui && uiApp && needsInternet) {
+    return createNodemailerTransport(ui);
+  }
+
   if (envSmtpConfigured()) {
     const envT = createTransportFromEnv();
     if (!envT.error) {

@@ -1,18 +1,18 @@
 'use strict';
 
 /**
- * Real browser console capture — local Playwright, or Vercel/serverless via @sparticuz/chromium.
+ * Browser console capture — local Playwright; Vercel/Lambda via puppeteer-core + @sparticuz/chromium.
  */
 function resolveLocalChromium() {
   try {
     return require('playwright').chromium;
   } catch {
-    /* full playwright package optional */
+    /* optional */
   }
   try {
     return require('@playwright/test').chromium;
   } catch {
-    /* devDependency — present when you run npm install locally */
+    /* devDependency */
   }
   return require('playwright-core').chromium;
 }
@@ -21,24 +21,82 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function captureWithLocalPlaywright(url, opts) {
-  const timeoutMs = opts.timeoutMs || 18_000;
-  const waitAfterMs = opts.waitAfterMs != null ? opts.waitAfterMs : 3000;
-  const chromium = resolveLocalChromium();
-  const browser = await chromium.launch({ headless: true });
-  try {
-    return await collectConsoleLogs(browser, url, { timeoutMs, waitAfterMs, useDefaultPage: false });
-  } finally {
-    await browser.close().catch(() => {});
-  }
+function pushLog(logs, seen, type, text) {
+  const t = String(text || '').trim();
+  if (!t || t.length < 2) return;
+  const key = type + '|' + t.slice(0, 240);
+  if (seen.has(key)) return;
+  seen.add(key);
+  logs.push({ type, text: t.slice(0, 500) });
 }
 
-async function captureWithServerlessChromium(url, opts) {
+/**
+ * @param {import('puppeteer').Page} page
+ */
+async function collectPuppeteerConsoleLogs(page, url, opts) {
   const timeoutMs = opts.timeoutMs || 24_000;
   const waitAfterMs = opts.waitAfterMs != null ? opts.waitAfterMs : 5000;
+  const logs = [];
+  const seen = new Set();
+
+  page.on('console', (msg) => {
+    const t = msg.type();
+    const pwType = t === 'warning' ? 'warn' : t === 'log' ? 'info' : t;
+    pushLog(logs, seen, pwType, msg.text());
+  });
+  page.on('pageerror', (err) => {
+    pushLog(logs, seen, 'pageerror', String((err && err.message) || err));
+  });
+  page.on('requestfailed', (request) => {
+    const fail = request.failure();
+    const hint = (fail && fail.errorText) || 'net::ERR_FAILED';
+    pushLog(logs, seen, 'error', `Failed to load resource: ${hint} — ${request.url()}`);
+  });
+  page.on('response', (response) => {
+    const status = response.status();
+    if (status < 400) return;
+    const u = response.url();
+    if (!u || /favicon\.ico|\.woff2?|\.png|\.jpg|\.gif|analytics|google-analytics/i.test(u)) return;
+    const rt = response.request().resourceType();
+    if (!['document', 'script', 'stylesheet', 'xhr', 'fetch'].includes(rt)) return;
+    let short = u;
+    try {
+      short = new URL(u).pathname.split('/').pop() || u;
+    } catch {
+      /* keep */
+    }
+    pushLog(logs, seen, 'error', `Failed to load resource: the server responded with a status of ${status} (${short})`);
+  });
+
+  await page.goto(url, { waitUntil: 'networkidle2', timeout: timeoutMs });
+  await sleep(waitAfterMs);
+
+  let pageStats = { buttonCount: 0, anchorHrefCount: 0, interactiveApprox: 0 };
+  try {
+    pageStats = await page.evaluate(() => {
+      const buttons = document.querySelectorAll('button, [role="button"], input[type="button"], input[type="submit"]')
+        .length;
+      const anchors = document.querySelectorAll('a[href]').length;
+      const interactive = document.querySelectorAll(
+        'button, a[href], [role="button"], input[type="button"], input[type="submit"], [onclick]'
+      ).length;
+      return {
+        buttonCount: buttons,
+        anchorHrefCount: anchors,
+        interactiveApprox: interactive,
+      };
+    });
+  } catch {
+    /* DOM not ready */
+  }
+
+  return { logs, pageStats };
+}
+
+async function captureWithServerlessPuppeteer(url, opts) {
   const chromiumPack = require('@sparticuz/chromium');
   const pack = chromiumPack.default || chromiumPack;
-  const { chromium } = require('playwright-core');
+  const puppeteer = require('puppeteer-core');
 
   if (typeof pack.setGraphicsMode === 'function') {
     pack.setGraphicsMode(false);
@@ -46,7 +104,7 @@ async function captureWithServerlessChromium(url, opts) {
 
   const executablePath = await pack.executablePath();
   if (!executablePath) {
-    throw new Error('@sparticuz/chromium executablePath() returned empty — redeploy with includeFiles for chromium');
+    throw new Error('@sparticuz/chromium executablePath() empty');
   }
 
   const launchOpts = {
@@ -62,14 +120,11 @@ async function captureWithServerlessChromium(url, opts) {
   for (let attempt = 0; attempt < 2; attempt++) {
     let browser;
     try {
-      browser = await chromium.launch(launchOpts);
-      const logs = await collectConsoleLogs(browser, url, {
-        timeoutMs,
-        waitAfterMs,
-        useDefaultPage: true,
-      });
+      browser = await puppeteer.launch(launchOpts);
+      const page = await browser.newPage();
+      const result = await collectPuppeteerConsoleLogs(page, url, opts);
       await browser.close().catch(() => {});
-      return logs;
+      return result;
     } catch (e) {
       lastErr = e;
       if (browser) await browser.close().catch(() => {});
@@ -79,52 +134,42 @@ async function captureWithServerlessChromium(url, opts) {
   throw lastErr;
 }
 
-/**
- * @param {import('playwright').Browser | import('playwright-core').Browser} browser
- */
-async function collectConsoleLogs(browser, url, opts) {
+async function captureWithLocalPlaywright(url, opts) {
   const timeoutMs = opts.timeoutMs || 18_000;
   const waitAfterMs = opts.waitAfterMs != null ? opts.waitAfterMs : 3000;
-  const useDefaultPage = opts.useDefaultPage === true;
-
-  let page;
-  let contextToClose = null;
-
-  if (useDefaultPage) {
-    page = await browser.newPage();
-  } else {
-    contextToClose = await browser.newContext({
-      userAgent:
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-      viewport: { width: 1366, height: 768 },
-      ignoreHTTPSErrors: true,
-    });
-    page = await contextToClose.newPage();
+  const chromium = resolveLocalChromium();
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const logs = await collectPlaywrightConsoleLogs(browser, url, { timeoutMs, waitAfterMs });
+    return { logs, pageStats: null };
+  } finally {
+    await browser.close().catch(() => {});
   }
+}
 
-  /** @type {Array<{ type: string, text: string }>} */
+async function collectPlaywrightConsoleLogs(browser, url, opts) {
+  const timeoutMs = opts.timeoutMs || 18_000;
+  const waitAfterMs = opts.waitAfterMs != null ? opts.waitAfterMs : 3000;
+  const context = await browser.newContext({
+    userAgent:
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    viewport: { width: 1366, height: 768 },
+    ignoreHTTPSErrors: true,
+  });
+  const page = await context.newPage();
   const logs = [];
   const seen = new Set();
 
-  function push(type, text) {
-    const t = String(text || '').trim();
-    if (!t || t.length < 2) return;
-    const key = type + '|' + t.slice(0, 240);
-    if (seen.has(key)) return;
-    seen.add(key);
-    logs.push({ type, text: t.slice(0, 500) });
-  }
-
   page.on('console', (msg) => {
-    push(msg.type(), msg.text());
+    pushLog(logs, seen, msg.type(), msg.text());
   });
   page.on('pageerror', (err) => {
-    push('pageerror', String((err && err.message) || err));
+    pushLog(logs, seen, 'pageerror', String((err && err.message) || err));
   });
   page.on('requestfailed', (request) => {
     const fail = request.failure();
     const hint = fail && fail.errorText ? fail.errorText : 'net::ERR_FAILED';
-    push('error', `Failed to load resource: ${hint} — ${request.url()}`);
+    pushLog(logs, seen, 'error', `Failed to load resource: ${hint} — ${request.url()}`);
   });
   page.on('response', (response) => {
     const status = response.status();
@@ -139,32 +184,20 @@ async function collectConsoleLogs(browser, url, opts) {
     } catch {
       /* keep */
     }
-    push(
-      'error',
-      `Failed to load resource: the server responded with a status of ${status} (${short})`
-    );
+    pushLog(logs, seen, 'error', `Failed to load resource: the server responded with a status of ${status} (${short})`);
   });
 
-  await page.goto(url, {
-    waitUntil: 'domcontentloaded',
-    timeout: timeoutMs,
-  });
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
   try {
     await page.waitForLoadState('networkidle', { timeout: Math.min(10_000, timeoutMs / 2) });
   } catch {
-    /* SPA / long-polling */
+    /* SPA */
   }
   await sleep(waitAfterMs);
-
-  if (contextToClose) {
-    await contextToClose.close().catch(() => {});
-  } else {
-    await page.close().catch(() => {});
-  }
+  await context.close().catch(() => {});
   return logs;
 }
 
-/** Vercel / Lambda — use @sparticuz/chromium, never ms-playwright cache */
 function isServerlessChromiumRuntime() {
   if (process.env.GO_LIVE_AUDIT_FORCE_LOCAL_PLAYWRIGHT === '1') return false;
   if (process.env.GO_LIVE_AUDIT_USE_SERVERLESS_CHROMIUM === '1') return true;
@@ -177,7 +210,7 @@ function isServerlessChromiumRuntime() {
 
 async function captureBrowserConsole(url, opts = {}) {
   const target = String(url || '').trim();
-  if (!target) return { error: 'No URL', logs: [] };
+  if (!target) return { error: 'No URL', logs: [], pageStats: null };
 
   const serverless = isServerlessChromiumRuntime();
   const merged = {
@@ -187,16 +220,24 @@ async function captureBrowserConsole(url, opts = {}) {
 
   try {
     if (serverless) {
-      const logs = await captureWithServerlessChromium(target, merged);
-      return { logs: Array.isArray(logs) ? logs : [], runtime: 'serverless' };
+      const result = await captureWithServerlessPuppeteer(target, merged);
+      return {
+        logs: result.logs || [],
+        pageStats: result.pageStats || null,
+        runtime: 'serverless-puppeteer',
+      };
     }
-    const logs = await captureWithLocalPlaywright(target, merged);
-    return { logs: Array.isArray(logs) ? logs : [], runtime: 'local' };
+    const result = await captureWithLocalPlaywright(target, merged);
+    return {
+      logs: result.logs || [],
+      pageStats: result.pageStats || null,
+      runtime: 'local-playwright',
+    };
   } catch (e) {
     const msg = String((e && e.message) || e);
     // eslint-disable-next-line no-console
     console.warn('[go-live-audit] console capture failed:', msg);
-    return { error: msg, logs: [], runtime: serverless ? 'serverless' : 'local' };
+    return { error: msg, logs: [], pageStats: null, runtime: serverless ? 'serverless' : 'local' };
   }
 }
 

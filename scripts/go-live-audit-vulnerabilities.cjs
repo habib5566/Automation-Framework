@@ -52,7 +52,8 @@ function buildVulnerabilities({ security, siteStack, pageIssues, siteIssues, con
 
   for (const it of (consoleIssues && consoleIssues.items) || []) {
     if (!it) continue;
-    const sev = it.severity === 'error' ? 'high' : it.severity === 'warn' ? 'medium' : 'low';
+    const sev =
+      it.severity === 'error' ? 'high' : it.severity === 'warn' ? 'medium' : it.severity === 'info' ? 'low' : 'low';
     add({
       id: 'console_' + String(it.message || '').slice(0, 36),
       severity: sev,

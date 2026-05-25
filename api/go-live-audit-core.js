@@ -33,6 +33,7 @@ const {
   detectHtmlRuntimeIssues,
   issuesFromAvailability,
   issuesFromPlaywrightConsole,
+  issuesFromHtmlScriptHints,
   mergeIssues,
   summarizeIssues,
 } = require('./go-live-audit-page-issues.cjs');
@@ -100,6 +101,28 @@ function enrichScanReportPayload(payload, ctx) {
     siteIssues: payload.siteIssues,
     consoleIssues: payload.consoleIssues,
   });
+
+  const cap = payload.scanMeta && payload.scanMeta.consoleCapture;
+  if (cap === 'playwright-vercel-failed' || cap === 'playwright-failed') {
+    const v = payload.vulnerabilities || { items: [], summary: {} };
+    v.items = v.items || [];
+    v.items.unshift({
+      id: 'browser_capture_failed',
+      severity: 'high',
+      category: 'console',
+      title: 'Live browser scan failed on Vercel',
+      detail:
+        (payload.scanMeta.consoleCaptureDetail || 'Chromium could not stay open').slice(0, 200) +
+        ' — redeploy with latest code; paste Gmail App Password for email.',
+      source: 'scan-meta',
+    });
+    v.summary.high = (v.summary.high || 0) + 1;
+    v.summary.total = (v.summary.total || 0) + 1;
+    v.headline = v.summary.critical
+      ? v.headline
+      : (v.summary.high || 0) + ' high-risk finding(s)';
+    payload.vulnerabilities = v;
+  }
 }
 
 async function flushScanEmailIfNeeded(requestJson, scanPayload) {
@@ -1102,6 +1125,23 @@ function collectSameOriginPageUrls(finalUrl, body, max) {
 
     const hrefRe = /\bhref\s*=\s*["']([^"']+)["']/gi;
     let hm;
+    const routeRe = /"(?:href|as|pathname)"\s*:\s*"(\/(?!\/)[^"\\]{1,180})"/gi;
+    let rm;
+    while ((rm = routeRe.exec(body)) !== null && out.length < max * 2) {
+      const path = rm[1].trim();
+      if (!path || path.length < 2) continue;
+      try {
+        const abs = new URL(path, finalUrl);
+        if (abs.hostname !== originHost) continue;
+        const key = abs.href.split('#')[0];
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(key);
+      } catch {
+        /* skip */
+      }
+    }
+
     while ((hm = hrefRe.exec(body)) !== null && out.length < max) {
       const href = hm[1].trim();
       if (
@@ -1211,6 +1251,7 @@ function mergeHtmlSignals(primary, mainBody, extras) {
 async function fetchFollowUpSameOriginSamples(finalUrl, mainBody, opts = {}) {
   const maxPages = opts.maxPages != null ? opts.maxPages : 2;
   const maxTotalMs = opts.maxTotalMs != null ? opts.maxTotalMs : 20_000;
+  const perPageTimeoutMs = opts.perPageTimeoutMs != null ? opts.perPageTimeoutMs : 10_000;
   const deadline = Date.now() + maxTotalMs;
   const urls = collectSameOriginPageUrls(finalUrl, mainBody, maxPages);
   /** @type {Array<{ body: string; finalUrl: string; contentType: string }>} */
@@ -1218,7 +1259,7 @@ async function fetchFollowUpSameOriginSamples(finalUrl, mainBody, opts = {}) {
   for (const href of urls) {
     if (Date.now() > deadline) break;
     try {
-      const b = await fetchUrl(href, 3, { timeoutMs: 10_000 });
+      const b = await fetchUrl(href, 3, { timeoutMs: perPageTimeoutMs });
       if (b.statusCode >= 200 && b.statusCode < 400 && b.body) {
         const ct = String(b.contentType || '');
         if (/html|text\/plain/i.test(ct) || /<html[\s>]/i.test(b.body.slice(0, 2500))) {
@@ -1297,7 +1338,8 @@ async function handleScan(req, res) {
       if (logs.length) {
         lists.push(issuesFromPlaywrightConsole(logs));
         consoleCapture = onServerless ? 'playwright-vercel' : 'playwright';
-        consoleCaptureDetail = logs.length + ' browser log line(s)';
+        consoleCaptureDetail =
+          (pw && pw.runtime ? pw.runtime + ' — ' : '') + logs.length + ' browser log line(s)';
       } else if (err) {
         consoleCapture = onServerless ? 'playwright-vercel-failed' : 'playwright-failed';
         consoleCaptureDetail = err.slice(0, 200);
@@ -1333,12 +1375,19 @@ async function handleScan(req, res) {
           cachedPw !== undefined && cachedPw !== null
             ? cachedPw
             : await captureBrowserConsole(pageUrl || requestedUrl, {
-                timeoutMs: onServerless ? 35_000 : 18_000,
-                waitAfterMs: onServerless ? 8000 : 3000,
+                timeoutMs: onServerless ? 28_000 : 18_000,
+                waitAfterMs: onServerless ? 6000 : 3000,
               });
         const applied = applyPlaywrightConsoleResult(pw, lists, onServerless);
         consoleCapture = applied.consoleCapture;
         consoleCaptureDetail = applied.consoleCaptureDetail;
+        if (
+          onServerless &&
+          (consoleCapture === 'playwright-vercel-failed' || consoleCapture === 'playwright-vercel-empty') &&
+          htmlBody
+        ) {
+          lists.push(issuesFromHtmlScriptHints(htmlBody));
+        }
       }
       const items = mergeIssues(lists);
       return { items, summary: summarizeIssues(items), consoleCapture, consoleCaptureDetail };
@@ -1402,43 +1451,76 @@ async function handleScan(req, res) {
     const { isServerlessChromiumRuntime } = require('./go-live-audit-playwright-console.cjs');
     const onServerlessDeploy = isServerlessChromiumRuntime();
     let cachedConsolePw = null;
-    if (
+    const wantConsoleOnServerless =
       onServerlessDeploy &&
       json.captureConsole !== false &&
       process.env.GO_LIVE_AUDIT_NO_PLAYWRIGHT_CONSOLE !== '1' &&
       statusCode >= 200 &&
-      statusCode < 400
-    ) {
-      cachedConsolePw = await captureBrowserConsole(finalUrl || requestedUrl, {
-        timeoutMs: 35_000,
-        waitAfterMs: 8000,
-      });
-    }
+      statusCode < 400;
 
     const html = analyzeHtml(body, finalUrl, contentType);
     html._contentType = contentType;
 
     let robotsInfo = { fetched: false, status: null, hasSitemapLine: false, error: '', preview: '' };
-    if (statusCode && statusCode < 500) {
-      try {
-        robotsInfo = await fetchRobotsTxt(finalUrl);
-      } catch (e) {
-        robotsInfo.error = String(e.message || e);
-      }
-    }
-
     let followUpSamples = [];
-    if (statusCode >= 200 && statusCode < 400 && html.isHtmlDocument && !onServerlessDeploy) {
-      const fu = await fetchFollowUpSameOriginSamples(finalUrl, body, {
-        maxPages: 2,
-        maxTotalMs: 20_000,
-      });
-      followUpSamples = fu.samples;
+
+    if (statusCode && statusCode < 500) {
+      if (onServerlessDeploy) {
+        try {
+          robotsInfo = await fetchRobotsTxt(finalUrl);
+        } catch (e) {
+          robotsInfo.error = String(e.message || e);
+        }
+        if (statusCode >= 200 && statusCode < 400 && html.isHtmlDocument) {
+          try {
+            const fu = await fetchFollowUpSameOriginSamples(finalUrl, body, {
+              maxPages: 2,
+              maxTotalMs: 14_000,
+              perPageTimeoutMs: 7_000,
+            });
+            followUpSamples = fu.samples;
+          } catch {
+            followUpSamples = [];
+          }
+        }
+        if (wantConsoleOnServerless) {
+          cachedConsolePw = await captureBrowserConsole(finalUrl || requestedUrl, {
+            timeoutMs: 24_000,
+            waitAfterMs: 5000,
+          });
+        }
+      } else {
+        try {
+          robotsInfo = await fetchRobotsTxt(finalUrl);
+        } catch (e) {
+          robotsInfo.error = String(e.message || e);
+        }
+        if (statusCode >= 200 && statusCode < 400 && html.isHtmlDocument) {
+          const fu = await fetchFollowUpSameOriginSamples(finalUrl, body, {
+            maxPages: 2,
+            maxTotalMs: 20_000,
+          });
+          followUpSamples = fu.samples;
+        }
+      }
     }
 
     const mergedHtml =
       followUpSamples.length > 0 ? mergeHtmlSignals(html, body, followUpSamples) : html;
     mergedHtml._contentType = contentType;
+
+    if (cachedConsolePw && cachedConsolePw.pageStats) {
+      const ps = cachedConsolePw.pageStats;
+      if (ps.interactiveApprox != null && ps.interactiveApprox > 0) {
+        mergedHtml.interactiveApprox = Math.max(mergedHtml.interactiveApprox || 0, ps.interactiveApprox);
+      }
+      if (ps.buttonCount != null) {
+        mergedHtml._browserButtonCount = ps.buttonCount;
+      }
+      if (ps.anchorHrefCount != null) {
+        mergedHtml._browserAnchorCount = ps.anchorHrefCount;
+      }
+    }
 
     const bodySlice = [body, ...followUpSamples.map((s) => s.body)]
       .map((b) => String(b || '').slice(0, 80_000))
@@ -1509,7 +1591,7 @@ async function handleScan(req, res) {
         }
       : detectSiteStack(headers, bodySlice, finalUrl);
 
-    if (!skipCh.skip && siteStack && siteStack.items && !onServerlessDeploy) {
+    if (!skipCh.skip && siteStack && siteStack.items) {
       siteStack = await enrichSiteStackVersions(siteStack, bodySlice, finalUrl, fetchUrl);
     }
 
@@ -1565,6 +1647,8 @@ async function handleScan(req, res) {
         consoleCapture: pageIssues.consoleCapture || 'unknown',
         consoleCaptureDetail: pageIssues.consoleCaptureDetail || '',
         scannedOnServerless: onServerlessDeploy,
+        scanDetailMode: onServerlessDeploy ? 'vercel-full' : 'local-full',
+        parallelEnrichment: onServerlessDeploy,
       },
       disclaimer:
         'Scan uses the start URL and robots.txt, then may fetch up to two same-origin pages linked from that HTML (time-capped) to widen signals. Form delivery, Zendesk, CLS, and full-site crawling still need manual QA or Playwright.',

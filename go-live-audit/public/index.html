@@ -2196,8 +2196,8 @@
                 ? 'Vercel browser ran but logged no console errors. Some sites load fewer trackers on serverless — compare with local scan; trust local for console QA.'
                 : 'Browser opened the site; no console errors or warnings logged.'
               : cap === 'playwright-failed' || cap === 'playwright-vercel-failed'
-                ? 'Browser could not run — ' +
-                  (capDetail || 'check Vercel function logs (2048MB, 60s) or run npx playwright install chromium locally.')
+                ? 'Browser could not run on Vercel — push latest code (uses puppeteer-core + Chromium). ' +
+                  (capDetail || 'Check redeploy and Vercel logs (2048MB, 60s).')
                 : cap === 'html-only'
                   ? 'Console not captured (page not 2xx HTML or Playwright off). Restart audit server after <code>npm install</code>.'
                   : 'Run scan again — console capture uses Playwright when the page loads in a browser.';

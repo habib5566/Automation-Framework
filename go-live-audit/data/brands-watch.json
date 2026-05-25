@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-05-22T09:01:37.509Z",
+  "updatedAt": "2026-05-25T05:50:58.262Z",
   "brands": [
     {
       "name": "Example Brand",
@@ -86,7 +86,7 @@
       "url": "https://vettedlogos.com/",
       "enabled": true,
       "addedAt": "2026-05-20T10:47:30.962Z",
-      "lastScanAt": "2026-05-22T08:10:24.713Z",
+      "lastScanAt": "2026-05-22T10:54:26.884Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://vettedlogos.com/",
       "baselineFingerprint": {
@@ -151,9 +151,24 @@
       "url": "https://websiteoptimax.com/",
       "enabled": true,
       "addedAt": "2026-05-22T09:01:36.987Z",
-      "lastScanAt": "2026-05-22T09:01:36.987Z",
+      "lastScanAt": "2026-05-22T09:22:58.510Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://websiteoptimax.com/"
+    },
+    {
+      "name": "vlogos",
+      "url": "https://vettedlogos.com/",
+      "enabled": true,
+      "addedAt": "2026-05-22T10:54:27.340Z"
+    },
+    {
+      "name": "optimax",
+      "url": "https://websiteoptimax.com/contact",
+      "enabled": true,
+      "addedAt": "2026-05-25T05:50:57.750Z",
+      "lastScanAt": "2026-05-25T05:50:57.750Z",
+      "lastAlertLevel": "warn",
+      "lastUrl": "https://websiteoptimax.com/contact"
     }
   ]
 }

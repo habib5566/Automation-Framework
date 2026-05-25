@@ -101,6 +101,28 @@ function enrichScanReportPayload(payload, ctx) {
     siteIssues: payload.siteIssues,
     consoleIssues: payload.consoleIssues,
   });
+
+  const cap = payload.scanMeta && payload.scanMeta.consoleCapture;
+  if (cap === 'playwright-vercel-failed' || cap === 'playwright-failed') {
+    const v = payload.vulnerabilities || { items: [], summary: {} };
+    v.items = v.items || [];
+    v.items.unshift({
+      id: 'browser_capture_failed',
+      severity: 'high',
+      category: 'console',
+      title: 'Live browser scan failed on Vercel',
+      detail:
+        (payload.scanMeta.consoleCaptureDetail || 'Chromium could not stay open').slice(0, 200) +
+        ' — redeploy with latest code; paste Gmail App Password for email.',
+      source: 'scan-meta',
+    });
+    v.summary.high = (v.summary.high || 0) + 1;
+    v.summary.total = (v.summary.total || 0) + 1;
+    v.headline = v.summary.critical
+      ? v.headline
+      : (v.summary.high || 0) + ' high-risk finding(s)';
+    payload.vulnerabilities = v;
+  }
 }
 
 async function flushScanEmailIfNeeded(requestJson, scanPayload) {
@@ -1316,7 +1338,8 @@ async function handleScan(req, res) {
       if (logs.length) {
         lists.push(issuesFromPlaywrightConsole(logs));
         consoleCapture = onServerless ? 'playwright-vercel' : 'playwright';
-        consoleCaptureDetail = logs.length + ' browser log line(s)';
+        consoleCaptureDetail =
+          (pw && pw.runtime ? pw.runtime + ' — ' : '') + logs.length + ' browser log line(s)';
       } else if (err) {
         consoleCapture = onServerless ? 'playwright-vercel-failed' : 'playwright-failed';
         consoleCaptureDetail = err.slice(0, 200);
@@ -1485,6 +1508,19 @@ async function handleScan(req, res) {
     const mergedHtml =
       followUpSamples.length > 0 ? mergeHtmlSignals(html, body, followUpSamples) : html;
     mergedHtml._contentType = contentType;
+
+    if (cachedConsolePw && cachedConsolePw.pageStats) {
+      const ps = cachedConsolePw.pageStats;
+      if (ps.interactiveApprox != null && ps.interactiveApprox > 0) {
+        mergedHtml.interactiveApprox = Math.max(mergedHtml.interactiveApprox || 0, ps.interactiveApprox);
+      }
+      if (ps.buttonCount != null) {
+        mergedHtml._browserButtonCount = ps.buttonCount;
+      }
+      if (ps.anchorHrefCount != null) {
+        mergedHtml._browserAnchorCount = ps.anchorHrefCount;
+      }
+    }
 
     const bodySlice = [body, ...followUpSamples.map((s) => s.body)]
       .map((b) => String(b || '').slice(0, 80_000))
