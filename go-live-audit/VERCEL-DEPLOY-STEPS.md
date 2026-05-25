@@ -11,12 +11,12 @@
 | Brand performance matrix | ✅ | |
 | **Email** report | ✅ | Vercel **Environment Variables** + Gmail App Password |
 | HTML hints (page errors) | ✅ | |
-| **Real browser console errors** (Playwright) | ✅ | `@sparticuz/chromium` + env `GO_LIVE_AUDIT_USE_SERVERLESS_CHROMIUM=1` |
+| **Real browser console errors** (Playwright) | ⚠️ | Serverless browser **aksar fail** — local jaisa nahi |
 | **Save brand watch** + **Run watch now** | ❌ | Sirf full server (`npm run go-live:audit` / **Render**) |
 | **Watch har 30 min** (daemon) | ❌ | Always-on server chahiye |
 
-**100% features chahiye?** → **Render** (`render.yaml`) ya PC par `npm run go-live:audit` + optional tunnel.  
-**Public link + zyada tar scans?** → **Vercel** (neeche steps).
+**Free + console local jaisa?** → **VERCEL-FREE-URDU.md** — Vercel UI + `npm run go-live:audit:tunnel` on PC ($0).  
+**24/7 bina PC?** → Render **Free** instance (card verify ho sakta hai) ya tunnel jab PC on ho.
 
 ---
 

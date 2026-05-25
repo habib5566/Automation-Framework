@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-05-25T05:50:58.262Z",
+  "updatedAt": "2026-05-25T07:39:30.519Z",
   "brands": [
     {
       "name": "Example Brand",
@@ -112,7 +112,7 @@
       "url": "https://www.designcentura.com/",
       "enabled": true,
       "addedAt": "2026-05-21T12:54:06.667Z",
-      "lastScanAt": "2026-05-22T08:37:04.883Z",
+      "lastScanAt": "2026-05-25T07:39:30.086Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://www.designcentura.com/"
     },
@@ -169,6 +169,12 @@
       "lastScanAt": "2026-05-25T05:50:57.750Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://websiteoptimax.com/contact"
+    },
+    {
+      "name": "designcentura",
+      "url": "https://www.designcentura.com/",
+      "enabled": true,
+      "addedAt": "2026-05-25T07:39:30.519Z"
     }
   ]
 }

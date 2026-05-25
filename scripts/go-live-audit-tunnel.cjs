@@ -50,6 +50,16 @@ function spawnNpxTunnel(commandLine) {
   });
 }
 
+// eslint-disable-next-line no-console
+console.log(
+  '\n=== FREE full scan with Vercel (same as localhost:3940) ===\n' +
+    '1) Wait for https:// URL below (ngrok or localtunnel)\n' +
+    '2) Open your Vercel checklist page\n' +
+    '3) Paste URL into "Scan API base" (no trailing slash)\n' +
+    '4) Run quick scan — keep this terminal open\n' +
+    'Guide: go-live-audit/VERCEL-FREE-URDU.md\n'
+);
+
 const serverScript = path.join(root, 'scripts', 'go-live-audit-run.cjs');
 const server = spawn(process.execPath, [serverScript], {
   cwd: root,

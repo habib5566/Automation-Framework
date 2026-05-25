@@ -1,11 +1,16 @@
-# Render Blueprint — free HTTPS URL for UI + /api/scan (same origin).
-# https://dashboard.render.com → New → Blueprint → connect this repo → apply.
+# Render = same scan as local (full Node + Playwright). NOT serverless.
+# https://dashboard.render.com → New → Blueprint → connect repo → Apply
 services:
   - type: web
     name: go-live-audit
     runtime: node
     plan: free
     region: oregon
-    buildCommand: npm install
+    buildCommand: npm install && npx playwright install chromium
     startCommand: node scripts/go-live-audit-server.js
     healthCheckPath: /
+    envVars:
+      - key: GO_LIVE_AUDIT_FORCE_LOCAL_PLAYWRIGHT
+        value: "1"
+      - key: NODE_ENV
+        value: production

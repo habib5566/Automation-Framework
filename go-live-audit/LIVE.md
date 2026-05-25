@@ -1,10 +1,21 @@
 # Live URL (perfect UI + scan — same origin)
 
-Main tumhare naam par deploy nahi kar sakta; **link tumhare account** se banti hai. Neeche sab se seedha tareeqa:
+**Free + local jaisa scan?** → **Option A (Vercel + tunnel)** — `VERCEL-FREE-URDU.md`.  
+Vercel **khali** Scan API base = light scan only (no real browser).
 
 ---
 
-## Option A — Vercel (recommended if you already use it)
+## Option A — Vercel free + tunnel (recommended, $0)
+
+1. Deploy checklist on **Vercel** (free) — `VERCEL.md`
+2. PC par: `npm run go-live:audit:tunnel` → copy `https://…` URL
+3. Vercel page → **Scan API base** paste → scan
+
+Detail: **VERCEL-FREE-URDU.md** | **TUNNEL.md**
+
+---
+
+## Option B — Vercel only (light scan — console often empty/wrong)
 
 1. GitHub par **poora** `Automation-Framework` repo push karo (sirf `index.html` folder mat — chahiye `api/scan.js`, `vercel.json`, `package.json`).
 2. [vercel.com/new](https://vercel.com/new) → repo import → **Deploy** (build: `npm run build`).
@@ -14,18 +25,13 @@ Ziyada detail: **VERCEL.md**.
 
 ---
 
-## Option B — Render (free `.onrender.com` link, poora Node server)
+## Option C — Render (24/7, PC off — may ask card for Free tier)
 
-1. Repo GitHub par push karo.
-2. [dashboard.render.com](https://dashboard.render.com) → **New** → **Blueprint** → repo select.
-3. Root mein **`render.yaml`** pick ho jayega → **Apply**.
-4. Deploy complete hone par **`https://go-live-audit-xxxx.onrender.com`** jaisi link milegi — **UI + `/api/scan` dono yahi** chalenge. **Scan API base khali** rakho.
-
-Optional env: `GO_LIVE_AUDIT_TLS_INSECURE=1` agar scan par TLS verify error aaye (sirf trusted network).
+**RENDER-LIVE-URDU.md** — choose **Free** instance, not paid Starter.
 
 ---
 
-## Option C — Sirf laptop (no public link)
+## Option D — Sirf laptop (no public link)
 
 ```bash
 npm run go-live:audit

@@ -13,6 +13,7 @@
     "report": "node scripts/run-playwright-with-local-browsers.cjs show-report reports/html-report",
     "demo:server": "node fixtures/server.js",
     "go-live:audit": "node scripts/go-live-audit-run.cjs",
+    "start": "node scripts/go-live-audit-server.js",
     "go-live:audit:strict": "node scripts/go-live-audit-server.js",
     "go-live:audit:insecure-tls": "node -r ./scripts/go-live-audit-tls-insecure-preload.cjs scripts/go-live-audit-server.js",
     "go-live:audit:tunnel": "node scripts/go-live-audit-tunnel.cjs",
@@ -26,14 +27,14 @@
     "go-live:watch:daemon": "node scripts/go-live-audit-watch-runner.cjs --daemon"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "dependencies": {
-    "@sparticuz/chromium": "^131.0.1",
+    "@sparticuz/chromium": "^133.0.0",
     "nodemailer": "^6.9.16",
     "playwright": "^1.49.0",
     "playwright-core": "^1.49.0",
-    "puppeteer-core": "^23.11.1"
+    "puppeteer-core": "^24.8.2"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",

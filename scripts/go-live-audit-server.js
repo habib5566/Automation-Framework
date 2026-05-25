@@ -42,6 +42,16 @@ function safeJoin(root, requestPath) {
 const server = http.createServer((req, res) => {
   const pathOnly = (req.url || '').split('?')[0];
 
+  if (pathOnly === '/api/ping' && req.method === 'GET') {
+    sendJson(res, 200, {
+      ok: true,
+      route: '/api/ping',
+      mode: 'full-node-server',
+      hint: 'Same stack as npm run go-live:audit — real Playwright console scan.',
+    });
+    return;
+  }
+
   if (pathOnly === '/api/email-status' && req.method === 'GET') {
     try {
       sendJson(res, 200, { ok: true, email: getEmailConfigStatus() });

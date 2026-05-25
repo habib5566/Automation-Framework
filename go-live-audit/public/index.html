@@ -1363,6 +1363,10 @@
             autocomplete="off"
             spellcheck="false"
           />
+          <div id="vercelFreeTunnelCard" class="scan-msg scan-msg-ok" style="display:none;margin-top:0.65rem;font-size:0.92rem">
+            <strong>Vercel scan</strong> — <strong>Scan API base khali</strong> = server Chromium + deep HTTP console (redeploy after git push).<br />
+            <strong>Optional:</strong> tunnel URL yahan → Vercel proxy karega (PC par <code>npm run go-live:audit:tunnel</code>). <code>VERCEL.md</code>
+          </div>
         </div>
         <div class="scan-actions">
           <label class="chk-wrap">
@@ -1728,7 +1732,16 @@
         }
       }
 
+      function scanUsesVercelProxy() {
+        return (
+          typeof location !== 'undefined' &&
+          location.hostname &&
+          /\.vercel\.app$/i.test(location.hostname)
+        );
+      }
+
       function scanEndpoint() {
+        if (scanUsesVercelProxy()) return '/api/scan';
         const base = normalizeScanApiBase(state.apiBaseUrl);
         if (base) return base + '/api/scan';
         return '/api/scan';
@@ -2003,17 +2016,36 @@
         panel.innerHTML = html;
       }
 
-      function renderLiveVsLocalBanner(data) {
-        const onLive =
+      function showVercelFreeTunnelCard() {
+        const el = document.getElementById('vercelFreeTunnelCard');
+        if (!el) return;
+        const onVercel =
           typeof location !== 'undefined' &&
           location.hostname &&
           /\.vercel\.app$/i.test(location.hostname);
-        if (!onLive || !data || !data.scanMeta) return '';
-        if (data.scanMeta.browserScanOk) return '';
+        el.style.display = onVercel ? 'block' : 'none';
+      }
+
+      function renderLiveVsLocalBanner(data) {
+        const onVercel =
+          typeof location !== 'undefined' &&
+          location.hostname &&
+          /\.vercel\.app$/i.test(location.hostname);
+        if (!onVercel) return '';
+        if (data && data.scanMeta && data.scanMeta.browserScanOk) {
+          return (
+            '<div class="scan-msg scan-msg-ok" style="margin-bottom:1rem"><strong>Browser scan OK</strong> on this host.</div>'
+          );
+        }
         return (
-          '<div class="scan-msg scan-msg-warn" style="margin-bottom:1rem"><strong>Live scan ≠ local scan</strong> — Vercel could not run Chromium (' +
-          escapeHtml(String(data.scanMeta.consoleCapture || 'failed')) +
-          '). This pass used <strong>deep HTTP scan</strong> (sitemap, scripts, HTML). For <strong>same results as localhost:3940</strong>: run <code>npm run go-live:audit:tunnel</code> on your PC and paste the tunnel URL into <strong>Scan API base</strong> above, then scan again.</div>'
+          '<div class="scan-msg scan-msg-warn" style="margin-bottom:1rem"><strong>Vercel scan note</strong> — ' +
+          (data && data.scanMeta && data.scanMeta.browserScanOk
+            ? 'Console captured on this pass.'
+            : 'Redeploy latest code (Chromium fix). Or paste tunnel URL in Scan API base + <code>npm run go-live:audit:tunnel</code>. ') +
+          (data && data.scanMeta && data.scanMeta.consoleCapture
+            ? ' Last scan: <code>' + escapeHtml(String(data.scanMeta.consoleCapture)) + '</code>.'
+            : '') +
+          '</div>'
         );
       }
 
@@ -2225,7 +2257,7 @@
         const liveNote =
           (scanMeta && scanMeta.scannedOnServerless) ||
           (deployHints && deployHints.serverlessChrome)
-            ? '<p class="site-stack-sub stack-empty-hint"><strong>Live vs local:</strong> For console errors (DevTools-style), trust <strong>localhost:3940</strong> scan first. After deploy, live should show <code>playwright-vercel</code> in the hint below — if it says <code>html-only</code> or <code>failed</code>, redeploy with latest code.</p>'
+            ? '<p class="site-stack-sub stack-empty-hint"><strong>Live vs local:</strong> DevTools-style console needs <strong>Render</strong> or <strong>localhost:3940</strong> — not Vercel. Hint below should say <code>local-playwright</code> / <code>playwright</code>; if <code>playwright-vercel-failed</code> or <code>html-only</code>, use Render URL (see RENDER-LIVE-URDU.md).</p>'
             : '';
         if (!items.length) {
           panel.className = 'console-errors-panel console-clean';
@@ -2380,7 +2412,7 @@
           if (data.runtime.deployHost === 'vercel' && backendBannerEl) {
             showBackendBanner(
               'warn',
-              '<strong>Vercel live</strong> — Full scan uses serverless Chromium for <strong>console errors</strong> (may take 30–50s). First deploy after this update needs <code>playwright-core</code> + redeploy. Saving brands uses this browser; edit <code>go-live-audit/data/brands-watch.json</code> in Git for “Watch all”.'
+              '<strong>Vercel</strong> — scan uses server Chromium + deep HTTP console. Tunnel in Scan API base = optional full local parity via proxy.'
             );
           }
         } catch (e) {
@@ -2871,6 +2903,8 @@
         }, 2200);
         try {
           const scanBody = { url, captureConsole: true };
+          const tunnelBase = normalizeScanApiBase(state.apiBaseUrl);
+          if (tunnelBase) scanBody.scanApiBase = tunnelBase;
           const brandScan = brandNameEl ? brandNameEl.value.trim() : '';
           if (brandScan) scanBody.brandName = brandScan;
           if (sendEmailEl && sendEmailEl.checked) scanBody.sendEmail = true;
@@ -3169,6 +3203,7 @@
         }
       });
 
+      showVercelFreeTunnelCard();
       probeScanBackend();
       loadScannerRuntime();
       loadEmailConfigStatus();

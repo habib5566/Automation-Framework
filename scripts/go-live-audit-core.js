@@ -8,6 +8,8 @@ const { URL } = require('url');
 const path = require('path');
 
 require(path.join(__dirname, 'go-live-audit-smtp-env.cjs'));
+const { ensureServerlessChromiumEnv } = require('./go-live-audit-chromium-env.cjs');
+ensureServerlessChromiumEnv();
 
 /** Corporate proxy / MITM: set GO_LIVE_AUDIT_TLS_INSECURE=1 only if you accept MITM risk for outbound scans. */
 const HTTPS_AGENT =
@@ -1284,6 +1286,79 @@ async function fetchRobotsTxt(originHref) {
   return out;
 }
 
+function normalizeScanApiBase(raw) {
+  const s = String(raw || '').trim().replace(/\/+$/, '');
+  if (!s || !/^https?:\/\//i.test(s)) return '';
+  try {
+    const u = new URL(s);
+    if (isBlockedHost(u.hostname)) return '';
+    return u.origin;
+  } catch {
+    return '';
+  }
+}
+
+/** Vercel UI can POST here with scanApiBase — server forwards to tunnel/Render (no browser CORS). */
+async function proxyScanToRemoteBase(res, json) {
+  const base = normalizeScanApiBase(json.scanApiBase || json.apiBase);
+  if (!base) return false;
+  const target = base + '/api/scan';
+  const payload = { ...json };
+  delete payload.scanApiBase;
+  delete payload.apiBase;
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), 55_000);
+  try {
+    const r = await fetch(target, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: ac.signal,
+    });
+    const text = await r.text();
+    let data;
+    try {
+      data = JSON.parse(text || '{}');
+    } catch {
+      sendJson(res, 502, { ok: false, error: 'Scan API base returned non-JSON' });
+      return true;
+    }
+    const status = r.status >= 400 && data.ok !== true ? r.status : 200;
+    sendJson(res, status, data);
+    return true;
+  } catch (e) {
+    sendJson(res, 502, {
+      ok: false,
+      error:
+        'Scan API base unreachable: ' +
+        String(e.message || e) +
+        '. Run npm run go-live:audit:tunnel on your PC and paste the https URL.',
+    });
+    return true;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function augmentConsoleWithStaticFallback(pw, htmlBody, pageUrl, onServerless) {
+  if (!onServerless || !htmlBody) return pw;
+  const hasLogs = pw && Array.isArray(pw.logs) && pw.logs.length > 0;
+  if (hasLogs) return pw;
+  try {
+    const { buildStaticConsoleSignals } = require('./go-live-audit-static-console.cjs');
+    const { logs } = await buildStaticConsoleSignals(htmlBody, pageUrl, fetchUrl);
+    if (!logs.length) return pw;
+    return {
+      logs,
+      pageStats: pw && pw.pageStats ? pw.pageStats : null,
+      runtime: 'vercel-http-console',
+      error: pw && pw.error ? pw.error : undefined,
+    };
+  } catch {
+    return pw;
+  }
+}
+
 async function handleScan(req, res) {
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
@@ -1315,6 +1390,8 @@ async function handleScan(req, res) {
       return;
     }
 
+    if (await proxyScanToRemoteBase(res, json)) return;
+
     function applyPlaywrightConsoleResult(pw, lists, onServerless) {
       let consoleCapture = 'html-only';
       let consoleCaptureDetail = '';
@@ -1328,8 +1405,11 @@ async function handleScan(req, res) {
       if (logs.length) {
         lists.push(issuesFromPlaywrightConsole(logs));
         consoleCapture = onServerless ? 'playwright-vercel' : 'playwright';
+        const viaHttp = pw && pw.runtime === 'vercel-http-console';
         consoleCaptureDetail =
-          (pw && pw.runtime ? pw.runtime + ' — ' : '') + logs.length + ' browser log line(s)';
+          (viaHttp ? 'deep HTTP console (Vercel) — ' : pw && pw.runtime ? pw.runtime + ' — ' : '') +
+          logs.length +
+          ' browser log line(s)';
       } else if (err) {
         consoleCapture = onServerless ? 'playwright-vercel-failed' : 'playwright-failed';
         consoleCaptureDetail = err.slice(0, 200);
@@ -1362,13 +1442,16 @@ async function handleScan(req, res) {
       if (wantPw) {
         const { isServerlessChromiumRuntime } = require('./go-live-audit-playwright-console.cjs');
         const onServerless = isServerlessChromiumRuntime();
-        const pw =
+        let pw =
           cachedPw !== undefined && cachedPw !== null
             ? cachedPw
             : await captureBrowserConsole(pageUrl || requestedUrl, {
                 timeoutMs: onServerless ? 28_000 : 18_000,
                 waitAfterMs: onServerless ? 6000 : 3000,
               });
+        if (onServerless && htmlBody) {
+          pw = await augmentConsoleWithStaticFallback(pw, htmlBody, pageUrl || requestedUrl, onServerless);
+        }
         const applied = applyPlaywrightConsoleResult(pw, lists, onServerless);
         consoleCapture = applied.consoleCapture;
         consoleCaptureDetail = applied.consoleCaptureDetail;
@@ -1473,9 +1556,9 @@ async function handleScan(req, res) {
         if (statusCode >= 200 && statusCode < 400 && html.isHtmlDocument) {
           try {
             followUpSamples = await fetchDeepFollowUpSamples(finalUrl, body, fetchUrl, {
-              maxPages: 2,
-              maxTotalMs: 16_000,
-              perPageTimeoutMs: 7_000,
+              maxPages: 3,
+              maxTotalMs: 20_000,
+              perPageTimeoutMs: 8_000,
               helpers: { collectSameOriginPageUrls, fetchFollowUpSameOriginSamples },
             });
             deepHttpScan = true;
@@ -1666,8 +1749,9 @@ async function handleScan(req, res) {
         scanDetailMode: onServerlessDeploy ? 'vercel-full' : 'local-full',
         deepHttpScan: !!deepHttpScan,
         browserScanOk:
-          pageIssues.consoleCapture === 'playwright-vercel' ||
-          pageIssues.consoleCapture === 'playwright',
+          (pageIssues.consoleCapture === 'playwright-vercel' ||
+            pageIssues.consoleCapture === 'playwright') &&
+          !(pageIssues.consoleCaptureDetail || '').includes('failed on server'),
       },
       disclaimer:
         'Scan uses the start URL and robots.txt, then may fetch up to two same-origin pages linked from that HTML (time-capped) to widen signals. Form delivery, Zendesk, CLS, and full-site crawling still need manual QA or Playwright.',

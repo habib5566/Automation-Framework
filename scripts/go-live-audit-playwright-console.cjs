@@ -1,5 +1,7 @@
 'use strict';
 
+const { ensureServerlessChromiumEnv } = require('./go-live-audit-chromium-env.cjs');
+
 /**
  * Browser console capture — local Playwright; Vercel/Lambda via puppeteer-core + @sparticuz/chromium.
  */
@@ -58,7 +60,7 @@ async function collectPuppeteerConsoleLogs(page, url, opts) {
     const u = response.url();
     if (!u || /favicon\.ico|\.woff2?|\.png|\.jpg|\.gif|analytics|google-analytics/i.test(u)) return;
     const rt = response.request().resourceType();
-    if (!['document', 'script', 'stylesheet', 'xhr', 'fetch'].includes(rt)) return;
+    if (!['document', 'script', 'stylesheet', 'xhr', 'fetch', 'media'].includes(rt)) return;
     let short = u;
     try {
       short = new URL(u).pathname.split('/').pop() || u;
@@ -68,14 +70,20 @@ async function collectPuppeteerConsoleLogs(page, url, opts) {
     pushLog(logs, seen, 'error', `Failed to load resource: the server responded with a status of ${status} (${short})`);
   });
 
-  await page.goto(url, { waitUntil: 'networkidle2', timeout: timeoutMs });
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
+  try {
+    await page.waitForNetworkIdle({ idleTime: 800, timeout: Math.min(12_000, timeoutMs / 2) });
+  } catch {
+    /* SPA / heavy media */
+  }
   await sleep(waitAfterMs);
 
   let pageStats = { buttonCount: 0, anchorHrefCount: 0, interactiveApprox: 0 };
   try {
     pageStats = await page.evaluate(() => {
-      const buttons = document.querySelectorAll('button, [role="button"], input[type="button"], input[type="submit"]')
-        .length;
+      const buttons = document.querySelectorAll(
+        'button, [role="button"], input[type="button"], input[type="submit"]'
+      ).length;
       const anchors = document.querySelectorAll('a[href]').length;
       const interactive = document.querySelectorAll(
         'button, a[href], [role="button"], input[type="button"], input[type="submit"], [onclick]'
@@ -93,9 +101,23 @@ async function collectPuppeteerConsoleLogs(page, url, opts) {
   return { logs, pageStats };
 }
 
+function loadSparticuzPack() {
+  ensureServerlessChromiumEnv();
+  try {
+    const chromiumPack = require('@sparticuz/chromium');
+    return chromiumPack.default || chromiumPack;
+  } catch (e) {
+    try {
+      const chromiumMin = require('@sparticuz/chromium-min');
+      return chromiumMin.default || chromiumMin;
+    } catch {
+      throw e;
+    }
+  }
+}
+
 async function captureWithServerlessPuppeteer(url, opts) {
-  const chromiumPack = require('@sparticuz/chromium');
-  const pack = chromiumPack.default || chromiumPack;
+  const pack = loadSparticuzPack();
   const puppeteer = require('puppeteer-core');
 
   if (typeof pack.setGraphicsMode === 'function') {
@@ -111,15 +133,15 @@ async function captureWithServerlessPuppeteer(url, opts) {
     throw new Error('@sparticuz/chromium executablePath() empty');
   }
 
-  const libDir = path.dirname(executablePath);
-  process.env.LD_LIBRARY_PATH = libDir + (process.env.LD_LIBRARY_PATH ? ':' + process.env.LD_LIBRARY_PATH : '');
+  const execDir = path.dirname(executablePath);
+  process.env.LD_LIBRARY_PATH = execDir;
 
-  const extraArgs = ['--disable-dev-shm-usage', '--disable-gpu', '--single-process', '--no-zygote'];
   const launchOpts = {
-    args: [...(pack.args || []), ...extraArgs],
+    args: [...(pack.args || []), '--disable-dev-shm-usage', '--disable-gpu'],
     executablePath,
     headless: typeof pack.headless === 'boolean' ? pack.headless : true,
     ignoreHTTPSErrors: true,
+    protocolTimeout: 120_000,
   };
   if (pack.defaultViewport) {
     launchOpts.defaultViewport = pack.defaultViewport;
@@ -131,13 +153,16 @@ async function captureWithServerlessPuppeteer(url, opts) {
     try {
       browser = await puppeteer.launch(launchOpts);
       const page = await browser.newPage();
+      await page.setUserAgent(
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+      );
       const result = await collectPuppeteerConsoleLogs(page, url, opts);
       await browser.close().catch(() => {});
       return result;
     } catch (e) {
       lastErr = e;
       if (browser) await browser.close().catch(() => {});
-      if (attempt === 0) await sleep(500);
+      if (attempt === 0) await sleep(600);
     }
   }
   throw lastErr;
@@ -186,7 +211,7 @@ async function collectPlaywrightConsoleLogs(browser, url, opts) {
     const u = response.url();
     if (!u || /favicon\.ico|\.woff2?|\.png|\.jpg|\.gif|analytics|google-analytics/i.test(u)) return;
     const rt = response.request().resourceType();
-    if (!['document', 'script', 'stylesheet', 'xhr', 'fetch'].includes(rt)) return;
+    if (!['document', 'script', 'stylesheet', 'xhr', 'fetch', 'media'].includes(rt)) return;
     let short = u;
     try {
       short = new URL(u).pathname.split('/').pop() || u;
@@ -223,8 +248,8 @@ async function captureBrowserConsole(url, opts = {}) {
 
   const serverless = isServerlessChromiumRuntime();
   const merged = {
-    timeoutMs: opts.timeoutMs != null ? opts.timeoutMs : serverless ? 24_000 : 18_000,
-    waitAfterMs: opts.waitAfterMs != null ? opts.waitAfterMs : serverless ? 5000 : 3000,
+    timeoutMs: opts.timeoutMs != null ? opts.timeoutMs : serverless ? 28_000 : 18_000,
+    waitAfterMs: opts.waitAfterMs != null ? opts.waitAfterMs : serverless ? 6000 : 3000,
   };
 
   try {

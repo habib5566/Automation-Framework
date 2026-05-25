@@ -72,4 +72,7 @@ Jo **https** URL mile, wohi **Scan API base** mein daalo.
 
 ## Note
 
-Tunnel band hote hi public URL khatam — har session par naya URL mil sakta hai (ngrok free tier). Production ke liye **Vercel par poora project** (`api/scan` + build) behtar hai — `VERCEL.md` dekho.
+Tunnel band hote hi public URL khatam — har session par naya URL mil sakta hai (ngrok free tier).
+
+**Vercel free + local jaisa console:** UI Vercel par, scan tunnel se — **`VERCEL-FREE-URDU.md`**.  
+Vercel par **Scan API base khali** = light scan only (browser nahi).

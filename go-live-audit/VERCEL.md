@@ -51,14 +51,17 @@ Without this, the UI may load after you log in, but **Run quick scan** will stil
 
 ## Console errors on live (Vercel)
 
-Live must use **@sparticuz/chromium** (not the `ms-playwright` folder on your PC). `vercel.json` sets:
+Live uses **@sparticuz/chromium** + **puppeteer-core** (not your PC’s `ms-playwright`). `vercel.json` sets:
 
 - `GO_LIVE_AUDIT_USE_SERVERLESS_CHROMIUM=1`
+- `AWS_LAMBDA_JS_RUNTIME=nodejs22.x` (fixes `libnss3.so` on Vercel Fluid Compute)
 - `includeFiles` for `node_modules/@sparticuz/chromium/**` on `api/scan.js`
 
-If live shows `playwright-failed` and “Executable doesn't exist … ms-playwright”, redeploy after `git push` — old deploy was still using local Playwright paths.
+If Chromium still fails, the scan adds **deep HTTP console** (script hints, `.mp4` probes, `applyLogo`-style errors) so console/performance are closer to local.
 
-After a good deploy, `scanMeta.consoleCapture` should be **`playwright-vercel`** (or `playwright-vercel-empty`), not `playwright-failed`.
+**Scan API base** (tunnel): Vercel **proxies** `POST /api/scan` to your tunnel URL — paste `https://….ngrok-free.app`, run `npm run go-live:audit:tunnel` on your PC.
+
+After deploy, `scanMeta.consoleCapture` should be **`playwright-vercel`** when logs exist, not `playwright-vercel-failed`.
 
 **Local PC:** do not put `VERCEL=1` in `.env` unless you intend serverless mode locally. Use `npm run go-live:audit` without that, or set `GO_LIVE_AUDIT_FORCE_LOCAL_PLAYWRIGHT=1`.
 
