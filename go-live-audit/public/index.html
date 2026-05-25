@@ -2003,6 +2003,20 @@
         panel.innerHTML = html;
       }
 
+      function renderLiveVsLocalBanner(data) {
+        const onLive =
+          typeof location !== 'undefined' &&
+          location.hostname &&
+          /\.vercel\.app$/i.test(location.hostname);
+        if (!onLive || !data || !data.scanMeta) return '';
+        if (data.scanMeta.browserScanOk) return '';
+        return (
+          '<div class="scan-msg scan-msg-warn" style="margin-bottom:1rem"><strong>Live scan ≠ local scan</strong> — Vercel could not run Chromium (' +
+          escapeHtml(String(data.scanMeta.consoleCapture || 'failed')) +
+          '). This pass used <strong>deep HTTP scan</strong> (sitemap, scripts, HTML). For <strong>same results as localhost:3940</strong>: run <code>npm run go-live:audit:tunnel</code> on your PC and paste the tunnel URL into <strong>Scan API base</strong> above, then scan again.</div>'
+        );
+      }
+
       function dashboardStaleBanner(data) {
         if (!data || !siteEl) return '';
         const cur = siteEl.value.trim();
@@ -2950,11 +2964,18 @@
           }
           if (data.scanMeta && data.scanMeta.scanDetailMode === 'vercel-full') {
             lines.push(
-              'Scan depth: full (Vercel) — robots.txt, up to 2 linked pages, browser console (sequential).'
+              'Scan depth: Vercel — robots.txt, up to 2 pages (links + sitemap), script HTTP checks, HTML hints.'
             );
-            if (data.scanMeta.consoleCapture === 'playwright-vercel-failed') {
+            if (data.scanMeta.deepHttpScan) {
+              lines.push('Deep HTTP enrichment: on.');
+            }
+            if (data.scanMeta.browserScanOk) {
+              lines.push('Browser console: captured on Vercel.');
+            } else {
               lines.push(
-                'Console browser failed on Vercel — third-party script hints from HTML added when possible. For exact DevTools errors use local scan.'
+                'Browser console: not available on Vercel (' +
+                  (data.scanMeta.consoleCapture || 'failed') +
+                  ') — use local or tunnel for exact console/vulnerabilities.'
               );
             }
           }
@@ -3002,6 +3023,7 @@
             l.startsWith('<') ? l : '<div class="scan-line">' + escapeHtml(l) + '</div>'
           );
           out.innerHTML =
+            renderLiveVsLocalBanner(data) +
             dashboardStaleBanner(data) +
             renderEmailReportBanner(data.emailReport, sendEmailEl && sendEmailEl.checked) +
             overallBlock +

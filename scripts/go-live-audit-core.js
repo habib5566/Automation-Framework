@@ -37,6 +37,11 @@ const {
   mergeIssues,
   summarizeIssues,
 } = require('./go-live-audit-page-issues.cjs');
+const {
+  enrichInteractiveFromHtml,
+  fetchDeepFollowUpSamples,
+  issuesFromScriptSrcProbe,
+} = require('./go-live-audit-deep-http-scan.cjs');
 const { captureBrowserConsole } = require('./go-live-audit-playwright-console.cjs');
 const { buildBrandMatrix, pickConsoleIssues, pickNonConsoleIssues } = require('./go-live-audit-brand-matrix.cjs');
 const { buildVulnerabilities } = require('./go-live-audit-vulnerabilities.cjs');
@@ -1359,8 +1364,9 @@ async function handleScan(req, res) {
       return { consoleCapture, consoleCaptureDetail };
     }
 
-    async function buildPageIssuesForScan(htmlBody, avail, sc, pageUrl, cachedPw) {
+    async function buildPageIssuesForScan(htmlBody, avail, sc, pageUrl, cachedPw, scanOpts) {
       const lists = [issuesFromAvailability(avail, sc), detectHtmlRuntimeIssues(htmlBody)];
+      const onSrv = scanOpts && scanOpts.onServerless;
       let consoleCapture = 'html-only';
       let consoleCaptureDetail = '';
       const wantPw =
@@ -1381,12 +1387,16 @@ async function handleScan(req, res) {
         const applied = applyPlaywrightConsoleResult(pw, lists, onServerless);
         consoleCapture = applied.consoleCapture;
         consoleCaptureDetail = applied.consoleCaptureDetail;
-        if (
-          onServerless &&
-          (consoleCapture === 'playwright-vercel-failed' || consoleCapture === 'playwright-vercel-empty') &&
-          htmlBody
-        ) {
-          lists.push(issuesFromHtmlScriptHints(htmlBody));
+        if ((onServerless || onSrv) && htmlBody) {
+          if (consoleCapture === 'playwright-vercel-failed' || consoleCapture === 'playwright-vercel-empty') {
+            lists.push(issuesFromHtmlScriptHints(htmlBody));
+          }
+          try {
+            const scriptIssues = await issuesFromScriptSrcProbe(htmlBody, pageUrl || requestedUrl, fetchUrl);
+            if (scriptIssues.length) lists.push(scriptIssues);
+          } catch {
+            /* probe optional */
+          }
         }
       }
       const items = mergeIssues(lists);
@@ -1460,9 +1470,13 @@ async function handleScan(req, res) {
 
     const html = analyzeHtml(body, finalUrl, contentType);
     html._contentType = contentType;
+    if (onServerlessDeploy) {
+      enrichInteractiveFromHtml(body, html);
+    }
 
     let robotsInfo = { fetched: false, status: null, hasSitemapLine: false, error: '', preview: '' };
     let followUpSamples = [];
+    let deepHttpScan = false;
 
     if (statusCode && statusCode < 500) {
       if (onServerlessDeploy) {
@@ -1473,20 +1487,21 @@ async function handleScan(req, res) {
         }
         if (statusCode >= 200 && statusCode < 400 && html.isHtmlDocument) {
           try {
-            const fu = await fetchFollowUpSameOriginSamples(finalUrl, body, {
+            followUpSamples = await fetchDeepFollowUpSamples(finalUrl, body, fetchUrl, {
               maxPages: 2,
-              maxTotalMs: 14_000,
+              maxTotalMs: 16_000,
               perPageTimeoutMs: 7_000,
+              helpers: { collectSameOriginPageUrls, fetchFollowUpSameOriginSamples },
             });
-            followUpSamples = fu.samples;
+            deepHttpScan = true;
           } catch {
             followUpSamples = [];
           }
         }
         if (wantConsoleOnServerless) {
           cachedConsolePw = await captureBrowserConsole(finalUrl || requestedUrl, {
-            timeoutMs: 24_000,
-            waitAfterMs: 5000,
+            timeoutMs: 22_000,
+            waitAfterMs: 4500,
           });
         }
       } else {
@@ -1565,6 +1580,11 @@ async function handleScan(req, res) {
       scanWarnings.push({
         message: `[auto] Follow-up pass: merged ${followUpSamples.length} extra same-origin HTML page(s) linked from the start URL (sample only; not a full crawl).`,
       });
+    } else if (onServerlessDeploy && html.isHtmlDocument) {
+      scanWarnings.push({
+        message:
+          '[live] No extra pages merged — try sitemap or internal links; for full parity with local scan use tunnel + Scan API base.',
+      });
     }
 
     let siteStack = skipCh.skip
@@ -1600,7 +1620,8 @@ async function handleScan(req, res) {
       availability,
       statusCode,
       finalUrl,
-      cachedConsolePw
+      cachedConsolePw,
+      { onServerless: onServerlessDeploy, deepHttpScan }
     );
     if (pageIssues.items.length) {
       for (const it of pageIssues.items) {
@@ -1610,6 +1631,16 @@ async function handleScan(req, res) {
           });
         }
       }
+    }
+    if (
+      onServerlessDeploy &&
+      pageIssues.consoleCapture &&
+      String(pageIssues.consoleCapture).includes('failed')
+    ) {
+      scanWarnings.unshift({
+        message:
+          '[live] Real browser could not start on Vercel — used deep HTTP scan (extra pages, script checks, HTML hints). For the same console + vulnerabilities as local: open http://localhost:3940 or set Scan API base to an ngrok tunnel (npm run go-live:audit:tunnel).',
+      });
     }
 
     const overallSummary = buildOverallSummary({
@@ -1648,7 +1679,10 @@ async function handleScan(req, res) {
         consoleCaptureDetail: pageIssues.consoleCaptureDetail || '',
         scannedOnServerless: onServerlessDeploy,
         scanDetailMode: onServerlessDeploy ? 'vercel-full' : 'local-full',
-        parallelEnrichment: onServerlessDeploy,
+        deepHttpScan: !!deepHttpScan,
+        browserScanOk:
+          pageIssues.consoleCapture === 'playwright-vercel' ||
+          pageIssues.consoleCapture === 'playwright',
       },
       disclaimer:
         'Scan uses the start URL and robots.txt, then may fetch up to two same-origin pages linked from that HTML (time-capped) to widen signals. Form delivery, Zendesk, CLS, and full-site crawling still need manual QA or Playwright.',

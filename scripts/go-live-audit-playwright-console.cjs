@@ -101,16 +101,21 @@ async function captureWithServerlessPuppeteer(url, opts) {
   if (typeof pack.setGraphicsMode === 'function') {
     pack.setGraphicsMode(false);
   }
+  if (typeof pack.font === 'function') {
+    await pack.font();
+  }
 
   const executablePath = await pack.executablePath();
   if (!executablePath) {
     throw new Error('@sparticuz/chromium executablePath() empty');
   }
 
+  const extraArgs = ['--disable-dev-shm-usage', '--disable-gpu', '--single-process', '--no-zygote'];
   const launchOpts = {
-    args: pack.args || [],
+    args: [...(pack.args || []), ...extraArgs],
     executablePath,
     headless: typeof pack.headless === 'boolean' ? pack.headless : true,
+    ignoreHTTPSErrors: true,
   };
   if (pack.defaultViewport) {
     launchOpts.defaultViewport = pack.defaultViewport;

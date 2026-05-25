@@ -76,6 +76,7 @@ console.log('Vercel: copied scripts/go-live-audit-email-config.cjs → api/go-li
 for (const name of [
   'go-live-audit-defaults.cjs',
   'go-live-audit-page-issues.cjs',
+  'go-live-audit-deep-http-scan.cjs',
   'go-live-audit-playwright-console.cjs',
   'go-live-audit-brand-matrix.cjs',
   'go-live-audit-laravel-version.cjs',
