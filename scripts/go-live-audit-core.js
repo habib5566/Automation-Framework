@@ -134,23 +134,51 @@ function enrichScanReportPayload(payload, ctx) {
   });
 }
 
-async function flushScanEmailIfNeeded(requestJson, scanPayload) {
-  if (requestJson && requestJson.skipEmail === true) return;
-  const threatMail =
-    scanPayload.securityAlert === true ||
-    (scanPayload.security && scanPayload.security.shouldAlert) ||
-    requestJson.securityWatch === true;
-  const wants =
+function scanWantsEmail(requestJson, scanPayload) {
+  if (requestJson && requestJson.skipEmail === true) return false;
+  const { scanNeedsDangerEmail } = require('./go-live-audit-email-notify');
+  return (
     process.env.GO_LIVE_AUDIT_EMAIL_ALWAYS === '1' ||
-    (process.env.GO_LIVE_AUDIT_ALERT_ON_THREAT !== '0' && threatMail) ||
+    scanNeedsDangerEmail(scanPayload) ||
     requestJson.sendEmail === true ||
     requestJson.emailReport === true ||
-    requestJson.email === true;
-  if (!wants) return;
-  const emailReport = await maybeSendScanEmail(requestJson, scanPayload).catch((e) => ({
-    error: String((e && e.message) || e),
-  }));
-  scanPayload.emailReport = emailReport;
+    requestJson.email === true
+  );
+}
+
+async function flushScanEmailIfNeeded(requestJson, scanPayload) {
+  if (!scanWantsEmail(requestJson, scanPayload)) return;
+  const emailTimeoutMs = Number(process.env.GO_LIVE_AUDIT_EMAIL_TIMEOUT_MS || 14_000);
+  let emailReport;
+  try {
+    emailReport = await Promise.race([
+      maybeSendScanEmail(requestJson, scanPayload),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Email send timed out after ' + emailTimeoutMs + 'ms')), emailTimeoutMs)
+      ),
+    ]);
+  } catch (e) {
+    emailReport = { error: String((e && e.message) || e) };
+  }
+  scanPayload.emailReport = emailReport || {
+    skipped: true,
+    reason: 'Email step returned no status — set GO_LIVE_AUDIT_SMTP_USER + GO_LIVE_AUDIT_SMTP_PASS on Vercel (see VERCEL-EMAIL-SETUP.md) or paste Sender Gmail + App Password in the form.',
+  };
+  if (emailReport && emailReport.sent) {
+    scanPayload.emailSent = true;
+  }
+}
+
+function ensureEmailReportOnPayload(requestJson, scanPayload) {
+  if (!scanWantsEmail(requestJson, scanPayload)) return;
+  if (scanPayload.emailReport) return;
+  const { envSmtpConfigured } = require('./go-live-audit-email-notify');
+  scanPayload.emailReport = {
+    skipped: true,
+    reason: envSmtpConfigured()
+      ? 'Email did not run (server timeout or old deploy). Redeploy latest code and scan again.'
+      : '[GMAIL_SMTP_REQUIRED] Add GO_LIVE_AUDIT_SMTP_USER + GO_LIVE_AUDIT_SMTP_PASS in Vercel → Environment Variables → Redeploy. Or paste Sender Gmail + App Password in the scan form (App Password must be for that sender account, not the alert inbox).',
+  };
 }
 
 function readBody(req) {
@@ -365,6 +393,14 @@ function summarizeHttpAvailability(statusCode, finalUrl) {
       detail: `HTTP ${sc} from ${urlShort}`,
     };
   }
+  if (sc === 521) {
+    return {
+      state: 'server_error',
+      headline: 'HTTP 521 — origin server down (Cloudflare)',
+      detail:
+        'Cloudflare could not reach your web server. Fix hosting (server stopped, wrong DNS, or firewall) — this is the site you scanned, not the audit tool.',
+    };
+  }
   if (sc >= 500) {
     return {
       state: 'server_error',
@@ -407,12 +443,17 @@ function summarizeHttpAvailability(statusCode, finalUrl) {
 function shouldSkipContentAutoChecks(statusCode, html) {
   const sc = Number(statusCode) || 0;
   if (sc < 200 || sc >= 400) {
+    const extra =
+      sc === 521
+        ? ' Cloudflare 521 = your origin server is offline or unreachable — start/fix the site, then scan again.'
+        : '';
     return {
       skip: true,
       reason:
         'HTTP ' +
         sc +
-        ': not a successful 2xx page — automated checklist rows are skipped (error or access pages must not be scored like real content).',
+        ': not a successful 2xx page — automated checklist rows are skipped (error or access pages must not be scored like real content).' +
+        extra,
     };
   }
   if (html && html.isHtmlDocument === false) {
@@ -1143,6 +1184,128 @@ function buildAutoChecks(requestedUrl, finalUrl, statusCode, headers, html, robo
   return { autoChecks, scanWarnings };
 }
 
+/** When HTTP is not 2xx — still auto-set Pass/Fail (mostly Fail) instead of leaving checklist empty. */
+function buildAutoChecksForErrorResponse(statusCode, finalUrl, requestedUrl) {
+  const sc = Number(statusCode) || 0;
+  const down = sc === 0 || sc >= 500 || sc === 521;
+  const clientErr = sc >= 400 && sc < 500;
+  const failNote = down
+    ? `[auto] HTTP ${sc || 'error'} — origin not serving a normal page (fix hosting, then scan again).`
+    : clientErr
+      ? `[auto] HTTP ${sc} — request blocked or page missing.`
+      : `[auto] HTTP ${sc} — not a successful 2xx page.`;
+
+  const failOnError = new Set([
+    'C01',
+    'M01',
+    'M02',
+    'R01',
+    'U01',
+    'U02',
+    'U03',
+    'P03',
+    'S01',
+    'I01',
+    'I02',
+    'I03',
+    'L01',
+    'L05',
+    'E01',
+    'E02',
+    'E03',
+    'C03',
+    'F01',
+    'F02',
+  ]);
+  const naOnError = new Set([
+    'F03',
+    'F04',
+    'Z01',
+    'Z02',
+    'C02',
+    'L02',
+    'L03',
+    'L04',
+    'I04',
+    'B01',
+    'P01',
+    'P02',
+    'U04',
+    'S02',
+    'SEO1',
+  ]);
+
+  const autoChecks = CHECKLIST_IDS.map((id) => {
+    if (failOnError.has(id)) {
+      return { id, status: 'fail', note: failNote };
+    }
+    if (naOnError.has(id)) {
+      return {
+        id,
+        status: 'na',
+        note: `[auto] Not scored while HTTP ${sc} — re-test after the site returns 200 OK.`,
+      };
+    }
+    return { id, status: 'pending', note: failNote };
+  });
+
+  return {
+    autoChecks,
+    scanWarnings: [
+      {
+        message:
+          `[auto] Checklist auto Pass/Fail applied for HTTP ${sc} — fix the live site, then re-scan for full 2xx signals.`,
+      },
+    ],
+  };
+}
+
+/** Merge console / page-issue signals into checklist rows after browser pass. */
+function enrichAutoChecksFromPageIssues(autoChecks, pageIssues) {
+  if (!Array.isArray(autoChecks) || !autoChecks.length) return autoChecks;
+  const sum = pageIssues && pageIssues.summary ? pageIssues.summary : {};
+  const errs = Number(sum.errors) || 0;
+  const warns = Number(sum.warns) || 0;
+  const cap = String((pageIssues && pageIssues.consoleCapture) || '');
+  const byId = new Map(autoChecks.map((ac) => [ac.id, { ...ac }]));
+
+  if (errs > 0) {
+    byId.set('P03', {
+      id: 'P03',
+      status: 'fail',
+      note: `[auto] ${errs} error(s) from browser console / network on this scan.`,
+    });
+    if (errs >= 2) {
+      byId.set('U02', {
+        id: 'U02',
+        status: 'fail',
+        note: '[auto] Failed resources or broken requests in console — verify internal links and assets.',
+      });
+    }
+    byId.set('P01', {
+      id: 'P01',
+      status: 'fail',
+      note: '[auto] Console/network errors often hurt performance scores — run Lighthouse after fixes.',
+    });
+  } else if (/playwright|serverless-puppeteer|vercel-http-console/i.test(cap)) {
+    byId.set('P03', {
+      id: 'P03',
+      status: 'pass',
+      note: '[auto] No console errors captured in this browser pass (spot-check other pages).',
+    });
+  }
+
+  if (warns >= 3 && byId.get('P03') && byId.get('P03').status !== 'fail') {
+    byId.set('P03', {
+      id: 'P03',
+      status: 'fail',
+      note: `[auto] ${warns} warning(s) in console — review before go-live.`,
+    });
+  }
+
+  return CHECKLIST_IDS.map((id) => byId.get(id) || { id, status: 'pending', note: '[auto] No signal.' });
+}
+
 const FOLLOWUP_ASSET_EXT = /\.(css|js|mjs|map|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot|pdf|zip|mp4|webm|json)(\?|#|$)/i;
 
 /** Up to `max` same-origin page URLs from HTML (excludes start URL, skips obvious assets). */
@@ -1337,6 +1500,32 @@ function normalizeScanApiBase(raw) {
   }
 }
 
+function explainNonJsonTunnelResponse(text, status, base) {
+  const sample = String(text || '').slice(0, 800).toLowerCase();
+  if (status === 511 || /tunnel reminder|bypass-tunnel-reminder|loca\.lt/i.test(sample)) {
+    return (
+      'Tunnel returned an HTML warning page (localtunnel), not scan JSON. Fix: (1) On your PC run npm run go-live:audit:tunnel and keep it open. (2) Open the tunnel URL once in your browser and click Continue. (3) Paste the fresh https URL into Scan API base. Or leave Scan API base empty to scan on Vercel only.'
+    );
+  }
+  if (/ngrok|tunnel\.ngrok/i.test(sample) || status === 404) {
+    return (
+      'Tunnel is down or the URL changed — ngrok/localtunnel gives a new link each time. Run npm run go-live:audit:tunnel again, paste the new https URL, or clear Scan API base to use Vercel scan only.'
+    );
+  }
+  if (/<!doctype html|<html[\s>]/i.test(sample)) {
+    return (
+      'Scan API base returned HTML instead of JSON (tunnel expired, PC server stopped, or wrong URL). Clear Scan API base for Vercel-only scan, or restart: npm run go-live:audit:tunnel'
+    );
+  }
+  return (
+    'Scan API base returned non-JSON (HTTP ' +
+    status +
+    '). Check tunnel is running at ' +
+    base +
+    ' or leave Scan API base empty.'
+  );
+}
+
 /** Vercel UI can POST here with scanApiBase — server forwards to tunnel/Render (no browser CORS). */
 async function proxyScanToRemoteBase(res, json) {
   const base = normalizeScanApiBase(json.scanApiBase || json.apiBase);
@@ -1347,10 +1536,17 @@ async function proxyScanToRemoteBase(res, json) {
   delete payload.apiBase;
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 55_000);
+  const proxyHeaders = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    'User-Agent': 'Automation-Framework-GoLiveAudit/1.0',
+    'Bypass-Tunnel-Reminder': 'true',
+    'ngrok-skip-browser-warning': 'true',
+  };
   try {
     const r = await fetch(target, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: proxyHeaders,
       body: JSON.stringify(payload),
       signal: ac.signal,
     });
@@ -1359,7 +1555,12 @@ async function proxyScanToRemoteBase(res, json) {
     try {
       data = JSON.parse(text || '{}');
     } catch {
-      sendJson(res, 502, { ok: false, error: 'Scan API base returned non-JSON' });
+      sendJson(res, 502, {
+        ok: false,
+        error: explainNonJsonTunnelResponse(text, r.status, base),
+        proxyTarget: target,
+        proxyHttpStatus: r.status,
+      });
       return true;
     }
     const status = r.status >= 400 && data.ok !== true ? r.status : 200;
@@ -1371,7 +1572,7 @@ async function proxyScanToRemoteBase(res, json) {
       error:
         'Scan API base unreachable: ' +
         String(e.message || e) +
-        '. Run npm run go-live:audit:tunnel on your PC and paste the https URL.',
+        '. Run npm run go-live:audit:tunnel on your PC (keep terminal open) or clear Scan API base.',
     });
     return true;
   } finally {
@@ -1515,12 +1716,13 @@ async function handleScan(req, res) {
       bundle = await fetchUrl(requestedUrl);
     } catch (fetchErr) {
       const availability = classifyAvailabilityError(fetchErr);
+      const downChecks = buildAutoChecksForErrorResponse(0, requestedUrl, requestedUrl);
       const overallSummary = buildOverallSummary({
         reachable: false,
         availability,
         statusCode: 0,
-        autoChecks: [],
-        scanWarnings: [],
+        autoChecks: downChecks.autoChecks,
+        scanWarnings: downChecks.scanWarnings,
         html: null,
       });
       const pageIssuesDown = await buildPageIssuesForScan('', availability, 0, requestedUrl);
@@ -1531,7 +1733,9 @@ async function handleScan(req, res) {
         alertEmail: getAlertEmail(),
         availability,
         error: String(fetchErr.message || fetchErr),
-        autoChecks: [],
+        autoChecks: downChecks.autoChecks,
+        contentAutoChecksSkipped: true,
+        contentAutoChecksSkipReason: availability.headline || 'Site unreachable',
         overallSummary,
         pageIssues: pageIssuesDown,
         statusCode: 0,
@@ -1558,6 +1762,7 @@ async function handleScan(req, res) {
         headers: {},
       });
       await flushScanEmailIfNeeded(json, unreachablePayload);
+      ensureEmailReportOnPayload(json, unreachablePayload);
       sendJson(res, 200, unreachablePayload);
       return;
     }
@@ -1666,11 +1871,11 @@ async function handleScan(req, res) {
     /** @type {Array<{ message: string }>} */
     let scanWarnings;
     if (skipCh.skip) {
-      autoChecks = [];
+      const errBuilt = buildAutoChecksForErrorResponse(statusCode, finalUrl, requestedUrl);
+      autoChecks = errBuilt.autoChecks;
       scanWarnings = [
-        {
-          message: skipCh.reason + ' Fix hosting or the URL, then run the scan again.',
-        },
+        { message: skipCh.reason + ' Fix hosting or the URL, then run the scan again.' },
+        ...errBuilt.scanWarnings,
       ];
     } else {
       const built = buildAutoChecks(
@@ -1743,6 +1948,7 @@ async function handleScan(req, res) {
       cachedConsolePw,
       { onServerless: onServerlessDeploy, deepHttpScan }
     );
+    autoChecks = enrichAutoChecksFromPageIssues(autoChecks, pageIssues);
     if (pageIssues.items.length) {
       for (const it of pageIssues.items) {
         if (it.severity === 'error' || it.severity === 'warn') {
@@ -1816,6 +2022,7 @@ async function handleScan(req, res) {
       headers,
     });
     await flushScanEmailIfNeeded(json, successPayload);
+    ensureEmailReportOnPayload(json, successPayload);
     sendJson(res, 200, successPayload);
   } catch (e) {
     sendJson(res, 400, { ok: false, error: String(e.message || e), requestedUrl });

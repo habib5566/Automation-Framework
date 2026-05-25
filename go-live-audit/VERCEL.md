@@ -67,12 +67,16 @@ After deploy, `scanMeta.consoleCapture` should be **`playwright-vercel`** when l
 
 **Local shows “site down” but Vercel shows “up”?** Your PC may block HTTPS (corporate antivirus: `UNABLE_TO_VERIFY_LEAF_SIGNATURE`). The scanner auto-retries once with relaxed TLS on localhost so results match Vercel. Permanent local fix: `npm run go-live:audit:insecure-tls` (trusted network only).
 
-## Environment variables (optional)
+## Email after scan (required for inbox delivery)
+
+See **`VERCEL-EMAIL-SETUP.md`** — add `GO_LIVE_AUDIT_SMTP_USER` + `GO_LIVE_AUDIT_SMTP_PASS` (Google App Password) in Vercel, then **Redeploy**.  
+`GO_LIVE_AUDIT_EMAIL_ALWAYS=1` is already in `vercel.json` → reports go to **habib.developer8899@gmail.com**.
+
+## Other environment variables (optional)
 
 | Variable | When |
 |----------|------|
 | `GO_LIVE_AUDIT_TLS_INSECURE=1` | Only if outbound scans hit TLS verify errors you accept (MITM risk on untrusted networks). |
-| `GO_LIVE_AUDIT_SMTP_*` + App Password | Email reports from live scans (see `EMAIL.md`). |
 
 ## After deploy
 

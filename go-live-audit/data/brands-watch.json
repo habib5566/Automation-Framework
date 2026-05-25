@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-05-25T07:39:30.519Z",
+  "updatedAt": "2026-05-25T11:17:13.936Z",
   "brands": [
     {
       "name": "Example Brand",
@@ -112,7 +112,7 @@
       "url": "https://www.designcentura.com/",
       "enabled": true,
       "addedAt": "2026-05-21T12:54:06.667Z",
-      "lastScanAt": "2026-05-25T07:39:30.086Z",
+      "lastScanAt": "2026-05-25T09:33:48.977Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://www.designcentura.com/"
     },
@@ -175,6 +175,36 @@
       "url": "https://www.designcentura.com/",
       "enabled": true,
       "addedAt": "2026-05-25T07:39:30.519Z"
+    },
+    {
+      "name": "stagging kogents",
+      "url": "https://staging.kogents.com/",
+      "enabled": true,
+      "addedAt": "2026-05-25T10:16:08.780Z",
+      "lastScanAt": "2026-05-25T11:17:13.935Z",
+      "lastAlertLevel": "critical",
+      "lastUrl": "https://staging.kogents.com/",
+      "lastAlertAt": "2026-05-25T11:17:13.935Z",
+      "alertHistory": [
+        {
+          "at": "2026-05-25T11:17:13.935Z",
+          "level": "critical",
+          "critical": 1,
+          "warns": 0
+        },
+        {
+          "at": "2026-05-25T11:00:29.019Z",
+          "level": "critical",
+          "critical": 1,
+          "warns": 0
+        },
+        {
+          "at": "2026-05-25T10:16:08.780Z",
+          "level": "critical",
+          "critical": 1,
+          "warns": 0
+        }
+      ]
     }
   ]
 }

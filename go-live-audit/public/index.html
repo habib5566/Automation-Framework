@@ -1366,13 +1366,13 @@
           <div id="vercelFreeTunnelCard" class="scan-msg scan-msg-ok" style="display:none;margin-top:0.65rem;font-size:0.92rem;line-height:1.5">
             <strong>How to scan on Vercel</strong><br />
             <strong>Leave Scan API base empty</strong> — scan runs on Vercel (Chromium + deep HTTP console). After you <code>git push</code>, click <strong>Redeploy</strong> on Vercel once.<br />
-            <strong>Optional — same as your PC:</strong> run <code>npm run go-live:audit:tunnel</code>, copy the <code>https://…</code> URL, paste it here. Vercel will proxy the scan to your machine (keep the terminal open). See <code>go-live-audit/VERCEL.md</code>.
+            <strong>Optional — same as your PC:</strong> run <code>npm run go-live:audit:tunnel</code>, copy the <code>https://…</code> URL, paste it here (keep the terminal open). If you see “non-JSON” errors: tunnel is off or the URL changed — clear this field and scan on Vercel only. See <code>VERCEL.md</code>.
           </div>
         </div>
         <div class="scan-actions">
           <label class="chk-wrap">
             <input type="checkbox" id="autoApply" checked />
-            <span>Auto-fill checklist after scan</span>
+            <span>Auto-set Pass / Fail on checklist after scan</span>
           </label>
           <label class="chk-wrap">
             <input type="checkbox" id="sendEmailAfterScan" checked />
@@ -1404,7 +1404,18 @@
               />
             </div>
             <div class="field-block">
-              <label for="gmailAppPasswordInput">Gmail App Password <span class="label-hint">(send report to Gmail)</span></label>
+              <label for="gmailSenderInput">Sender Gmail <span class="label-hint">(account that owns the App Password)</span></label>
+              <input
+                id="gmailSenderInput"
+                type="email"
+                inputmode="email"
+                autocomplete="username"
+                spellcheck="false"
+                placeholder="you@gmail.com — not the alert inbox below"
+              />
+            </div>
+            <div class="field-block">
+              <label for="gmailAppPasswordInput">Gmail App Password <span class="label-hint">(16 chars)</span></label>
               <input
                 id="gmailAppPasswordInput"
                 type="password"
@@ -1413,7 +1424,7 @@
                 placeholder="16-character Google App Password"
               />
               <span class="label-hint" style="display:block;margin-top:0.35rem">
-                Not your normal Gmail password. Google Account → Security → App passwords. Stored only in this browser.
+                From Google Account → Security → App passwords (after 2-Step Verification). Must match <strong>Sender Gmail</strong> above. On Vercel you can use Environment Variables instead — <code>VERCEL-EMAIL-SETUP.md</code>.
               </span>
             </div>
             <div class="field-block">
@@ -1532,14 +1543,14 @@
             '<strong>Use Google App Password, not normal Gmail password.</strong> Update <code>.env</code> via <code>npm run go-live:email-setup</code> or paste the 16-character App Password below, then restart <code>npm run go-live:audit</code>.'
           );
         }
-        if (r.includes('[GMAIL_SMTP_REQUIRED]') || /Mailpit captured/i.test(r)) {
-          const live =
-            typeof location !== 'undefined' &&
-            location.hostname &&
-            !/localhost|127\.0\.0\.1/.test(location.hostname);
-          if (live) {
+        if (r.includes('[GMAIL_SMTP_REQUIRED]') || /Mailpit captured|Sender Gmail/i.test(r)) {
+          if (isLiveAuditHost()) {
             return (
-              '<strong>Email not sent from Vercel.</strong> Add Gmail SMTP env vars in Vercel (App Password, not normal password) and redeploy. Target: <code>' +
+              '<strong>Email skipped.</strong> ' +
+              (/\.vercel\.app$/i.test(location.hostname)
+                ? 'Add <code>GO_LIVE_AUDIT_SMTP_USER</code> + <code>GO_LIVE_AUDIT_SMTP_PASS</code> in Vercel env → Redeploy, or paste Sender Gmail + App Password here.'
+                : 'Configure SMTP on the scan host, or paste Sender Gmail + App Password on this page.') +
+              ' Inbox: <code>' +
               escapeHtml(DEFAULT_ALERT_EMAIL) +
               '</code>.'
             );
@@ -1566,11 +1577,30 @@
         return escapeHtml(r);
       }
 
+      function isLiveAuditHost() {
+        return (
+          typeof location !== 'undefined' &&
+          location.hostname &&
+          !/localhost|127\.0\.0\.1/.test(location.hostname)
+        );
+      }
+
       function humanizeEmailSendError(msg) {
         const m = String(msg || '');
-        if (m.includes('[GMAIL_SMTP_REQUIRED]') || /go-live:email-setup/i.test(m)) {
+        if (m.includes('[GMAIL_SMTP_REQUIRED]') || /go-live:email-setup|No SMTP/i.test(m)) {
+          if (isLiveAuditHost()) {
+            return (
+              '<strong>Email not configured on the server.</strong> ' +
+              (/\.vercel\.app$/i.test(location.hostname)
+                ? 'Vercel → Settings → Environment Variables → <code>GO_LIVE_AUDIT_SMTP_USER</code> (your Gmail), <code>GO_LIVE_AUDIT_SMTP_PASS</code> (16-char App Password), <code>GO_LIVE_AUDIT_EMAIL_FROM</code> (same Gmail) → <strong>Redeploy</strong>. Or fill <strong>Sender Gmail</strong> + App Password on this page. See <code>VERCEL-EMAIL-SETUP.md</code>.'
+                : 'Add SMTP on the scan server, or on this page fill <strong>Sender Gmail</strong> + App Password (must match the account that created the App Password).') +
+              ' Reports go to <code>' +
+              escapeHtml(DEFAULT_ALERT_EMAIL) +
+              '</code>.'
+            );
+          }
           return (
-            '<strong>Gmail not set up on this PC.</strong> In the project folder run <code>npm run go-live:email-setup</code>, enter Gmail + App Password, then <code>npm run go-live:audit</code> again. See <code>go-live-audit/EMAIL.md</code>.'
+            '<strong>Gmail not set up on this PC.</strong> Run <code>npm run go-live:email-setup</code> in the project folder, or paste <strong>Sender Gmail</strong> + App Password below, then scan again.'
           );
         }
         if (/Invalid login|535|EAUTH|authentication failed/i.test(m)) {
@@ -1610,7 +1640,7 @@
             location.hostname &&
             !/localhost|127\.0\.0\.1/.test(location.hostname);
           const vercelHint = onVercel
-            ? '<div class="email-fallback-hint"><strong>Live site (Vercel):</strong> Project → Settings → Environment Variables → add <code>GO_LIVE_AUDIT_SMTP_PRESET=gmail</code>, <code>GO_LIVE_AUDIT_SMTP_USER</code>, <code>GO_LIVE_AUDIT_SMTP_PASS</code> (16-char App Password), <code>GO_LIVE_AUDIT_ALERT_EMAIL=habib.developer8899@gmail.com</code> → <strong>Redeploy</strong>.</div>'
+            ? '<div class="email-fallback-hint"><strong>Vercel:</strong> Settings → Environment Variables → <code>GO_LIVE_AUDIT_SMTP_USER</code> = your Gmail (sender), <code>GO_LIVE_AUDIT_SMTP_PASS</code> = 16-char App Password, <code>GO_LIVE_AUDIT_EMAIL_FROM</code> = same Gmail → <strong>Redeploy</strong>. Or fill <strong>Sender Gmail</strong> + App Password on this page.</div>'
             : '<div class="email-fallback-hint">Local: run <code>npm run go-live:email-setup</code>, restart <code>npm run go-live:audit</code>, or paste App Password below.</div>';
           return (
             '<div class="scan-msg scan-msg-warn" style="margin-bottom:1rem"><strong>Email</strong> — no delivery status from server. ' +
@@ -1694,6 +1724,7 @@
       const apiBaseEl = document.getElementById('auditApiBase');
       const sendEmailEl = document.getElementById('sendEmailAfterScan');
       const reportEmailEl = document.getElementById('reportEmailInput');
+      const gmailSenderEl = document.getElementById('gmailSenderInput');
       const gmailAppPasswordEl = document.getElementById('gmailAppPasswordInput');
       if (!Array.isArray(state.savedBrands)) state.savedBrands = [];
       if (siteEl) siteEl.value = state.siteUrl || '';
@@ -1701,6 +1732,7 @@
       if (apiBaseEl) apiBaseEl.value = state.apiBaseUrl || '';
       if (sendEmailEl) sendEmailEl.checked = !!state.sendEmailAfterScan;
       if (reportEmailEl) reportEmailEl.value = DEFAULT_ALERT_EMAIL;
+      if (gmailSenderEl) gmailSenderEl.value = state.gmailSender || '';
       if (gmailAppPasswordEl) gmailAppPasswordEl.value = state.gmailAppPassword || '';
 
       function refreshBrandDatalist() {
@@ -2564,10 +2596,16 @@
       function renderChecklistSkippedBanner(data) {
         if (!data || !data.contentAutoChecksSkipped) return '';
         const r = data.contentAutoChecksSkipReason || 'Automated checklist was skipped for this response.';
+        const hasRows = Array.isArray(data.autoChecks) && data.autoChecks.length > 0;
         return (
-          '<div class="scan-msg scan-msg-warn" role="status"><strong>Checklist auto-fill skipped.</strong> ' +
+          '<div class="scan-msg scan-msg-warn" role="status"><strong>' +
+          (hasRows ? 'Partial auto Pass/Fail (site not 200 OK)' : 'Checklist auto-fill skipped') +
+          '</strong> ' +
           escapeHtml(r) +
-          ' Previous scan Pass/Fail from <span class="badge auto">Auto from scan</span> was cleared so rows are not misleading.</div>'
+          (hasRows
+            ? ' Rows below were still set to Pass/Fail where possible — scroll the checklist.'
+            : ' Previous auto Pass/Fail was cleared.') +
+          '</div>'
         );
       }
 
@@ -2764,6 +2802,7 @@
         if (apiBaseEl) apiBaseEl.value = '';
         if (brandNameEl) brandNameEl.value = '';
         if (reportEmailEl) reportEmailEl.value = DEFAULT_ALERT_EMAIL;
+        if (gmailSenderEl) gmailSenderEl.value = '';
         if (gmailAppPasswordEl) gmailAppPasswordEl.value = '';
         if (sendEmailEl) sendEmailEl.checked = true;
         render();
@@ -2834,11 +2873,18 @@
           saveState(state);
         });
       }
+      function persistGmailCreds() {
+        if (gmailSenderEl) state.gmailSender = gmailSenderEl.value.trim();
+        if (gmailAppPasswordEl) state.gmailAppPassword = gmailAppPasswordEl.value.trim();
+        saveState(state);
+      }
+      if (gmailSenderEl) {
+        gmailSenderEl.addEventListener('change', persistGmailCreds);
+        gmailSenderEl.addEventListener('input', persistGmailCreds);
+      }
       if (gmailAppPasswordEl) {
-        gmailAppPasswordEl.addEventListener('change', () => {
-          state.gmailAppPassword = gmailAppPasswordEl.value.trim();
-          saveState(state);
-        });
+        gmailAppPasswordEl.addEventListener('change', persistGmailCreds);
+        gmailAppPasswordEl.addEventListener('input', persistGmailCreds);
       }
 
       document.getElementById('btnScan').addEventListener('click', async () => {
@@ -2857,6 +2903,7 @@
             }
           }
         }
+        if (gmailSenderEl) state.gmailSender = gmailSenderEl.value.trim();
         if (gmailAppPasswordEl) state.gmailAppPassword = gmailAppPasswordEl.value.trim();
         saveState(state);
         const out = document.getElementById('scanResult');
@@ -2910,12 +2957,15 @@
           if (brandScan) scanBody.brandName = brandScan;
           if (sendEmailEl && sendEmailEl.checked) scanBody.sendEmail = true;
           scanBody.reportEmail = DEFAULT_ALERT_EMAIL;
+          const senderGmail = gmailSenderEl ? gmailSenderEl.value.trim() : '';
           const appPassSend = gmailAppPasswordEl ? gmailAppPasswordEl.value.trim().replace(/\s+/g, '') : '';
-          if (appPassSend.length >= 16 && !appPassSend.includes('@')) {
-            scanBody.smtpUser = DEFAULT_ALERT_EMAIL;
+          if (appPassSend.length >= 16 && !appPassSend.includes('@') && senderGmail.includes('@')) {
+            scanBody.smtpUser = senderGmail;
             scanBody.smtpPass = appPassSend;
             scanBody.gmailAppPassword = appPassSend;
-            scanBody.gmailUser = DEFAULT_ALERT_EMAIL;
+            scanBody.gmailUser = senderGmail;
+          } else if (sendEmailEl && sendEmailEl.checked && appPassSend.length > 0 && !senderGmail.includes('@')) {
+            console.warn('[go-live-audit] Fill Sender Gmail (the account that created the App Password).');
           } else if (sendEmailEl && sendEmailEl.checked && appPassSend.length > 0) {
             console.warn(
               '[go-live-audit] Gmail App Password must be 16 characters (no @). Server will try .env SMTP if configured.'
@@ -3070,13 +3120,22 @@
             data.autoChecks.forEach((ac) => lines.push(ac.id + ' → ' + ac.status + ' — ' + ac.note));
           }
           lines.push('', data.disclaimer);
-          if (document.getElementById('autoApply').checked && Array.isArray(data.autoChecks) && data.autoChecks.length) {
-            lines.splice(
-              1,
-              0,
-              '✓ Checklist updated from scan — scroll to review each row’s status and [auto] notes.'
-            );
-            applyAutoChecks(data.autoChecks);
+          if (Array.isArray(data.autoChecks) && data.autoChecks.length) {
+            const autoApplyOn = !document.getElementById('autoApply') || document.getElementById('autoApply').checked;
+            if (autoApplyOn) {
+              lines.splice(
+                1,
+                0,
+                '✓ Checklist Pass/Fail updated from scan — scroll down to review each row (badge: Auto from scan).'
+              );
+              applyAutoChecks(data.autoChecks);
+            } else {
+              lines.splice(
+                1,
+                0,
+                'Checklist auto results available — turn on “Auto-set Pass / Fail” and run scan again to apply.'
+              );
+            }
           }
           const detailLines = lines.map((l) =>
             l.startsWith('<') ? l : '<div class="scan-line">' + escapeHtml(l) + '</div>'
@@ -3174,7 +3233,9 @@
           const watchBody = { reportEmail: DEFAULT_ALERT_EMAIL };
           const appPassWatch = gmailAppPasswordEl ? gmailAppPasswordEl.value.trim().replace(/\s+/g, '') : '';
           if (appPassWatch.length >= 16 && !appPassWatch.includes('@')) {
-            watchBody.smtpUser = DEFAULT_ALERT_EMAIL;
+            if (gmailSenderEl && gmailSenderEl.value.trim().includes('@')) {
+              watchBody.smtpUser = gmailSenderEl.value.trim();
+            }
             watchBody.smtpPass = appPassWatch;
             watchBody.gmailAppPassword = appPassWatch;
           }

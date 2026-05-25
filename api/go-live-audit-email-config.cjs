@@ -33,27 +33,47 @@ function getEmailConfigStatus() {
 
   const envReady = envSmtpConfigured();
   const canUseUi = uiSmtpAllowed();
+  const onVercel = process.env.VERCEL === '1';
 
   let ready = envReady;
   let level = envReady ? 'good' : 'bad';
-  let headline = envReady ? 'Gmail SMTP ready (.env)' : 'Enter Gmail App Password below';
+  let headline = envReady
+    ? 'Gmail SMTP ready (server .env)'
+    : onVercel
+      ? 'Vercel: add Gmail App Password (env or form)'
+      : 'Enter Gmail App Password below';
   let detail = envReady
-    ? `Will send via ${host}:${port || (secure ? '465' : '587')} as ${from || user}.`
-    : canUseUi
-      ? 'Paste your Google App Password in the field below (saved only in this browser). No .env file needed.'
-      : 'Configure SMTP in server environment variables (see go-live-audit/EMAIL.md).';
+    ? `Will send via ${host}:${port || (secure ? '465' : '587')} as ${from || user}. Reports go to ${require('./go-live-audit-defaults.cjs').getAlertEmail()}.`
+    : onVercel
+      ? 'Add GO_LIVE_AUDIT_SMTP_USER + GO_LIVE_AUDIT_SMTP_PASS in Vercel → Settings → Environment Variables (see go-live-audit/VERCEL-EMAIL-SETUP.md), Redeploy — OR paste App Password below (saved in this browser).'
+      : canUseUi
+        ? 'Paste your Google App Password in the field below (saved only in this browser). No .env file needed.'
+        : 'Configure SMTP in server environment variables (see go-live-audit/EMAIL.md).';
   const steps = envReady
-    ? []
-    : canUseUi
+    ? ['After each scan, email goes to ' + require('./go-live-audit-defaults.cjs').getAlertEmail()]
+    : onVercel
       ? [
-          'Turn on Email scan summary',
-          'Report email = your Gmail inbox',
-          'Gmail App Password = 16-char password from Google Account (not your normal password)',
-          'Run quick scan — report is sent after each scan',
+          'Vercel → Project → Settings → Environment Variables → Production',
+          'GO_LIVE_AUDIT_SMTP_USER = your Gmail (the account that created the App Password)',
+          'GO_LIVE_AUDIT_SMTP_PASS = 16-character Google App Password (not normal password)',
+          'GO_LIVE_AUDIT_EMAIL_FROM = same Gmail address',
+          'Redeploy, then run a scan (Email scan summary is on by default)',
         ]
-      : ['Run npm run go-live:email-setup or set SMTP env vars on the host'];
+      : canUseUi
+        ? [
+            'Keep Email scan summary checked',
+            'Paste Gmail App Password below (16 chars, no spaces)',
+            'Run quick scan — report goes to habib.developer8899@gmail.com',
+          ]
+        : ['Run: npm run go-live:email-setup', 'Restart: npm run go-live:audit'];
 
-  if (!envReady && mailpit && !user && canUseUi) {
+  if (!envReady && onVercel && !user) {
+    ready = false;
+    level = 'bad';
+    headline = 'Vercel: Gmail password not in server env';
+    detail =
+      'Set GO_LIVE_AUDIT_SMTP_USER and GO_LIVE_AUDIT_SMTP_PASS in Vercel Environment Variables, then Redeploy — or paste App Password in the form below.';
+  } else if (!envReady && mailpit && !user && canUseUi) {
     level = 'bad';
     headline = 'Enter Gmail App Password below';
     detail =

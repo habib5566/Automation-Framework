@@ -92,6 +92,15 @@ async function main() {
     console.log('Next: stop the audit server (Ctrl+C), then run: npm run go-live:audit');
     console.log('Scan reports will be sent to:', alertInbox);
     console.log('SMTP sends as:', gmail, '(must match Google App Password account)');
+    console.log('');
+    console.log('=== Vercel (live site) — copy these to Environment Variables ===');
+    console.log('GO_LIVE_AUDIT_SMTP_USER=' + gmail);
+    console.log('GO_LIVE_AUDIT_SMTP_PASS=' + appPass);
+    console.log('GO_LIVE_AUDIT_EMAIL_FROM=' + gmail);
+    console.log('GO_LIVE_AUDIT_ALERT_EMAIL=' + alertInbox);
+    console.log('GO_LIVE_AUDIT_SMTP_PRESET=gmail');
+    console.log('(GO_LIVE_AUDIT_EMAIL_ALWAYS=1 is already in vercel.json)');
+    console.log('Then: Vercel → Redeploy. See go-live-audit/VERCEL-EMAIL-SETUP.md');
   } finally {
     rl.close();
   }

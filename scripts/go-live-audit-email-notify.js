@@ -271,22 +271,42 @@ function buildSubject(scanResponse) {
   return prefix + host + ' — ' + short;
 }
 
-function shouldSendForRequest(requestJson) {
+/** Critical / high-risk scan — email even if user forgot the checkbox. */
+function scanNeedsDangerEmail(scanResponse) {
+  const o = scanResponse || {};
+  if (process.env.GO_LIVE_AUDIT_ALERT_ON_THREAT === '0') return false;
+  if (o.ok === false && o.availability) return true;
+  if (o.securityAlert === true) return true;
+  if (o.security && o.security.shouldAlert) return true;
+  if (o.security && o.security.alertLevel === 'critical') return true;
+  const vs = o.vulnerabilities && o.vulnerabilities.summary;
+  if (vs && (Number(vs.critical) > 0 || Number(vs.high) >= 2)) return true;
+  const pi = o.pageIssues && o.pageIssues.summary;
+  if (pi && Number(pi.errors) >= 4) return true;
+  if (o.overallSummary && o.overallSummary.level === 'bad') return true;
+  return false;
+}
+
+function shouldSendForRequest(requestJson, scanResponse) {
   if (!requestJson || requestJson.skipEmail === true) return { ok: false, reason: 'skipEmail' };
   const always = process.env.GO_LIVE_AUDIT_EMAIL_ALWAYS === '1';
   const asked =
     requestJson.sendEmail === true ||
     requestJson.emailReport === true ||
     requestJson.email === true;
-  if (!always && !asked) {
-    return { ok: false, reason: 'sendEmail not true (check UI) or set GO_LIVE_AUDIT_EMAIL_ALWAYS=1' };
+  const danger = scanNeedsDangerEmail(scanResponse);
+  if (!always && !asked && !danger) {
+    return {
+      ok: false,
+      reason: 'sendEmail not checked and no danger alert — tick Email scan summary or set GO_LIVE_AUDIT_EMAIL_ALWAYS=1',
+    };
   }
   const expected = (process.env.GO_LIVE_AUDIT_NOTIFY_TOKEN || '').trim();
   if (expected) {
     const got = String(requestJson.notifyToken || '').trim();
     if (got !== expected) return { ok: false, reason: 'notifyToken mismatch or missing' };
   }
-  return { ok: true };
+  return { ok: true, danger };
 }
 
 function smtpHostIsLocalMailpit() {
@@ -515,7 +535,7 @@ function resolveTransport(requestJson, to) {
  * @returns {Promise<{ skipped?: boolean, reason?: string, sent?: boolean, error?: string, recipientMode?: string }>}
  */
 async function maybeSendScanEmail(requestJson, scanResponse) {
-  const gate = shouldSendForRequest(requestJson);
+  const gate = shouldSendForRequest(requestJson, scanResponse);
   if (!gate.ok) return { skipped: true, reason: gate.reason };
 
   const resolved = resolveRecipient(requestJson);
@@ -632,6 +652,7 @@ async function maybeSendScanEmail(requestJson, scanResponse) {
 
 module.exports = {
   maybeSendScanEmail,
+  scanNeedsDangerEmail,
   looksLikeGoogleAppPassword,
   buildPlainText,
   buildSubject,
