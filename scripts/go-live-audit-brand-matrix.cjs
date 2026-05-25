@@ -55,6 +55,7 @@ function buildBrandMatrix({
   siteStack,
   requestedUrl,
   finalUrl,
+  consoleDisplaySummary,
 }) {
   const counts = (overallSummary && overallSummary.counts) || {
     pass: 0,
@@ -63,7 +64,9 @@ function buildBrandMatrix({
     notScored: 0,
   };
   const piSum = (pageIssues && pageIssues.summary) || { errors: 0, warns: 0, total: 0 };
-  const consoleSum = pickConsoleIssues(pageIssues).summary;
+  const consoleSum =
+    consoleDisplaySummary ||
+    pickConsoleIssues(pageIssues).summary;
   const sc = Number(statusCode) || 0;
 
   const siteHealth = computeSiteHealthPercent({

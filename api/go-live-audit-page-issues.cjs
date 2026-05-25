@@ -133,6 +133,39 @@ function summarizeIssues(issues) {
   return { errors, warns, total: issues.length };
 }
 
+/** UI counts — script/HTTP failures count as errors; infra-only browser-fail line separate. */
+function computeConsoleDisplaySummary(items, scanMeta) {
+  const list = Array.isArray(items) ? items : [];
+  let errors = 0;
+  let warns = 0;
+  let infra = 0;
+  for (const it of list) {
+    const msg = String(it.message || '');
+    if (/Browser console capture failed on server/i.test(msg)) {
+      infra++;
+      continue;
+    }
+    if (
+      it.severity === 'error' ||
+      /Script returned HTTP [45]\d|Failed to load resource|net::ERR_/i.test(msg)
+    ) {
+      errors++;
+    } else if (it.severity === 'warn') {
+      warns++;
+    }
+  }
+  const cap = scanMeta && scanMeta.consoleCapture ? String(scanMeta.consoleCapture) : '';
+  const browserFailed = cap.includes('failed');
+  return {
+    errors,
+    warns,
+    infra,
+    total: list.length,
+    browserFailed,
+    siteIssues: errors + warns,
+  };
+}
+
 module.exports = {
   detectHtmlRuntimeIssues,
   issuesFromHtmlScriptHints,
@@ -140,4 +173,5 @@ module.exports = {
   issuesFromPlaywrightConsole,
   mergeIssues,
   summarizeIssues,
+  computeConsoleDisplaySummary,
 };

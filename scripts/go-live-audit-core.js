@@ -36,6 +36,7 @@ const {
   issuesFromHtmlScriptHints,
   mergeIssues,
   summarizeIssues,
+  computeConsoleDisplaySummary,
 } = require('./go-live-audit-page-issues.cjs');
 const {
   enrichInteractiveFromHtml,
@@ -55,6 +56,10 @@ const { findBrand, loadBrandsWatch, recordScanForBrand } = require('./go-live-au
 function enrichScanReportPayload(payload, ctx) {
   const pageIssues = payload.pageIssues || { items: [], summary: { errors: 0, warns: 0, total: 0 } };
   payload.consoleIssues = pickConsoleIssues(pageIssues);
+  payload.consoleIssues.displaySummary = computeConsoleDisplaySummary(
+    payload.consoleIssues.items,
+    payload.scanMeta
+  );
   payload.siteIssues = pickNonConsoleIssues(pageIssues);
   payload.brandMatrix = buildBrandMatrix({
     brandName: ctx.brandName || payload.brandName,
@@ -66,6 +71,7 @@ function enrichScanReportPayload(payload, ctx) {
     siteStack: payload.siteStack,
     requestedUrl: payload.requestedUrl,
     finalUrl: payload.finalUrl,
+    consoleDisplaySummary: payload.consoleIssues.displaySummary,
   });
 
   const brandName = ctx.brandName || payload.brandName;
@@ -105,29 +111,8 @@ function enrichScanReportPayload(payload, ctx) {
     pageIssues,
     siteIssues: payload.siteIssues,
     consoleIssues: payload.consoleIssues,
+    scanMeta: payload.scanMeta,
   });
-
-  const cap = payload.scanMeta && payload.scanMeta.consoleCapture;
-  if (cap === 'playwright-vercel-failed' || cap === 'playwright-failed') {
-    const v = payload.vulnerabilities || { items: [], summary: {} };
-    v.items = v.items || [];
-    v.items.unshift({
-      id: 'browser_capture_failed',
-      severity: 'high',
-      category: 'console',
-      title: 'Live browser scan failed on Vercel',
-      detail:
-        (payload.scanMeta.consoleCaptureDetail || 'Chromium could not stay open').slice(0, 200) +
-        ' — redeploy with latest code; paste Gmail App Password for email.',
-      source: 'scan-meta',
-    });
-    v.summary.high = (v.summary.high || 0) + 1;
-    v.summary.total = (v.summary.total || 0) + 1;
-    v.headline = v.summary.critical
-      ? v.headline
-      : (v.summary.high || 0) + ' high-risk finding(s)';
-    payload.vulnerabilities = v;
-  }
 }
 
 async function flushScanEmailIfNeeded(requestJson, scanPayload) {

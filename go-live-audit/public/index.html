@@ -2196,7 +2196,14 @@
         const panel = document.getElementById('consoleErrorsPanel');
         if (!panel) return;
         const items = consoleIssues && Array.isArray(consoleIssues.items) ? consoleIssues.items : [];
-        const errCount = consoleIssues && consoleIssues.summary ? consoleIssues.summary.errors : 0;
+        const disp =
+          consoleIssues && consoleIssues.displaySummary
+            ? consoleIssues.displaySummary
+            : consoleIssues && consoleIssues.summary
+              ? consoleIssues.summary
+              : { errors: 0, warns: 0, siteIssues: 0, browserFailed: false };
+        const errCount = disp.errors || 0;
+        const warnCount = disp.warns || 0;
         const cap = scanMeta && scanMeta.consoleCapture ? String(scanMeta.consoleCapture) : '';
         const capDetail =
           scanMeta && scanMeta.consoleCaptureDetail ? String(scanMeta.consoleCaptureDetail) : '';
@@ -2235,24 +2242,41 @@
           return;
         }
         panel.className = 'console-errors-panel';
+        let headlineText;
+        if (cap.includes('failed') && (errCount > 0 || warnCount > 0)) {
+          headlineText =
+            errCount +
+            ' site/script issue(s)' +
+            (warnCount ? ', ' + warnCount + ' warning(s)' : '') +
+            ' — Vercel browser did not run (HTTP checks only)';
+        } else if (errCount > 0 || warnCount > 0) {
+          headlineText =
+            errCount + ' error(s)' + (warnCount ? ', ' + warnCount + ' warning(s)' : '') + ' in console';
+        } else {
+          headlineText = 'No console errors detected';
+        }
         let html =
           '<p class="site-stack-title">Website console errors' +
           (brandName ? ' · ' + escapeHtml(brandName) : '') +
           '</p>' +
           '<p class="site-stack-headline">' +
-          errCount +
-          ' error(s) in console</p><p class="site-stack-sub">' +
+          escapeHtml(headlineText) +
+          '</p><p class="site-stack-sub">' +
           escapeHtml(capHint) +
+          (capDetail ? ' — ' + escapeHtml(capDetail) : '') +
           '</p>';
         items.forEach(function (it) {
-          const sev = it.severity === 'warn' ? 'warn' : 'error';
+          const msg = it.message || '';
+          let sev = it.severity === 'warn' ? 'warn' : 'error';
+          if (/Script returned HTTP|Failed to load resource/i.test(msg)) sev = 'error';
+          if (/Browser console capture failed on server/i.test(msg)) sev = 'warn';
           html +=
             '<div class="console-error-line sev-' +
             sev +
             '"><span class="console-sev-tag">' +
-            escapeHtml((it.severity || 'error').toUpperCase()) +
+            escapeHtml(sev.toUpperCase()) +
             '</span> ' +
-            escapeHtml(it.message || '') +
+            escapeHtml(msg) +
             '</div>';
         });
         panel.innerHTML = html;

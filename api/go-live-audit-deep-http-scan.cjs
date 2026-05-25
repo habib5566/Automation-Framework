@@ -131,7 +131,7 @@ async function issuesFromScriptSrcProbe(html, finalUrl, fetchUrl) {
     if (c.status >= 400) {
       issues.push({
         kind: 'console',
-        severity: 'warn',
+        severity: 'error',
         message: `Script returned HTTP ${c.status}: ${c.scriptUrl.slice(0, 120)}`,
       });
     } else if (c.status === 0) {
