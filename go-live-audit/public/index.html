@@ -1740,6 +1740,38 @@
         );
       }
 
+      function isVercelHost() {
+        return /\.vercel\.app$/i.test((location && location.hostname) || '');
+      }
+
+      function mergeWatchSummaries(target, batch) {
+        if (!batch) return target;
+        target.scanned = (target.scanned || 0) + (batch.scanned || 0);
+        target.alerts = (target.alerts || 0) + (batch.alerts || 0);
+        target.emailsSent = (target.emailsSent || 0) + (batch.emailsSent || 0);
+        target.emailsFailed = (target.emailsFailed || 0) + (batch.emailsFailed || 0);
+        target.emailsSkipped = (target.emailsSkipped || 0) + (batch.emailsSkipped || 0);
+        target.alertEmail = batch.alertEmail || target.alertEmail;
+        target.totalBrands = batch.totalBrands != null ? batch.totalBrands : target.totalBrands;
+        if (Array.isArray(batch.brands)) {
+          target.brands = (target.brands || []).concat(batch.brands);
+        }
+        return target;
+      }
+
+      function buildWatchRequestBody() {
+        const watchBody = { reportEmail: DEFAULT_ALERT_EMAIL };
+        const appPassWatch = gmailAppPasswordEl ? gmailAppPasswordEl.value.trim().replace(/\s+/g, '') : '';
+        if (appPassWatch.length >= 16 && !appPassWatch.includes('@')) {
+          if (gmailSenderEl && gmailSenderEl.value.trim().includes('@')) {
+            watchBody.smtpUser = gmailSenderEl.value.trim();
+          }
+          watchBody.smtpPass = appPassWatch;
+          watchBody.gmailAppPassword = appPassWatch;
+        }
+        return watchBody;
+      }
+
       function humanizeEmailSendError(msg) {
         const m = String(msg || '');
         if (m.includes('[GMAIL_SMTP_REQUIRED]') || /go-live:email-setup|No SMTP/i.test(m)) {
@@ -3999,27 +4031,25 @@
         ];
         if (s.emailsSent > 0) {
           lines.push('Email sent: ' + s.emailsSent + ' report(s) to ' + to + '. Check inbox + spam.');
-        } else {
-          lines.push('Email NOT sent to ' + to + '.');
-          if (s.emailsSkipped > 0 || s.emailsFailed > 0) {
-            lines.push(
-              'Skipped: ' + (s.emailsSkipped || 0) + ', failed: ' + (s.emailsFailed || 0) + '.'
-            );
-          }
-          if (/\.vercel\.app$/i.test(window.location.hostname || '')) {
-            lines.push(
-              'Vercel fix: dashboard → Project → Settings → Environment Variables → Production:'
-            );
-            lines.push(
-              'GO_LIVE_AUDIT_SMTP_USER, GO_LIVE_AUDIT_SMTP_PASS (16-char App Password), GO_LIVE_AUDIT_EMAIL_FROM, GO_LIVE_AUDIT_SMTP_PRESET=gmail'
-            );
-            lines.push('Then Redeploy. OR paste App Password in this page Gmail field before Watch.');
           } else {
-            lines.push(
-              'Fix: paste Gmail App Password (16 chars) in the form OR npm run go-live:email-setup, restart npm run go-live:audit.'
-            );
+            lines.push('Email NOT sent to ' + to + '.');
+            if (s.emailsSkipped > 0 || s.emailsFailed > 0) {
+              lines.push(
+                'Skipped: ' + (s.emailsSkipped || 0) + ', failed: ' + (s.emailsFailed || 0) + '.'
+              );
+            }
+            lines.push('');
+            lines.push('Gmail needs a 16-character Google App Password — NOT your normal sign-in password.');
+            if (isVercelHost()) {
+              lines.push(
+                'Vercel: Settings → Environment Variables → GO_LIVE_AUDIT_SMTP_USER + GO_LIVE_AUDIT_SMTP_PASS (App Password) → Redeploy.'
+              );
+              lines.push('OR paste Sender Gmail + App Password in this page before Watch.');
+            } else {
+              lines.push('Local: npm run go-live:email-setup (paste App Password), restart npm run go-live:audit.');
+              lines.push('OR paste Sender Gmail + App Password in the form below, then Watch again.');
+            }
           }
-        }
         if (Array.isArray(s.brands)) {
           for (const b of s.brands) {
             if (!b || !b.email) continue;
@@ -4041,37 +4071,77 @@
       document.getElementById('btnWatchAll').addEventListener('click', async function () {
         const btn = document.getElementById('btnWatchAll');
         btn.disabled = true;
-        btn.textContent = 'Watching all brands…';
+        const batchSize = isVercelHost() ? 1 : 5;
+        const watchBody = buildWatchRequestBody();
+        let offset = 0;
+        let total = null;
+        let merged = {
+          scanned: 0,
+          alerts: 0,
+          emailsSent: 0,
+          emailsFailed: 0,
+          emailsSkipped: 0,
+          brands: [],
+          alertEmail: DEFAULT_ALERT_EMAIL,
+        };
         try {
-          const watchBody = { reportEmail: DEFAULT_ALERT_EMAIL };
-          const appPassWatch = gmailAppPasswordEl ? gmailAppPasswordEl.value.trim().replace(/\s+/g, '') : '';
-          if (appPassWatch.length >= 16 && !appPassWatch.includes('@')) {
-            if (gmailSenderEl && gmailSenderEl.value.trim().includes('@')) {
-              watchBody.smtpUser = gmailSenderEl.value.trim();
+          while (true) {
+            const done = total != null ? Math.min(offset, total) : offset;
+            btn.textContent =
+              total != null
+                ? 'Watching ' + done + '/' + total + '…'
+                : isVercelHost()
+                  ? 'Watching (1 brand per step on Vercel)…'
+                  : 'Watching all brands…';
+            const sig =
+              typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+                ? AbortSignal.timeout(120000)
+                : undefined;
+            const r = await fetch(watchRunEndpoint(), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(
+                Object.assign({}, watchBody, { offset: offset, limit: batchSize })
+              ),
+              signal: sig,
+            });
+            const data = await r.json().catch(function () {
+              return {};
+            });
+            if (!r.ok || data.ok === false) {
+              alert(
+                data.error
+                  ? 'Watch failed: ' + data.error
+                  : 'Watch failed: HTTP ' +
+                      r.status +
+                      ' — redeploy after git push (needs api/watch/run.js).'
+              );
+              return;
             }
-            watchBody.smtpPass = appPassWatch;
-            watchBody.gmailAppPassword = appPassWatch;
+            const s = data.summary || {};
+            if (s.totalBrands != null) total = s.totalBrands;
+            mergeWatchSummaries(merged, s);
+            if (!s.hasMore || s.nextOffset == null) break;
+            offset = s.nextOffset;
           }
-          const r = await fetch(watchRunEndpoint(), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(watchBody),
-          });
-          const data = await r.json().catch(function () {
-            return {};
-          });
-          if (!r.ok && !data.error) {
-            alert(
-              'Watch failed: HTTP ' +
-                r.status +
-                ' — redeploy after git push (needs api/watch/run.js). On Vercel, only brands in repo file are scanned.'
-            );
-          } else {
-            alert(data.ok ? formatWatchResultMessage(data) : 'Watch failed: ' + (data.error || r.statusText));
-          }
+          alert(formatWatchResultMessage({ summary: merged }));
           loadBrandWatchList();
         } catch (e) {
-          alert('Watch failed: ' + (e.message || String(e)));
+          const msg = String(e.message || e);
+          if (/abort|timeout/i.test(msg)) {
+            alert(
+              'Watch timed out on the server (Vercel max ~60s per brand). Wait and try again, or scan brands one-by-one from All brands.'
+            );
+          } else if (/failed to fetch/i.test(msg)) {
+            alert(
+              'Watch failed: server did not respond in time.\n\n' +
+                (isVercelHost()
+                  ? 'On Vercel, all brands are scanned one-by-one — keep this tab open until finished. If it still fails, redeploy latest code or use Quick scan per brand.'
+                  : 'Check that npm run go-live:audit is running on this PC.')
+            );
+          } else {
+            alert('Watch failed: ' + msg);
+          }
         } finally {
           btn.disabled = false;
           btn.textContent = 'Run watch now (all brands)';

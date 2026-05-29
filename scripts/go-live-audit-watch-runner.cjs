@@ -10,9 +10,22 @@
  */
 require('./go-live-audit-smtp-env.cjs');
 
-const { listEnabledBrands, loadBrandsWatch } = require('./go-live-audit-brand-watch.cjs');
+const { listEnabledBrands } = require('./go-live-audit-brand-watch.cjs');
 const { runScanInternal } = require('./go-live-audit-core');
 const { getAlertEmail } = require('./go-live-audit-defaults.cjs');
+const { extractBrandScanSummary } = require('./go-live-audit-brand-matrix.cjs');
+
+function isServerlessWatch() {
+  return !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+}
+
+function watchBatchLimit(requestJson) {
+  if (requestJson && requestJson.limit != null) {
+    const n = Number(requestJson.limit);
+    if (Number.isFinite(n) && n > 0) return Math.min(Math.floor(n), 10);
+  }
+  return isServerlessWatch() ? 1 : 9999;
+}
 
 function mergeWatchSmtpFromRequest(json, requestJson) {
   const uiPass = String(
@@ -69,14 +82,64 @@ function summarizeEmailReport(email) {
 }
 
 async function runWatchPass(requestJson) {
-  const brands = listEnabledBrands();
+  requestJson = requestJson || {};
+  const allBrands = listEnabledBrands();
   const alertEmail = getAlertEmail();
-  if (!brands.length) {
-    console.log('[go-live-watch] No brands in go-live-audit/data/brands-watch.json — add brands in the UI or edit the file.');
-    return { scanned: 0, alerts: 0, alertEmail, emailsSent: 0, emailsFailed: 0, emailsSkipped: 0, brands: [] };
+  const offset = Math.max(0, Number(requestJson.offset) || 0);
+  const limit = watchBatchLimit(requestJson);
+  const brands = allBrands.slice(offset, offset + limit);
+  const totalBrands = allBrands.length;
+  const hasMore = offset + brands.length < totalBrands;
+  const nextOffset = hasMore ? offset + brands.length : null;
+
+  if (!totalBrands) {
+    console.log(
+      '[go-live-watch] No brands in go-live-audit/data/brands-watch.json — add brands in the UI or edit the file.'
+    );
+    return {
+      scanned: 0,
+      alerts: 0,
+      alertEmail,
+      emailsSent: 0,
+      emailsFailed: 0,
+      emailsSkipped: 0,
+      brands: [],
+      totalBrands: 0,
+      offset: 0,
+      limit,
+      hasMore: false,
+      nextOffset: null,
+      serverless: isServerlessWatch(),
+    };
   }
 
-  console.log('[go-live-watch] Scanning', brands.length, 'brand(s)… alerts →', alertEmail);
+  if (!brands.length) {
+    return {
+      scanned: 0,
+      alerts: 0,
+      alertEmail,
+      emailsSent: 0,
+      emailsFailed: 0,
+      emailsSkipped: 0,
+      brands: [],
+      totalBrands,
+      offset,
+      limit,
+      hasMore: false,
+      nextOffset: null,
+      serverless: isServerlessWatch(),
+    };
+  }
+
+  console.log(
+    '[go-live-watch] Scanning',
+    brands.length,
+    'of',
+    totalBrands,
+    'brand(s) (offset',
+    offset + ')… alerts →',
+    alertEmail
+  );
   let alerts = 0;
   let emailsSent = 0;
   let emailsFailed = 0;
@@ -111,6 +174,8 @@ async function runWatchPass(requestJson) {
         url: brand.url,
         securityAlert: !!(sec.shouldAlert || sec.alertLevel === 'critical'),
         email: emailSummary,
+        snapshot: extractBrandScanSummary(result),
+        ok: result.ok !== false,
       });
     } catch (e) {
       emailsFailed += 1;
@@ -120,11 +185,13 @@ async function runWatchPass(requestJson) {
         url: brand.url,
         securityAlert: false,
         email: { status: 'failed', error: String(e.message || e).slice(0, 240) },
+        snapshot: null,
+        ok: false,
       });
     }
   }
   console.log(
-    '[go-live-watch] Done.',
+    '[go-live-watch] Batch done.',
     alerts,
     'alert(s); email sent:',
     emailsSent,
@@ -132,6 +199,7 @@ async function runWatchPass(requestJson) {
     emailsSkipped,
     'failed:',
     emailsFailed,
+    hasMore ? '(more brands remain)' : '(all done)',
     '→',
     alertEmail
   );
@@ -143,6 +211,12 @@ async function runWatchPass(requestJson) {
     emailsSkipped,
     emailsFailed,
     brands: brandRows,
+    totalBrands,
+    offset,
+    limit,
+    hasMore,
+    nextOffset,
+    serverless: isServerlessWatch(),
   };
 }
 
@@ -150,12 +224,24 @@ async function main() {
   const daemon = process.argv.includes('--daemon');
   const intervalMin = Number(process.env.GO_LIVE_WATCH_INTERVAL_MIN || 30) || 30;
 
-  await runWatchPass();
+  let offset = 0;
+  let summary;
+  do {
+    summary = await runWatchPass({ offset, limit: isServerlessWatch() ? 1 : 9999 });
+    offset = summary.nextOffset;
+  } while (summary && summary.hasMore && summary.nextOffset != null);
 
   if (daemon) {
     console.log('[go-live-watch] Daemon mode — next pass in', intervalMin, 'minutes.');
     setInterval(() => {
-      runWatchPass().catch((e) => console.error('[go-live-watch]', e));
+      (async () => {
+        let o = 0;
+        let s;
+        do {
+          s = await runWatchPass({ offset: o, limit: isServerlessWatch() ? 1 : 9999 });
+          o = s.nextOffset;
+        } while (s && s.hasMore && s.nextOffset != null);
+      })().catch((e) => console.error('[go-live-watch]', e));
     }, intervalMin * 60 * 1000);
   }
 }
@@ -167,4 +253,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { runWatchPass, scanOneBrand };
+module.exports = { runWatchPass, scanOneBrand, isServerlessWatch, watchBatchLimit };
