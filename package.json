@@ -27,7 +27,7 @@
     "go-live:watch:daemon": "node scripts/go-live-audit-watch-runner.cjs --daemon"
   },
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   },
   "dependencies": {
     "@vercel/blob": "^0.27.3",

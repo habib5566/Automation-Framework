@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-05-29T11:34:04.394Z",
+  "updatedAt": "2026-06-01T08:44:59.254Z",
   "brands": [
     {
       "name": "Example Brand",
@@ -232,10 +232,10 @@
     },
     {
       "name": "optimax",
-      "url": "https://websiteoptimax.com/",
+      "url": "https://websiteoptimax.com",
       "enabled": true,
       "addedAt": "2026-05-25T05:50:57.750Z",
-      "lastScanAt": "2026-05-29T10:37:51.141Z",
+      "lastScanAt": "2026-06-01T08:44:58.640Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://websiteoptimax.com/"
     },

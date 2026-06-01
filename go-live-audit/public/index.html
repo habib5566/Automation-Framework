@@ -2851,7 +2851,7 @@
           '<div class="scan-msg scan-msg-warn" style="margin-bottom:1rem"><strong>Vercel scan note</strong> — ' +
           (data && data.scanMeta && data.scanMeta.browserScanOk
             ? 'Console captured on this pass.'
-            : 'Redeploy latest code (Chromium fix). Keep Scan API base empty — no tunnel needed to share this link. ') +
+            : 'Chromium failed on server (libnss3). Fix: Vercel → Fluid Compute OFF, env AWS_LAMBDA_JS_RUNTIME=nodejs22.x, Redeploy — see VERCEL-CHROMIUM-FIX-URDU.md. Scan API base empty (no tunnel for clients). ') +
           (data && data.scanMeta && data.scanMeta.consoleCapture
             ? ' Last scan: <code>' + escapeHtml(String(data.scanMeta.consoleCapture)) + '</code>.'
             : '') +

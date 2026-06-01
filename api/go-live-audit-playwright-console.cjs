@@ -128,13 +128,23 @@ async function captureWithServerlessPuppeteer(url, opts) {
   }
 
   const path = require('path');
+  const fs = require('fs');
   const executablePath = await pack.executablePath();
   if (!executablePath) {
     throw new Error('@sparticuz/chromium executablePath() empty');
   }
 
   const execDir = path.dirname(executablePath);
-  process.env.LD_LIBRARY_PATH = execDir;
+  const libDirs = [execDir, path.join(execDir, 'lib'), path.join(execDir, 'al2023', 'lib')].filter(
+    (d) => {
+      try {
+        return fs.existsSync(d);
+      } catch {
+        return false;
+      }
+    }
+  );
+  process.env.LD_LIBRARY_PATH = [...libDirs, process.env.LD_LIBRARY_PATH].filter(Boolean).join(':');
 
   const launchOpts = {
     args: [...(pack.args || []), '--disable-dev-shm-usage', '--disable-gpu'],

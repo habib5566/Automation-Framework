@@ -2023,6 +2023,23 @@ async function handleScan(req, res) {
     });
     await flushScanEmailIfNeeded(json, successPayload);
     ensureEmailReportOnPayload(json, successPayload);
+    const bnSave = brandName || successPayload.brandName;
+    if (bnSave) {
+      try {
+        const { saveBrandReport } = require('./go-live-audit-brand-reports.cjs');
+        successPayload.brandReportStored = await saveBrandReport({
+          brandName: bnSave,
+          url: requestedUrl,
+          payload: successPayload,
+          checklistState: json.checklistState,
+        });
+      } catch (storeErr) {
+        successPayload.brandReportStored = {
+          ok: false,
+          error: String((storeErr && storeErr.message) || storeErr).slice(0, 160),
+        };
+      }
+    }
     sendJson(res, 200, successPayload);
   } catch (e) {
     sendJson(res, 400, { ok: false, error: String(e.message || e), requestedUrl });

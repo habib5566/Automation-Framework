@@ -1,6 +1,12 @@
 /**
  * POST /api/watch/run — scan all brands (one pass; 60s max on Vercel).
  */
+if (process.env.VERCEL) {
+  process.env.AWS_LAMBDA_JS_RUNTIME = process.env.AWS_LAMBDA_JS_RUNTIME || 'nodejs22.x';
+  process.env.GO_LIVE_AUDIT_USE_SERVERLESS_CHROMIUM = '1';
+}
+require('../go-live-audit-chromium-env.cjs');
+
 const { sendJson } = require('../_scan-core.js');
 const { handleWatchRun } = require('../go-live-audit-brands-api.cjs');
 
