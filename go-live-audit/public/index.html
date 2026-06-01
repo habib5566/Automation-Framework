@@ -1167,6 +1167,46 @@
     .brand-watch-panel .secondary {
       margin-top: 0.75rem;
     }
+    .watch-summary-panel {
+      margin-top: 1rem;
+      padding: 1rem 1.1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface-elevated, rgba(0, 0, 0, 0.04));
+      font-size: 0.88rem;
+      line-height: 1.5;
+      max-height: 28rem;
+      overflow: auto;
+    }
+    .watch-summary-panel h4 {
+      margin: 0 0 0.5rem;
+      font-size: 1rem;
+    }
+    .watch-summary-panel .watch-stats {
+      margin: 0.35rem 0 0.75rem;
+      color: var(--text-secondary);
+    }
+    .watch-summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    .watch-summary-table th,
+    .watch-summary-table td {
+      text-align: left;
+      padding: 0.35rem 0.5rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .watch-summary-table tr.watch-row-fail td {
+      color: var(--danger, #c62828);
+    }
+    .watch-summary-actions {
+      margin-top: 0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
     .brand-watch-list {
       margin: 0.65rem 0 0;
       padding-left: 1.25rem;
@@ -1554,6 +1594,7 @@
             <strong>Automatic watch</strong> — all saved brands scanned on schedule (<code>npm run go-live:watch:daemon</code>).
             <ul class="brand-watch-list" id="brandWatchList"></ul>
             <button type="button" class="secondary" id="btnWatchAll">Run watch now (all brands)</button>
+            <div id="watchSummaryPanel" class="watch-summary-panel" hidden role="status" aria-live="polite"></div>
           </div>
           <div class="email-options" aria-label="Email report options">
             <div id="emailConfigStatus" class="email-config-status email-bad" role="status" aria-live="polite">
@@ -1792,8 +1833,14 @@
         return target;
       }
 
+      const WATCH_SUMMARY_STORAGE_KEY = 'goLiveAuditLastWatchSummary';
+
       function buildWatchRequestBody() {
         const watchBody = { reportEmail: DEFAULT_ALERT_EMAIL };
+        if (sendEmailEl && sendEmailEl.checked) {
+          watchBody.sendEmail = true;
+          watchBody.emailReport = true;
+        }
         const appPassWatch = gmailAppPasswordEl ? gmailAppPasswordEl.value.trim().replace(/\s+/g, '') : '';
         if (appPassWatch.length >= 16 && !appPassWatch.includes('@')) {
           if (gmailSenderEl && gmailSenderEl.value.trim().includes('@')) {
@@ -4087,51 +4134,160 @@
       refreshWatchBrandsCache().then(function () {
         applyRoute();
       });
-      function formatWatchResultMessage(data) {
-        const s = (data && data.summary) || {};
+      function watchEmailStatusLabel(em) {
+        if (!em) return '—';
+        if (em.status === 'sent') return '✓ Sent';
+        if (em.status === 'skipped') return 'Skipped';
+        if (em.status === 'failed') return 'Failed';
+        return em.status || '—';
+      }
+
+      function renderWatchSummaryPanel(summary, opts) {
+        const panel = document.getElementById('watchSummaryPanel');
+        if (!panel) return;
+        opts = opts || {};
+        const s = summary || {};
+        if (!s.scanned && !opts.inProgress) {
+          panel.hidden = true;
+          return;
+        }
+        panel.hidden = false;
         const to = s.alertEmail || DEFAULT_ALERT_EMAIL;
-        const lines = [
-          'Watch complete: ' + (s.scanned || 0) + ' brand(s), ' + (s.alerts || 0) + ' security alert(s).',
-          '',
-          'Report inbox: ' + to,
-        ];
-        if (s.emailsSent > 0) {
-          lines.push('Email sent: ' + s.emailsSent + ' report(s) to ' + to + '. Check inbox + spam.');
-          } else {
-            lines.push('Email NOT sent to ' + to + '.');
-            if (s.emailsSkipped > 0 || s.emailsFailed > 0) {
-              lines.push(
-                'Skipped: ' + (s.emailsSkipped || 0) + ', failed: ' + (s.emailsFailed || 0) + '.'
-              );
-            }
-            lines.push('');
-            lines.push('Gmail needs a 16-character Google App Password — NOT your normal sign-in password.');
-            if (isVercelHost()) {
-              lines.push(
-                'Vercel: Settings → Environment Variables → GO_LIVE_AUDIT_SMTP_USER + GO_LIVE_AUDIT_SMTP_PASS (App Password) → Redeploy.'
-              );
-              lines.push('OR paste Sender Gmail + App Password in this page before Watch.');
-            } else {
-              lines.push('Local: npm run go-live:email-setup (paste App Password), restart npm run go-live:audit.');
-              lines.push('OR paste Sender Gmail + App Password in the form below, then Watch again.');
-            }
-          }
-        if (Array.isArray(s.brands)) {
+        const done = opts.done != null ? opts.done : s.scanned || 0;
+        const total = opts.total != null ? opts.total : s.totalBrands || done;
+        const title = opts.inProgress
+          ? 'Watch in progress…'
+          : 'Watch finished — ' + new Date().toLocaleString();
+        let stats =
+          '<p class="watch-stats"><strong>' +
+          (opts.inProgress ? 'Progress' : 'Done') +
+          ':</strong> ' +
+          done +
+          '/' +
+          total +
+          ' brand(s) scanned';
+        if (!opts.inProgress) {
+          stats +=
+            ' · <strong>' +
+            (s.alerts || 0) +
+            '</strong> security alert(s) · Email sent: <strong>' +
+            (s.emailsSent || 0) +
+            '</strong> · skipped: ' +
+            (s.emailsSkipped || 0) +
+            ' · failed: ' +
+            (s.emailsFailed || 0) +
+            ' → <code>' +
+            escapeHtml(to) +
+            '</code></p>';
+        } else {
+          stats += ' — <em>keep this tab open until finished</em></p>';
+        }
+        let emailBanner = '';
+        if (!opts.inProgress && !(s.emailsSent > 0)) {
+          emailBanner =
+            '<div class="scan-msg scan-msg-warn" style="margin:0.5rem 0">' +
+            '<strong>No email in inbox.</strong> ' +
+            (isVercelHost()
+              ? 'Paste <strong>Sender Gmail</strong> + 16-char <strong>App Password</strong> below, then Watch again — OR Vercel env <code>GO_LIVE_AUDIT_SMTP_USER</code> + <code>GO_LIVE_AUDIT_SMTP_PASS</code> → Redeploy.'
+              : 'Run <code>npm run go-live:email-setup</code>, restart server, OR paste App Password below — then Watch again.') +
+            '</div>';
+        } else if (!opts.inProgress && s.emailsSent > 0) {
+          emailBanner =
+            '<div class="scan-msg scan-msg-ok" style="margin:0.5rem 0"><strong>Email:</strong> ' +
+            s.emailsSent +
+            ' report(s) sent to <code>' +
+            escapeHtml(to) +
+            '</code> — check inbox + spam.</div>';
+        }
+        let table = '';
+        if (Array.isArray(s.brands) && s.brands.length) {
+          table =
+            '<table class="watch-summary-table"><thead><tr><th>Brand</th><th>Scan</th><th>Email</th><th>Console</th><th>Pass/Fail</th></tr></thead><tbody>';
           for (const b of s.brands) {
-            if (!b || !b.email) continue;
-            const em = b.email;
-            if (em.status === 'sent') continue;
-            if (em.status === 'skipped' && em.reason) {
-              lines.push(b.name + ': ' + em.reason.slice(0, 100));
-              break;
-            }
-            if (em.status === 'failed' && em.error) {
-              lines.push(b.name + ': ' + em.error.slice(0, 100));
-              break;
-            }
+            const snap = b.snapshot || {};
+            const cap = snap.consoleCapture ? String(snap.consoleCapture) : '—';
+            const pf =
+              snap.pass != null
+                ? snap.pass + ' / ' + (snap.fail || 0) + ' fail'
+                : b.ok === false
+                  ? 'error'
+                  : '—';
+            const rowClass = b.ok === false || cap.includes('failed') ? ' class="watch-row-fail"' : '';
+            table +=
+              '<tr' +
+              rowClass +
+              '><td><strong>' +
+              escapeHtml(b.name || '—') +
+              '</strong></td><td>' +
+              (b.ok === false ? '✗ Error' : '✓ OK') +
+              '</td><td>' +
+              escapeHtml(watchEmailStatusLabel(b.email)) +
+              '</td><td><code>' +
+              escapeHtml(cap.slice(0, 28)) +
+              '</code></td><td>' +
+              escapeHtml(pf) +
+              '</td></tr>';
+          }
+          table += '</tbody></table>';
+        }
+        const actions = opts.inProgress
+          ? ''
+          : '<div class="watch-summary-actions">' +
+            '<a href="?view=brands" class="secondary" style="display:inline-block;padding:0.4rem 0.75rem;text-decoration:none">Open all brands</a>' +
+            (isVercelHost()
+              ? ' <span class="site-stack-sub">Live scan ≠ local until Chromium redeploy — see VERCEL-CHROMIUM-FIX-URDU.md</span>'
+              : '') +
+            '</div>';
+        panel.innerHTML =
+          '<h4>' +
+          escapeHtml(title) +
+          '</h4>' +
+          stats +
+          emailBanner +
+          table +
+          actions;
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      function saveWatchSummary(summary) {
+        try {
+          localStorage.setItem(
+            WATCH_SUMMARY_STORAGE_KEY,
+            JSON.stringify({ at: Date.now(), summary: summary })
+          );
+        } catch (e) {
+          /* ignore */
+        }
+      }
+
+      function loadWatchSummaryFromStorage() {
+        try {
+          const raw = localStorage.getItem(WATCH_SUMMARY_STORAGE_KEY);
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.summary) renderWatchSummaryPanel(parsed.summary);
+        } catch (e) {
+          /* ignore */
+        }
+      }
+
+      function maybeNotifyWatchDone(summary) {
+        if (!summary || summary.scanned < 1) return;
+        const title = 'Go-Live Watch finished';
+        const body =
+          summary.scanned +
+          ' brand(s), ' +
+          (summary.emailsSent || 0) +
+          ' email(s) sent, ' +
+          (summary.alerts || 0) +
+          ' alert(s).';
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          try {
+            new Notification(title, { body: body });
+          } catch (e) {
+            /* ignore */
           }
         }
-        return lines.join('\n');
       }
 
       document.getElementById('btnWatchAll').addEventListener('click', async function () {
@@ -4139,6 +4295,13 @@
         btn.disabled = true;
         const batchSize = isVercelHost() ? 1 : 5;
         const watchBody = buildWatchRequestBody();
+        if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+          try {
+            Notification.requestPermission();
+          } catch (e) {
+            /* ignore */
+          }
+        }
         let offset = 0;
         let total = null;
         let merged = {
@@ -4187,10 +4350,18 @@
             const s = data.summary || {};
             if (s.totalBrands != null) total = s.totalBrands;
             mergeWatchSummaries(merged, s);
+            merged.totalBrands = total != null ? total : merged.totalBrands;
+            renderWatchSummaryPanel(merged, {
+              inProgress: !!(s.hasMore && s.nextOffset != null),
+              done: merged.scanned,
+              total: merged.totalBrands || merged.scanned,
+            });
             if (!s.hasMore || s.nextOffset == null) break;
             offset = s.nextOffset;
           }
-          alert(formatWatchResultMessage({ summary: merged }));
+          saveWatchSummary(merged);
+          renderWatchSummaryPanel(merged, { inProgress: false });
+          maybeNotifyWatchDone(merged);
           loadBrandWatchList();
         } catch (e) {
           const msg = String(e.message || e);
@@ -4219,6 +4390,7 @@
       loadScannerRuntime();
       loadEmailConfigStatus();
       loadBrandWatchList();
+      loadWatchSummaryFromStorage();
     })();
   </script>
 </body>

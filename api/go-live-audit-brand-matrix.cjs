@@ -146,8 +146,29 @@ function buildBrandMatrix({
   };
 }
 
+/** Compact row for multi-brand watch summary (UI + API). */
+function extractBrandScanSummary(result) {
+  if (!result || typeof result !== 'object') return null;
+  const os = result.overallSummary || {};
+  const counts = os.counts || {};
+  const sm = result.scanMeta || {};
+  const sec = result.security || {};
+  return {
+    brandName: result.brandName || null,
+    url: result.requestedUrl || result.finalUrl || null,
+    consoleCapture: sm.consoleCapture || null,
+    browserScanOk: !!sm.browserScanOk,
+    pass: counts.pass || 0,
+    fail: counts.fail || 0,
+    pending: counts.pending || 0,
+    headline: sec.headline || null,
+    alert: !!(sec.shouldAlert || sec.alertLevel === 'critical'),
+  };
+}
+
 module.exports = {
   buildBrandMatrix,
   pickConsoleIssues,
   pickNonConsoleIssues,
+  extractBrandScanSummary,
 };
