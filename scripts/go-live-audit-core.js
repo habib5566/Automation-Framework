@@ -1560,6 +1560,10 @@ async function proxyScanToRemoteBase(res, json) {
         error: explainNonJsonTunnelResponse(text, r.status, base),
         proxyTarget: target,
         proxyHttpStatus: r.status,
+        emailReport: json.sendEmail || json.emailReport ? {
+          skipped: true,
+          reason: 'Email not attempted because Scan API base did not return scan JSON. Clear Scan API base for Vercel scan, then run again.',
+        } : undefined,
       });
       return true;
     }
@@ -1573,6 +1577,10 @@ async function proxyScanToRemoteBase(res, json) {
         'Scan API base unreachable: ' +
         String(e.message || e) +
         '. Run npm run go-live:audit:tunnel on your PC (keep terminal open) or clear Scan API base.',
+      emailReport: json.sendEmail || json.emailReport ? {
+        skipped: true,
+        reason: 'Email not attempted because Scan API base was unreachable. Clear Scan API base for Vercel scan, then run again.',
+      } : undefined,
     });
     return true;
   } finally {

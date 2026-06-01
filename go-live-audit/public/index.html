@@ -1804,9 +1804,14 @@
         return /\.vercel\.app$/i.test((location && location.hostname) || '');
       }
 
-      /** On Vercel: scans use same-origin /api/scan — no tunnel for link sharing. */
+      /** Live deployed pages prefer same-origin /api/scan; tunnels are an explicit advanced option. */
+      function useSameOriginApiByDefault() {
+        return isLiveAuditHost();
+      }
+
+      /** On Vercel/live: scans use same-origin /api/scan — no tunnel for link sharing. */
       function applyVercelNoTunnelDefaults() {
-        if (!isVercelHost()) return;
+        if (!useSameOriginApiByDefault()) return;
         const banner = document.getElementById('vercelNoTunnelBanner');
         if (banner) banner.hidden = false;
         const details = document.getElementById('tunnelApiBaseDetails');
@@ -2029,6 +2034,7 @@
       }
 
       function brandReportEndpoint() {
+        if (useSameOriginApiByDefault()) return '/api/brand-report';
         const base = normalizeScanApiBase(state.apiBaseUrl);
         if (base) return base + '/api/brand-report';
         return '/api/brand-report';
@@ -2500,6 +2506,7 @@
       }
 
       let state = loadState();
+      let apiBaseChangedThisSession = false;
       if (typeof state.sendEmailAfterScan !== 'boolean') state.sendEmailAfterScan = true;
       let lastScanPayload = null;
       try {
@@ -2518,8 +2525,9 @@
       if (!Array.isArray(state.savedBrands)) state.savedBrands = [];
       if (siteEl) siteEl.value = state.siteUrl || '';
       if (brandNameEl) brandNameEl.value = state.brandName || '';
-      if (isVercelHost()) {
+      if (useSameOriginApiByDefault() && state.apiBaseUrl) {
         state.apiBaseUrl = '';
+        saveState(state);
       }
       if (apiBaseEl) apiBaseEl.value = state.apiBaseUrl || '';
       applyVercelNoTunnelDefaults();
@@ -2559,11 +2567,7 @@
       }
 
       function scanUsesVercelProxy() {
-        return (
-          typeof location !== 'undefined' &&
-          location.hostname &&
-          /\.vercel\.app$/i.test(location.hostname)
-        );
+        return useSameOriginApiByDefault();
       }
 
       function scanEndpoint() {
@@ -2573,13 +2577,34 @@
         return '/api/scan';
       }
 
+      function getCurrentScanApiBaseInput() {
+        const raw = apiBaseEl ? apiBaseEl.value.trim() : '';
+        if (!raw) return '';
+        if (useSameOriginApiByDefault()) {
+          const details = document.getElementById('tunnelApiBaseDetails');
+          if (!details || !details.open) {
+            if (apiBaseEl) apiBaseEl.value = '';
+            return '';
+          }
+        }
+        return raw;
+      }
+
+      function resetScanApiBase() {
+        state.apiBaseUrl = '';
+        if (apiBaseEl) apiBaseEl.value = '';
+        saveState(state);
+      }
+
       function runtimeEndpoint() {
+        if (useSameOriginApiByDefault()) return '/api/runtime';
         const base = normalizeScanApiBase(state.apiBaseUrl);
         if (base) return base + '/api/runtime';
         return '/api/runtime';
       }
 
       function emailStatusEndpoint() {
+        if (useSameOriginApiByDefault()) return '/api/email-status';
         const base = normalizeScanApiBase(state.apiBaseUrl);
         if (base) return base + '/api/email-status';
         return '/api/email-status';
@@ -3676,11 +3701,15 @@
 
       if (apiBaseEl) {
         apiBaseEl.addEventListener('change', () => {
-          state.apiBaseUrl = apiBaseEl.value.trim();
+          apiBaseChangedThisSession = true;
+          state.apiBaseUrl = getCurrentScanApiBaseInput();
           saveState(state);
           probeScanBackend();
           loadScannerRuntime();
           loadEmailConfigStatus();
+        });
+        apiBaseEl.addEventListener('input', () => {
+          apiBaseChangedThisSession = true;
         });
       }
 
@@ -3714,7 +3743,7 @@
       document.getElementById('btnScan').addEventListener('click', async () => {
         const url = siteEl ? siteEl.value.trim() : '';
         state.siteUrl = url;
-        state.apiBaseUrl = apiBaseEl ? apiBaseEl.value.trim() : '';
+        state.apiBaseUrl = getCurrentScanApiBaseInput();
         if (brandNameEl) {
           const bn = brandNameEl.value.trim();
           state.brandName = bn;
@@ -3776,7 +3805,10 @@
         try {
           const scanBody = { url, captureConsole: true };
           const tunnelBase = normalizeScanApiBase(state.apiBaseUrl);
-          if (tunnelBase) scanBody.scanApiBase = tunnelBase;
+          const scanApiEndpoint = scanEndpoint();
+          const allowTunnelProxy =
+            tunnelBase && (!useSameOriginApiByDefault() || apiBaseChangedThisSession);
+          if (allowTunnelProxy) scanBody.scanApiBase = tunnelBase;
           const brandScan = brandNameEl ? brandNameEl.value.trim() : '';
           if (brandScan) scanBody.brandName = brandScan;
           if (sendEmailEl && sendEmailEl.checked) scanBody.sendEmail = true;
@@ -3802,7 +3834,7 @@
           const notifyTok = notifyTokEl && notifyTokEl.value.trim();
           if (notifyTok) scanBody.notifyToken = notifyTok;
 
-          const res = await fetch(scanEndpoint(), {
+          const res = await fetch(scanApiEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             cache: 'no-store',
@@ -4005,12 +4037,23 @@
             navigateToBrand(brandStorageKey(brandLabel, url), brandLabel);
           }
         } catch (e) {
-          const hint =
-            (state.apiBaseUrl || '').trim() === ''
-              ? ' If this UI is on a static host, run <code>npm run go-live:audit:tunnel</code> and set <strong>Scan API base</strong> to the tunnel URL.'
-              : ' Check that the tunnel is running and the URL matches <strong>Scan API base</strong> (CORS is enabled on the API).';
+          let hint = '';
+          if (useSameOriginApiByDefault()) {
+            resetScanApiBase();
+            hint =
+              ' Live/Vercel mode uses this site&apos;s own <code>/api/scan</code>. Redeploy the full repo so <code>api/scan.js</code> is included, then refresh this page. If Vercel Deployment Protection is on, turn it off for this project.';
+          } else {
+            hint =
+              (state.apiBaseUrl || '').trim() === ''
+                ? ' If this UI is on a static host, run <code>npm run go-live:audit:tunnel</code> and set <strong>Scan API base</strong> to the tunnel URL.'
+                : ' Check that the tunnel is running and the URL matches <strong>Scan API base</strong> (CORS is enabled on the API).';
+          }
+          const intro = useSameOriginApiByDefault()
+            ? '<strong>Request failed</strong> &mdash; live scan API <code>/api/scan</code> did not respond.'
+            : '<strong>Request failed</strong> &mdash; same-origin needs the audit server (e.g. <code>http://localhost:3940</code>), or use a tunnel + Scan API base.';
           out.innerHTML =
-            '<div class="scan-msg scan-msg-warn"><strong>Request failed</strong> — same-origin needs the audit server (e.g. <code>http://localhost:3940</code>), or use a tunnel + Scan API base.' +
+            '<div class="scan-msg scan-msg-warn">' +
+            intro +
             hint +
             '<br/><br/>Error: ' +
             escapeHtml(e.message) +
