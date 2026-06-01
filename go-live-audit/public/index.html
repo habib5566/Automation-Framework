@@ -1397,6 +1397,19 @@
       text-decoration: none;
     }
     .brand-watch-list a.brand-open-link:hover { text-decoration: underline; }
+    .tunnel-api-details {
+      margin-bottom: 1rem;
+      padding: 0.65rem 0.85rem;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .tunnel-api-details summary {
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
   </style>
 </head>
 <body>
@@ -1481,8 +1494,9 @@
       <div class="panel-head">
         <h2 class="panel-title" id="scan-heading">Quick scan</h2>
         <p class="panel-desc">
-          Fetches the start page, <code>robots.txt</code>, then up to <strong>two</strong> linked same-origin HTML pages when the scan finds them (extra pass, time-limited). Same host as this page → leave <strong>Scan API base</strong> empty.
-          Static / Vercel-only UI → run <code>npm run go-live:audit:tunnel</code> locally and paste the tunnel <code>https://…</code> below.
+          Fetches the start page, <code>robots.txt</code>, then up to <strong>two</strong> linked same-origin HTML pages when the scan finds them (extra pass, time-limited).
+          <strong>Share link (Vercel):</strong> leave <strong>Scan API base</strong> empty — scan runs on this site; nobody needs your PC or tunnel.
+          Tunnel is only optional if you want 100% same console as localhost while this page is on Vercel.
           <span class="label-hint">Office TLS errors on every URL?</span> Stop the server, then run <code>npm run go-live:audit:insecure-tls</code> (trusted network only) — see <code>go-live-audit/TUNNEL.md</code>.
         </p>
       </div>
@@ -1503,21 +1517,26 @@
           <label for="siteUrl">Site URL</label>
           <input id="siteUrl" type="url" placeholder="https://example.com" autocomplete="url" />
         </div>
-        <div class="field-block">
-          <label for="auditApiBase">Scan API base <span class="label-hint">(tunnel — optional)</span></label>
-          <input
-            id="auditApiBase"
-            type="url"
-            placeholder="https://xxxx.ngrok-free.app — empty if this site serves /api/scan"
-            autocomplete="off"
-            spellcheck="false"
-          />
-          <div id="vercelFreeTunnelCard" class="scan-msg scan-msg-ok" style="display:none;margin-top:0.65rem;font-size:0.92rem;line-height:1.5">
-            <strong>How to scan on Vercel</strong><br />
-            <strong>Leave Scan API base empty</strong> — scan runs on Vercel (Chromium + deep HTTP console). After you <code>git push</code>, click <strong>Redeploy</strong> on Vercel once.<br />
-            <strong>Optional — same as your PC:</strong> run <code>npm run go-live:audit:tunnel</code>, copy the <code>https://…</code> URL, paste it here (keep the terminal open). If you see “non-JSON” errors: tunnel is off or the URL changed — clear this field and scan on Vercel only. See <code>VERCEL.md</code>.
-          </div>
+        <div id="vercelNoTunnelBanner" class="scan-msg scan-msg-ok" hidden style="margin-bottom:1rem;font-size:0.95rem;line-height:1.55">
+          <strong>Share this link — no tunnel.</strong> Scan runs on Vercel; brand reports save on server (Vercel Blob).
+          Keep <strong>Scan API base</strong> empty. One-time setup: <code>go-live-audit/FULL-PERFECTION-URDU.md</code> (Blob + Gmail App Password).
         </div>
+        <details id="tunnelApiBaseDetails" class="tunnel-api-details">
+          <summary>Scan API base <span class="label-hint">(tunnel — only if you want local PC scan from this page)</span></summary>
+          <div class="field-block" style="margin-top:0.65rem">
+            <input
+              id="auditApiBase"
+              type="url"
+              placeholder="Leave empty on Vercel — or paste tunnel https://… only for advanced use"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <p id="vercelFreeTunnelCard" class="site-stack-sub" style="display:none;margin-top:0.5rem">
+              Tunnel = your PC must stay on. For sharing with clients, leave this <strong>empty</strong> and use Production URL only.
+              See <code>go-live-audit/VERCEL-NO-TUNNEL-URDU.md</code>.
+            </p>
+          </div>
+        </details>
         <div class="scan-actions">
           <label class="chk-wrap">
             <input type="checkbox" id="autoApply" checked />
@@ -1744,6 +1763,20 @@
         return /\.vercel\.app$/i.test((location && location.hostname) || '');
       }
 
+      /** On Vercel: scans use same-origin /api/scan — no tunnel for link sharing. */
+      function applyVercelNoTunnelDefaults() {
+        if (!isVercelHost()) return;
+        const banner = document.getElementById('vercelNoTunnelBanner');
+        if (banner) banner.hidden = false;
+        const details = document.getElementById('tunnelApiBaseDetails');
+        if (details) details.open = false;
+        if (state.apiBaseUrl) {
+          state.apiBaseUrl = '';
+          saveState(state);
+        }
+        if (apiBaseEl) apiBaseEl.value = '';
+      }
+
       function mergeWatchSummaries(target, batch) {
         if (!batch) return target;
         target.scanned = (target.scanned || 0) + (batch.scanned || 0);
@@ -1946,6 +1979,26 @@
         };
         localStorage.setItem(BRAND_SCANS_LS, JSON.stringify(scans));
         return key;
+      }
+
+      function brandReportEndpoint() {
+        const base = normalizeScanApiBase(state.apiBaseUrl);
+        if (base) return base + '/api/brand-report';
+        return '/api/brand-report';
+      }
+
+      async function fetchServerBrandReport(routeId) {
+        try {
+          const r = await fetch(
+            brandReportEndpoint() + '?key=' + encodeURIComponent(String(routeId || '').trim()),
+            { method: 'GET', cache: 'no-store' }
+          );
+          const data = await r.json().catch(function () {
+            return {};
+          });
+          if (data.ok && data.report && data.report.payload) return data.report;
+        } catch (e) {}
+        return null;
       }
 
       function normBrandName(s) {
@@ -2230,7 +2283,20 @@
       async function enterBrandView(routeId) {
         await refreshWatchBrandsCache();
         const scans = loadBrandScans();
-        let rec = findBrandRecord(scans, routeId);
+        let rec = null;
+        const serverRep = await fetchServerBrandReport(routeId);
+        if (serverRep) {
+          rec = {
+            key: serverRep.key || brandStorageKey(serverRep.brandName, serverRep.url),
+            brandName: serverRep.brandName,
+            url: serverRep.url,
+            scannedAt: serverRep.scannedAt,
+            payload: serverRep.payload,
+            checklistState: serverRep.checklistState || {},
+          };
+          saveBrandScanRecord(rec.brandName, rec.url, rec.payload, rec.checklistState);
+        }
+        if (!rec) rec = findBrandRecord(scans, routeId);
         if (!rec && lastScanPayload) {
           const lp = lastScanPayload;
           const lpName = lp.brandName || '';
@@ -2405,7 +2471,11 @@
       if (!Array.isArray(state.savedBrands)) state.savedBrands = [];
       if (siteEl) siteEl.value = state.siteUrl || '';
       if (brandNameEl) brandNameEl.value = state.brandName || '';
+      if (isVercelHost()) {
+        state.apiBaseUrl = '';
+      }
       if (apiBaseEl) apiBaseEl.value = state.apiBaseUrl || '';
+      applyVercelNoTunnelDefaults();
       if (sendEmailEl) sendEmailEl.checked = !!state.sendEmailAfterScan;
       if (reportEmailEl) reportEmailEl.value = DEFAULT_ALERT_EMAIL;
       if (gmailSenderEl) gmailSenderEl.value = state.gmailSender || '';
@@ -2763,11 +2833,7 @@
       function showVercelFreeTunnelCard() {
         const el = document.getElementById('vercelFreeTunnelCard');
         if (!el) return;
-        const onVercel =
-          typeof location !== 'undefined' &&
-          location.hostname &&
-          /\.vercel\.app$/i.test(location.hostname);
-        el.style.display = onVercel ? 'block' : 'none';
+        el.style.display = isVercelHost() ? 'block' : 'none';
       }
 
       function renderLiveVsLocalBanner(data) {
@@ -2785,7 +2851,7 @@
           '<div class="scan-msg scan-msg-warn" style="margin-bottom:1rem"><strong>Vercel scan note</strong> — ' +
           (data && data.scanMeta && data.scanMeta.browserScanOk
             ? 'Console captured on this pass.'
-            : 'Redeploy latest code (Chromium fix). Or paste tunnel URL in Scan API base + <code>npm run go-live:audit:tunnel</code>. ') +
+            : 'Redeploy latest code (Chromium fix). Keep Scan API base empty — no tunnel needed to share this link. ') +
           (data && data.scanMeta && data.scanMeta.consoleCapture
             ? ' Last scan: <code>' + escapeHtml(String(data.scanMeta.consoleCapture)) + '</code>.'
             : '') +

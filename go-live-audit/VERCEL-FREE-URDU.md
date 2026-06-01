@@ -1,12 +1,16 @@
-# Vercel free + scan bilkul local jaisa (0 payment)
+# Vercel free — link share (bina tunnel)
 
-**Render** kabhi **card** mangta hai (Free instance ke liye bhi verify) — tum **Vercel free** par hi raho.
+**Pehle yeh padho:** `VERCEL-NO-TUNNEL-URDU.md` — **link dene ke liye tunnel zaroori nahi.**
 
-**Console + performance** local jaisa tabhi aayega jab scan **tumhare PC** par chale. Vercel sirf **UI** hai; scan **tunnel** se PC par jata hai — **100% free**.
+**Default (link share):** Vercel par **Scan API base khali** → scan `https://<project>.vercel.app/api/scan` par chalta hai. PC band, tunnel band.
 
 ---
 
-## 3 steps (har scan se pehle ya jab PC on ho)
+## Optional: bilkul local jaisa console (tunnel)
+
+Sirf jab tumhein **100% same** result chahiye jaise `localhost:3940`. Is case mein link **clients ko mat do** jab tak tunnel on ho.
+
+## 3 steps (tunnel — optional, advanced)
 
 ### 1) PC par tunnel chalao
 

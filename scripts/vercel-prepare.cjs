@@ -87,6 +87,8 @@ for (const name of [
   'go-live-audit-brand-watch.cjs',
   'go-live-audit-brands-api.cjs',
   'go-live-audit-watch-runner.cjs',
+  'go-live-audit-brand-reports.cjs',
+  'go-live-audit-brand-reports-api.cjs',
 ]) {
   const s = path.join(__dirname, name);
   const d = path.join(__dirname, '..', 'api', name);

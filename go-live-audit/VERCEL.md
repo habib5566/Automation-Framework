@@ -41,13 +41,38 @@ After push, **Redeploy** on Vercel.
 
 ## Deployment Protection (login before site opens)
 
-If the browser asks for **Vercel login** on preview URLs, **`POST /api/scan` is also blocked** — the checklist cannot scan.
+Agar link dene par **Vercel login / permission** aata hai, yeh code bug nahi — **Deployment Protection** ON hai.
 
-- **Project** → **Settings** → **Deployment Protection** → allow public access for the environments you use, **or**
-- Use the **Production** domain (often no protection), **or**
-- Add **Protection Bypass for Automation** (Vercel docs) if you must keep protection on.
+### Fix — kisi ko bhi bina login (recommended)
 
-Without this, the UI may load after you log in, but **Run quick scan** will still fail until the API is reachable without auth.
+1. [vercel.com/dashboard](https://vercel.com/dashboard) → apna project (e.g. `automation-checklists`)
+2. **Settings** → **Deployment Protection**
+3. **Production** section:
+   - **Vercel Authentication** → **Off** (ya protection **None**)
+4. **Preview** section (agar preview link share karte ho):
+   - **Vercel Authentication** → **Off**, **ya**
+   - **Standard Protection** rakho lekin logon ko sirf **Production URL** do (neeche)
+5. **Save** — koi redeploy zaroori nahi, settings turant lagti hain
+
+### Kaunsi link share karo
+
+| Link type | Login? |
+|-----------|--------|
+| **Production** — `https://<project>.vercel.app` (Deployments → Production → Visit) | Hobby par aksar **public** |
+| Preview — `…-git-….vercel.app` | Aksar **login** mangta hai |
+
+**Seedhi baat:** Clients ko **Production** URL copy karo, preview URL nahi.
+
+### Team default (optional)
+
+**Team Settings** → **Deployment Protection** → default **None** for new projects — taake naye projects par dubara protection na lage.
+
+### Agar protection band nahi kar sakte (Pro / policy)
+
+- **Shareable Links** (Deployment Protection → generate link) — ek public link jisme login skip ho  
+- Docs: [Deployment Protection](https://vercel.com/docs/deployment-protection)
+
+Without public access, **`POST /api/scan` is also blocked** — scan fail ho sakta hai even if UI loads after you log in.
 
 ## Console errors on live (Vercel)
 

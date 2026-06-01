@@ -150,6 +150,18 @@ async function runWatchPass(requestJson) {
     try {
       console.log('[go-live-watch]', brand.name, '→', brand.url);
       const { result } = await scanOneBrand(brand, requestJson);
+      if (result && result.ok !== false) {
+        try {
+          const { saveBrandReport } = require('./go-live-audit-brand-reports.cjs');
+          await saveBrandReport({
+            brandName: brand.name,
+            url: brand.url,
+            payload: result,
+          });
+        } catch (storeErr) {
+          console.warn('[go-live-watch] brand report store:', String(storeErr.message || storeErr).slice(0, 80));
+        }
+      }
       const sec = result.security || {};
       const email = result.emailReport || {};
       const emailSummary = summarizeEmailReport(email);

@@ -1,15 +1,15 @@
 {
   "version": 1,
-  "updatedAt": "2026-05-25T11:17:13.936Z",
+  "updatedAt": "2026-05-29T11:34:04.394Z",
   "brands": [
     {
       "name": "Example Brand",
       "url": "https://example.com",
       "enabled": true,
       "addedAt": "2026-05-19T00:00:00.000Z",
-      "lastScanAt": "2026-05-21T12:15:46.633Z",
-      "lastAlertLevel": "warn",
-      "lastUrl": "https://example.com",
+      "lastScanAt": "2026-05-29T10:34:06.717Z",
+      "lastAlertLevel": "ok",
+      "lastUrl": "https://example.com/",
       "baselineFingerprint": {
         "hash": "04b9ad5cee14caec",
         "title": "Example Domain",
@@ -17,14 +17,14 @@
         "iframeCount": 0,
         "formCount": 0
       },
-      "baselineAt": "2026-05-21T08:38:19.962Z"
+      "baselineAt": "2026-05-29T10:34:06.717Z"
     },
     {
       "name": "weboptimax",
       "url": "https://logura.com/",
       "enabled": true,
       "addedAt": "2026-05-20T07:07:11.166Z",
-      "lastScanAt": "2026-05-21T12:15:47.117Z",
+      "lastScanAt": "2026-05-29T10:34:22.779Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://logura.com/",
       "baselineFingerprint": {
@@ -35,8 +35,26 @@
         "formCount": 0
       },
       "baselineAt": "2026-05-20T09:25:25.985Z",
-      "lastAlertAt": "2026-05-21T08:38:24.017Z",
+      "lastAlertAt": "2026-05-29T10:34:22.779Z",
       "alertHistory": [
+        {
+          "at": "2026-05-29T10:34:22.779Z",
+          "level": "warn",
+          "critical": 0,
+          "warns": 17
+        },
+        {
+          "at": "2026-05-25T13:24:42.239Z",
+          "level": "warn",
+          "critical": 0,
+          "warns": 17
+        },
+        {
+          "at": "2026-05-25T13:23:22.947Z",
+          "level": "warn",
+          "critical": 0,
+          "warns": 17
+        },
         {
           "at": "2026-05-21T08:38:24.017Z",
           "level": "warn",
@@ -86,7 +104,7 @@
       "url": "https://vettedlogos.com/",
       "enabled": true,
       "addedAt": "2026-05-20T10:47:30.962Z",
-      "lastScanAt": "2026-05-22T10:54:26.884Z",
+      "lastScanAt": "2026-05-29T11:34:04.394Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://vettedlogos.com/",
       "baselineFingerprint": {
@@ -97,8 +115,50 @@
         "formCount": 0
       },
       "baselineAt": "2026-05-21T12:07:38.211Z",
-      "lastAlertAt": "2026-05-22T08:10:24.713Z",
+      "lastAlertAt": "2026-05-29T11:34:04.394Z",
       "alertHistory": [
+        {
+          "at": "2026-05-29T11:34:04.394Z",
+          "level": "warn",
+          "critical": 0,
+          "warns": 2
+        },
+        {
+          "at": "2026-05-29T11:33:18.548Z",
+          "level": "warn",
+          "critical": 0,
+          "warns": 2
+        },
+        {
+          "at": "2026-05-29T11:30:15.808Z",
+          "level": "warn",
+          "critical": 0,
+          "warns": 11
+        },
+        {
+          "at": "2026-05-29T10:34:57.146Z",
+          "level": "warn",
+          "critical": 0,
+          "warns": 12
+        },
+        {
+          "at": "2026-05-29T10:33:08.831Z",
+          "level": "warn",
+          "critical": 0,
+          "warns": 11
+        },
+        {
+          "at": "2026-05-25T13:25:15.111Z",
+          "level": "warn",
+          "critical": 0,
+          "warns": 2
+        },
+        {
+          "at": "2026-05-25T13:23:50.941Z",
+          "level": "warn",
+          "critical": 0,
+          "warns": 2
+        },
         {
           "at": "2026-05-22T08:10:24.713Z",
           "level": "warn",
@@ -112,7 +172,7 @@
       "url": "https://www.designcentura.com/",
       "enabled": true,
       "addedAt": "2026-05-21T12:54:06.667Z",
-      "lastScanAt": "2026-05-25T09:33:48.977Z",
+      "lastScanAt": "2026-05-29T10:35:16.131Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://www.designcentura.com/"
     },
@@ -121,7 +181,7 @@
       "url": "https://vettedlogos.com/",
       "enabled": true,
       "addedAt": "2026-05-22T07:25:29.286Z",
-      "lastScanAt": "2026-05-22T08:08:20.285Z",
+      "lastScanAt": "2026-05-29T10:35:43.927Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://vettedlogos.com/"
     },
@@ -129,20 +189,26 @@
       "name": "vet",
       "url": "https://vettedlogos.com/",
       "enabled": true,
-      "addedAt": "2026-05-22T08:08:20.504Z"
+      "addedAt": "2026-05-22T08:08:20.504Z",
+      "lastScanAt": "2026-05-29T10:36:21.805Z",
+      "lastAlertLevel": "warn",
+      "lastUrl": "https://vettedlogos.com/"
     },
     {
       "name": "designcent",
       "url": "https://www.designcentura.com/",
       "enabled": true,
-      "addedAt": "2026-05-22T08:37:05.276Z"
+      "addedAt": "2026-05-22T08:37:05.276Z",
+      "lastScanAt": "2026-05-29T10:36:40.520Z",
+      "lastAlertLevel": "warn",
+      "lastUrl": "https://www.designcentura.com/"
     },
     {
       "name": "lorbit",
       "url": "https://logoorbit.com/",
       "enabled": true,
       "addedAt": "2026-05-22T08:40:00.596Z",
-      "lastScanAt": "2026-05-22T08:40:00.596Z",
+      "lastScanAt": "2026-05-29T10:37:03.085Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://www.logoorbit.com/"
     },
@@ -151,7 +217,7 @@
       "url": "https://websiteoptimax.com/",
       "enabled": true,
       "addedAt": "2026-05-22T09:01:36.987Z",
-      "lastScanAt": "2026-05-22T09:22:58.510Z",
+      "lastScanAt": "2026-05-29T10:37:12.582Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://websiteoptimax.com/"
     },
@@ -159,33 +225,45 @@
       "name": "vlogos",
       "url": "https://vettedlogos.com/",
       "enabled": true,
-      "addedAt": "2026-05-22T10:54:27.340Z"
+      "addedAt": "2026-05-22T10:54:27.340Z",
+      "lastScanAt": "2026-05-29T11:31:08.893Z",
+      "lastAlertLevel": "warn",
+      "lastUrl": "https://vettedlogos.com/"
     },
     {
       "name": "optimax",
-      "url": "https://websiteoptimax.com/contact",
+      "url": "https://websiteoptimax.com/",
       "enabled": true,
       "addedAt": "2026-05-25T05:50:57.750Z",
-      "lastScanAt": "2026-05-25T05:50:57.750Z",
+      "lastScanAt": "2026-05-29T10:37:51.141Z",
       "lastAlertLevel": "warn",
-      "lastUrl": "https://websiteoptimax.com/contact"
+      "lastUrl": "https://websiteoptimax.com/"
     },
     {
-      "name": "designcentura",
+      "name": "Designcentura",
       "url": "https://www.designcentura.com/",
       "enabled": true,
-      "addedAt": "2026-05-25T07:39:30.519Z"
+      "addedAt": "2026-05-25T07:39:30.519Z",
+      "lastScanAt": "2026-05-29T10:38:10.761Z",
+      "lastAlertLevel": "warn",
+      "lastUrl": "https://www.designcentura.com/"
     },
     {
       "name": "stagging kogents",
-      "url": "https://staging.kogents.com/",
+      "url": "https://www.designcentura.com/",
       "enabled": true,
       "addedAt": "2026-05-25T10:16:08.780Z",
-      "lastScanAt": "2026-05-25T11:17:13.935Z",
-      "lastAlertLevel": "critical",
-      "lastUrl": "https://staging.kogents.com/",
-      "lastAlertAt": "2026-05-25T11:17:13.935Z",
+      "lastScanAt": "2026-05-29T10:38:30.827Z",
+      "lastAlertLevel": "warn",
+      "lastUrl": "https://www.designcentura.com/",
+      "lastAlertAt": "2026-05-25T11:33:05.374Z",
       "alertHistory": [
+        {
+          "at": "2026-05-25T11:33:05.374Z",
+          "level": "critical",
+          "critical": 1,
+          "warns": 0
+        },
         {
           "at": "2026-05-25T11:17:13.935Z",
           "level": "critical",
@@ -205,6 +283,15 @@
           "warns": 0
         }
       ]
+    },
+    {
+      "name": "logura",
+      "url": "https://logura.com/",
+      "enabled": true,
+      "addedAt": "2026-05-26T06:49:12.433Z",
+      "lastScanAt": "2026-05-29T10:38:45.188Z",
+      "lastAlertLevel": "warn",
+      "lastUrl": "https://logura.com/"
     }
   ]
 }

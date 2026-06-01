@@ -17,6 +17,10 @@ const {
   handleBrandsPost,
   handleWatchRun,
 } = require('./go-live-audit-brands-api.cjs');
+const {
+  handleBrandReportGet,
+  handleBrandReportPost,
+} = require('./go-live-audit-brand-reports-api.cjs');
 
 /** Render / Railway / Fly set PORT; local uses GO_LIVE_AUDIT_PORT or 3940. */
 const PORT = Number(process.env.PORT || process.env.GO_LIVE_AUDIT_PORT || 3940);
@@ -93,6 +97,18 @@ const server = http.createServer((req, res) => {
   }
   if (pathOnly === '/api/watch/run' && req.method === 'POST') {
     handleWatchRun(req, res, sendJson).catch((e) => sendJson(res, 500, { ok: false, error: String(e.message || e) }));
+    return;
+  }
+  if (pathOnly === '/api/brand-report' && req.method === 'GET') {
+    handleBrandReportGet(req, res, sendJson).catch((e) =>
+      sendJson(res, 500, { ok: false, error: String(e.message || e) })
+    );
+    return;
+  }
+  if (pathOnly === '/api/brand-report' && req.method === 'POST') {
+    handleBrandReportPost(req, res, sendJson).catch((e) =>
+      sendJson(res, 500, { ok: false, error: String(e.message || e) })
+    );
     return;
   }
 

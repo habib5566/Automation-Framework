@@ -28,6 +28,9 @@
     "api/brands.js": {
       "memory": 128
     },
+    "api/brand-report.js": {
+      "memory": 256
+    },
     "api/watch/run.js": {
       "maxDuration": 60,
       "memory": 2048,
