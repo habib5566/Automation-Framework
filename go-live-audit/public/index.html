@@ -1809,22 +1809,22 @@
         return isLiveAuditHost();
       }
 
-      /** On Vercel/live: scans use same-origin /api/scan — no tunnel for link sharing. */
+      /** On Vercel/live: default same-origin scan; tunnel optional for local-quality results. */
       function applyVercelNoTunnelDefaults() {
         if (!useSameOriginApiByDefault()) return;
         const banner = document.getElementById('vercelNoTunnelBanner');
-        if (banner) banner.hidden = false;
-        const details = document.getElementById('tunnelApiBaseDetails');
-        if (details) details.open = false;
-        if (state.apiBaseUrl) {
-          state.apiBaseUrl = '';
-          saveState(state);
+        if (banner) {
+          banner.hidden = false;
+          banner.innerHTML =
+            '<strong>Live link (no tunnel):</strong> Scan API base <strong>khali</strong> rakho — clients ke liye.<br/>' +
+            '<strong>Local jaisa result chahiye?</strong> PC par <code>npm run go-live:audit:tunnel</code>, tunnel URL yahan paste karo (neeche Scan API base).';
         }
+        const details = document.getElementById('tunnelApiBaseDetails');
+        if (details && state.apiBaseUrl) details.open = true;
         if (apiBaseEl) {
-          apiBaseEl.value = '';
-          // Prevent accidental tunnel persistence on shared links.
-          apiBaseEl.disabled = true;
-          apiBaseEl.placeholder = 'Disabled on live — uses same-origin /api/scan (no tunnel)';
+          apiBaseEl.disabled = false;
+          apiBaseEl.placeholder =
+            'Khali = Vercel scan | Tunnel https://… = local PC scan (perfect result)';
         }
       }
 
@@ -1846,20 +1846,54 @@
       const WATCH_SUMMARY_STORAGE_KEY = 'goLiveAuditLastWatchSummary';
 
       function buildWatchRequestBody() {
-        const watchBody = { reportEmail: DEFAULT_ALERT_EMAIL };
-        if (sendEmailEl && sendEmailEl.checked) {
-          watchBody.sendEmail = true;
-          watchBody.emailReport = true;
-        }
+        const watchBody = {
+          reportEmail: DEFAULT_ALERT_EMAIL,
+          sendEmail: true,
+          emailReport: true,
+        };
         const appPassWatch = gmailAppPasswordEl ? gmailAppPasswordEl.value.trim().replace(/\s+/g, '') : '';
+        const senderWatch = gmailSenderEl ? gmailSenderEl.value.trim() : '';
         if (appPassWatch.length >= 16 && !appPassWatch.includes('@')) {
-          if (gmailSenderEl && gmailSenderEl.value.trim().includes('@')) {
-            watchBody.smtpUser = gmailSenderEl.value.trim();
-          }
+          watchBody.smtpUser = senderWatch.includes('@') ? senderWatch : '';
           watchBody.smtpPass = appPassWatch;
           watchBody.gmailAppPassword = appPassWatch;
+          if (watchBody.smtpUser) watchBody.gmailUser = watchBody.smtpUser;
         }
         return watchBody;
+      }
+
+      async function ensureEmailReadyBeforeWatch() {
+        const pass = gmailAppPasswordEl
+          ? gmailAppPasswordEl.value.trim().replace(/\s+/g, '')
+          : '';
+        const sender = gmailSenderEl ? gmailSenderEl.value.trim() : '';
+        if (pass.length >= 16 && !pass.includes('@')) {
+          if (!sender.includes('@')) {
+            alert('Pehle Sender Gmail likho (jis account ka App Password hai).');
+            if (gmailSenderEl) gmailSenderEl.focus();
+            return false;
+          }
+          return true;
+        }
+        try {
+          const r = await fetch(emailStatusEndpoint(), { method: 'GET' });
+          const data = await r.json().catch(function () {
+            return {};
+          });
+          if (data.email && data.email.ready) return true;
+        } catch (e) {
+          /* fall through */
+        }
+        alert(
+          'Email bhejne ke liye:\n\n' +
+            '1) Neeche Sender Gmail + 16-char App Password paste karo\n' +
+            '   phir Watch dubara chalao\n\n' +
+            'YA Vercel me SMTP_USER + SMTP_PASS set karke Redeploy'
+        );
+        const emailBox = document.getElementById('emailConfigStatus');
+        if (emailBox) emailBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (gmailAppPasswordEl) gmailAppPasswordEl.focus();
+        return false;
       }
 
       function humanizeEmailSendError(msg) {
@@ -2530,10 +2564,6 @@
       if (!Array.isArray(state.savedBrands)) state.savedBrands = [];
       if (siteEl) siteEl.value = state.siteUrl || '';
       if (brandNameEl) brandNameEl.value = state.brandName || '';
-      if (useSameOriginApiByDefault() && state.apiBaseUrl) {
-        state.apiBaseUrl = '';
-        saveState(state);
-      }
       if (apiBaseEl) apiBaseEl.value = state.apiBaseUrl || '';
       applyVercelNoTunnelDefaults();
       if (sendEmailEl) sendEmailEl.checked = !!state.sendEmailAfterScan;
@@ -2571,12 +2601,7 @@
         }
       }
 
-      function scanUsesVercelProxy() {
-        return useSameOriginApiByDefault();
-      }
-
       function scanEndpoint() {
-        if (scanUsesVercelProxy()) return '/api/scan';
         const base = normalizeScanApiBase(state.apiBaseUrl);
         if (base) return base + '/api/scan';
         return '/api/scan';
@@ -2585,14 +2610,7 @@
       function getCurrentScanApiBaseInput() {
         const raw = apiBaseEl ? apiBaseEl.value.trim() : '';
         if (!raw) return '';
-        if (useSameOriginApiByDefault()) {
-          const details = document.getElementById('tunnelApiBaseDetails');
-          if (!details || !details.open) {
-            if (apiBaseEl) apiBaseEl.value = '';
-            return '';
-          }
-        }
-        return raw;
+        return normalizeScanApiBase(raw) || '';
       }
 
       function resetScanApiBase() {
@@ -2602,14 +2620,12 @@
       }
 
       function runtimeEndpoint() {
-        if (useSameOriginApiByDefault()) return '/api/runtime';
         const base = normalizeScanApiBase(state.apiBaseUrl);
         if (base) return base + '/api/runtime';
         return '/api/runtime';
       }
 
       function emailStatusEndpoint() {
-        if (useSameOriginApiByDefault()) return '/api/email-status';
         const base = normalizeScanApiBase(state.apiBaseUrl);
         if (base) return base + '/api/email-status';
         return '/api/email-status';
@@ -3811,9 +3827,7 @@
           const scanBody = { url, captureConsole: true };
           const tunnelBase = normalizeScanApiBase(state.apiBaseUrl);
           const scanApiEndpoint = scanEndpoint();
-          const allowTunnelProxy =
-            tunnelBase && (!useSameOriginApiByDefault() || apiBaseChangedThisSession);
-          if (allowTunnelProxy) scanBody.scanApiBase = tunnelBase;
+          if (tunnelBase) scanBody.scanApiBase = tunnelBase;
           const brandScan = brandNameEl ? brandNameEl.value.trim() : '';
           if (brandScan) scanBody.brandName = brandScan;
           if (sendEmailEl && sendEmailEl.checked) scanBody.sendEmail = true;
@@ -4340,6 +4354,7 @@
 
       document.getElementById('btnWatchAll').addEventListener('click', async function () {
         const btn = document.getElementById('btnWatchAll');
+        if (!(await ensureEmailReadyBeforeWatch())) return;
         btn.disabled = true;
         const batchSize = isVercelHost() ? 1 : 5;
         const watchBody = buildWatchRequestBody();
