@@ -1575,6 +1575,9 @@
               Tunnel = your PC must stay on. For sharing with clients, leave this <strong>empty</strong> and use Production URL only.
               See <code>go-live-audit/VERCEL-NO-TUNNEL-URDU.md</code>.
             </p>
+            <button type="button" class="secondary" id="btnClearScanApiBase" style="margin-top:0.5rem">
+              Clear tunnel — use Vercel scan only
+            </button>
           </div>
         </details>
         <div class="scan-actions">
@@ -1600,6 +1603,23 @@
             <div id="emailConfigStatus" class="email-config-status email-bad" role="status" aria-live="polite">
               Checking whether Gmail SMTP is configured on this server…
             </div>
+            <details class="email-help-details" id="emailQuickSteps" style="margin-top:0.5rem">
+              <summary><strong>Email 100% fix (step-by-step)</strong></summary>
+              <ol style="margin:0.5rem 0 0 1.1rem;line-height:1.55;font-size:0.88rem">
+                <li>Google Account → Security → <strong>2-Step Verification ON</strong></li>
+                <li>
+                  <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">App passwords</a>
+                  → Mail → copy <strong>16 characters</strong> (normal Gmail password nahi)
+                </li>
+                <li>
+                  <strong>Option A (best):</strong> Vercel → Settings → Environment Variables → Production:
+                  <code>GO_LIVE_AUDIT_SMTP_USER</code>, <code>GO_LIVE_AUDIT_SMTP_PASS</code>,
+                  <code>GO_LIVE_AUDIT_EMAIL_FROM</code> → <strong>Redeploy</strong>
+                </li>
+                <li><strong>Option B:</strong> Neeche Sender Gmail + App Password paste → Watch / Scan</li>
+                <li>Inbox check: <code>habib.developer8899@gmail.com</code> + Spam</li>
+              </ol>
+            </details>
             <div class="field-block">
               <label for="reportEmailInput">Alert email <span class="label-hint">(fixed)</span></label>
               <input
@@ -2623,8 +2643,14 @@
         return init;
       }
 
+      function pingEndpoint() {
+        const base = activeScanApiBase();
+        if (base) return base + '/api/ping';
+        return '/api/ping';
+      }
+
       function scanEndpoint() {
-        const base = normalizeScanApiBase(state.apiBaseUrl);
+        const base = activeScanApiBase();
         if (base) return base + '/api/scan';
         return '/api/scan';
       }
@@ -2639,6 +2665,61 @@
         state.apiBaseUrl = '';
         if (apiBaseEl) apiBaseEl.value = '';
         saveState(state);
+        apiBaseChangedThisSession = false;
+      }
+
+      async function pingApiBase(url) {
+        const sig =
+          typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+            ? AbortSignal.timeout(8000)
+            : undefined;
+        const r = await fetch(url, Object.assign({}, buildApiFetchInit('GET'), { signal: sig }));
+        const ct = (r.headers.get('content-type') || '').toLowerCase();
+        const text = ct.includes('application/json')
+          ? JSON.stringify(await r.json().catch(function () { return {}; }))
+          : await r.text().catch(function () { return ''; });
+        return { ok: r.ok && /"ok"\s*:\s*true/.test(text), status: r.status, text: text };
+      }
+
+      async function sanitizeBrokenTunnelBase() {
+        const base = activeScanApiBase();
+        if (!base) return false;
+        try {
+          if (base.replace(/\/$/, '') === window.location.origin.replace(/\/$/, '')) {
+            resetScanApiBase();
+            return true;
+          }
+        } catch (e) {
+          /* ignore */
+        }
+        try {
+          const ping = await pingApiBase(base + '/api/ping');
+          if (ping.ok) return false;
+          if (/network authentication required/i.test(ping.text)) {
+            resetScanApiBase();
+            showBackendBanner(
+              'warn',
+              '<strong>Purana/galat tunnel URL hata diya.</strong> Ab Vercel <code>/api/scan</code> use hoga. Local jaisa chahiye to naya tunnel: <code>npm run go-live:audit:tunnel</code> → naya URL paste.'
+            );
+            return true;
+          }
+          if (!/"ok"\s*:\s*true/.test(ping.text)) {
+            resetScanApiBase();
+            showBackendBanner(
+              'warn',
+              '<strong>Scan API base galat tha — clear kar diya.</strong> Ab sirf is Vercel site ka scan chalega. Tunnel dubara chahiye to PC par tunnel on karke <strong>naya</strong> https URL paste karo.'
+            );
+            return true;
+          }
+        } catch (e) {
+          resetScanApiBase();
+          showBackendBanner(
+            'warn',
+            '<strong>Tunnel reach nahi hua — clear kar diya.</strong> PC par tunnel chal raha hai? Warna Scan API base khali rakho.'
+          );
+          return true;
+        }
+        return false;
       }
 
       function runtimeEndpoint() {
@@ -3624,11 +3705,21 @@
 
       async function probeScanBackend() {
         if (!backendBannerEl) return;
-        const ep = scanEndpoint();
+        await sanitizeBrokenTunnelBase();
         const sig =
           typeof AbortSignal !== 'undefined' && AbortSignal.timeout
             ? AbortSignal.timeout(12000)
             : undefined;
+        try {
+          const ping = await pingApiBase('/api/ping');
+          if (ping.ok) {
+            hideBackendBanner();
+            return;
+          }
+        } catch (e) {
+          /* try scan probe below */
+        }
+        const ep = scanEndpoint();
         try {
           const r = await fetch(
             ep,
@@ -3776,12 +3867,25 @@
           apiBaseChangedThisSession = true;
           state.apiBaseUrl = getCurrentScanApiBaseInput();
           saveState(state);
-          probeScanBackend();
-          loadScannerRuntime();
-          loadEmailConfigStatus();
+          sanitizeBrokenTunnelBase().then(function () {
+            probeScanBackend();
+            loadScannerRuntime();
+            loadEmailConfigStatus();
+          });
         });
         apiBaseEl.addEventListener('input', () => {
           apiBaseChangedThisSession = true;
+        });
+      }
+
+      const btnClearScanApiBase = document.getElementById('btnClearScanApiBase');
+      if (btnClearScanApiBase) {
+        btnClearScanApiBase.addEventListener('click', function () {
+          resetScanApiBase();
+          hideBackendBanner();
+          probeScanBackend();
+          loadEmailConfigStatus();
+          loadScannerRuntime();
         });
       }
 
@@ -4501,9 +4605,11 @@
       });
 
       showVercelFreeTunnelCard();
-      probeScanBackend();
-      loadScannerRuntime();
-      loadEmailConfigStatus();
+      sanitizeBrokenTunnelBase().then(function () {
+        probeScanBackend();
+        loadScannerRuntime();
+        loadEmailConfigStatus();
+      });
       loadBrandWatchList();
       loadWatchSummaryFromStorage();
     })();
