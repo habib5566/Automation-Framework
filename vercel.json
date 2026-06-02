@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 2,
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "env": {
     "GO_LIVE_AUDIT_ALLOW_UI_SMTP": "1",
