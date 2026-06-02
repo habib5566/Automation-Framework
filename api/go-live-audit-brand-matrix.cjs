@@ -25,10 +25,10 @@ function computeSiteHealthPercent({ reachable, statusCode, availability, piSum, 
   if (['dns_failed', 'connection_refused', 'timeout', 'unreachable'].includes(avState)) return 0;
   if (sc >= 400) return 22;
 
-  let h = 90;
-  h -= Math.min(45, (piSum.errors || 0) * 10);
-  h -= Math.min(18, (piSum.warns || 0) * 3);
-  h -= Math.min(36, (consoleSum.errors || 0) * 7);
+  let h = 92;
+  h -= Math.min(28, (piSum.errors || 0) * 6);
+  h -= Math.min(12, (piSum.warns || 0) * 2);
+  h -= Math.min(22, (consoleSum.errors || 0) * 4);
   return clampPct(h);
 }
 
@@ -38,7 +38,7 @@ function computeChecklistPercent(counts) {
   const scored = pass + fail;
   if (!scored) return null;
   const raw = (pass / scored) * 100;
-  const penalized = raw - Math.min(35, fail * 4);
+  const penalized = raw - Math.min(18, fail * 2);
   return clampPct(penalized);
 }
 
@@ -79,17 +79,24 @@ function buildBrandMatrix({
   const checklistPct = computeChecklistPercent(counts);
 
   let performancePercent;
+  const pending = counts.pending || 0;
   if (checklistPct != null) {
-    performancePercent = clampPct(siteHealth * 0.55 + checklistPct * 0.45);
+    const autoScored = (counts.pass || 0) + (counts.fail || 0);
+    const failHeavy = autoScored > 0 && (counts.fail || 0) / autoScored > 0.35;
+    if (pending > autoScored && !failHeavy) {
+      performancePercent = clampPct(siteHealth * 0.75 + checklistPct * 0.25);
+    } else {
+      performancePercent = clampPct(siteHealth * 0.6 + checklistPct * 0.4);
+    }
   } else {
     performancePercent = siteHealth;
   }
 
   let grade = 'F';
-  if (performancePercent >= 90) grade = 'A';
-  else if (performancePercent >= 80) grade = 'B';
-  else if (performancePercent >= 65) grade = 'C';
-  else if (performancePercent >= 45) grade = 'D';
+  if (performancePercent >= 88) grade = 'A';
+  else if (performancePercent >= 75) grade = 'B';
+  else if (performancePercent >= 58) grade = 'C';
+  else if (performancePercent >= 40) grade = 'D';
 
   const pass = counts.pass || 0;
   const fail = counts.fail || 0;

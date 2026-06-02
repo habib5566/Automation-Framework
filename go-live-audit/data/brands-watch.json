@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-06-02T10:22:52.785Z",
+  "updatedAt": "2026-06-02T11:58:10.808Z",
   "brands": [
     {
       "name": "Example Brand",
@@ -110,7 +110,7 @@
       "url": "https://vettedlogos.com/",
       "enabled": true,
       "addedAt": "2026-05-20T10:47:30.962Z",
-      "lastScanAt": "2026-06-01T12:24:51.096Z",
+      "lastScanAt": "2026-06-02T11:47:23.404Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://vettedlogos.com/",
       "baselineFingerprint": {
@@ -184,9 +184,9 @@
       "url": "https://www.designcentura.com/",
       "enabled": true,
       "addedAt": "2026-05-21T12:54:06.667Z",
-      "lastScanAt": "2026-06-02T05:37:26.913Z",
+      "lastScanAt": "2026-06-02T11:58:10.784Z",
       "lastAlertLevel": "warn",
-      "lastUrl": "https://www.designcentura.com/portfolio.php"
+      "lastUrl": "https://www.designcentura.com/"
     },
     {
       "name": "vett",
@@ -310,7 +310,7 @@
       "url": "https://appxide.com/",
       "enabled": true,
       "addedAt": "2026-06-01T12:31:09.120Z",
-      "lastScanAt": "2026-06-02T10:22:50.975Z",
+      "lastScanAt": "2026-06-02T11:27:21.139Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://appxide.com/"
     },
@@ -330,6 +330,21 @@
         "formCount": 0
       },
       "baselineAt": "2026-06-01T12:39:22.732Z"
+    },
+    {
+      "name": "Vetted logos",
+      "url": "https://vettedlogos.com/",
+      "enabled": true,
+      "addedAt": "2026-06-02T11:47:23.447Z",
+      "lastScanAt": "2026-06-02T11:53:00.991Z",
+      "lastAlertLevel": "warn",
+      "lastUrl": "https://vettedlogos.com/"
+    },
+    {
+      "name": "DC",
+      "url": "https://www.designcentura.com/",
+      "enabled": true,
+      "addedAt": "2026-06-02T11:58:10.808Z"
     }
   ]
 }

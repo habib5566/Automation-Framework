@@ -55,6 +55,7 @@ const {
   issuesFromHtmlScriptHints,
   mergeIssues,
   summarizeIssues,
+  summarizeMaterialIssues,
   computeConsoleDisplaySummary,
 } = require('./go-live-audit-page-issues.cjs');
 const {
@@ -75,10 +76,16 @@ const { findBrand, loadBrandsWatch, recordScanForBrand } = require('./go-live-au
 function enrichScanReportPayload(payload, ctx) {
   const pageIssues = payload.pageIssues || { items: [], summary: { errors: 0, warns: 0, total: 0 } };
   payload.consoleIssues = pickConsoleIssues(pageIssues);
+  const materialSum = summarizeMaterialIssues(pageIssues.items || [], payload.scanMeta);
   payload.consoleIssues.displaySummary = computeConsoleDisplaySummary(
-    payload.consoleIssues.items,
+    materialSum.filtered || payload.consoleIssues.items,
     payload.scanMeta
   );
+  payload.consoleIssues.materialSummary = {
+    errors: materialSum.errors,
+    warns: materialSum.warns,
+    total: materialSum.total,
+  };
   payload.siteIssues = pickNonConsoleIssues(pageIssues);
   payload.brandMatrix = buildBrandMatrix({
     brandName: ctx.brandName || payload.brandName,
@@ -534,12 +541,23 @@ function buildOverallSummary({
     };
   }
 
-  if (counts.fail >= 2) {
+  if (counts.fail >= 5) {
     const ids = failedItems.map((f) => f.id).join(', ');
     return {
       level: 'concern',
       headline: 'Overall: multiple automated failures',
       subline: `${counts.fail} rows failed (${ids}) — fix on the live site, or scroll the checklist and filter by Fail.`,
+      counts,
+      failedItems,
+    };
+  }
+
+  if (counts.fail >= 2 && counts.fail < 5) {
+    const ids = failedItems.map((f) => f.id).join(', ');
+    return {
+      level: 'caution',
+      headline: 'Overall: a few items to review',
+      subline: `${counts.fail} automated flag(s) (${ids}) — many sites pass with minor warnings; verify each row.`,
       counts,
       failedItems,
     };
@@ -638,7 +656,7 @@ function analyzeHtml(body, finalUrl, contentTypeHeader) {
   const imgTags = body.match(/<img\b[^>]*>/gi) || [];
   let emptyAlt = 0;
   for (const t of imgTags) {
-    if (/\salt\s*=\s*["']["']/i.test(t) || !/\salt\s*=/i.test(t)) emptyAlt += 1;
+    if (!/\salt\s*=/i.test(t)) emptyAlt += 1;
   }
   const hasHttps = /^https:/i.test(finalUrl);
   const isHtmlish =
@@ -933,12 +951,21 @@ function buildAutoChecks(requestedUrl, finalUrl, statusCode, headers, html, robo
   let u03note =
     '[auto] No <img> tags in this HTML snapshot — confirm images render as expected (other routes / lazy load).';
   if (html.imageTags > 0) {
-    if (html.imagesMissingOrEmptyAlt === 0) {
+    const imgN = html.imageTags || 0;
+    const miss = html.imagesMissingOrEmptyAlt || 0;
+    const missRatio = imgN > 0 ? miss / imgN : 0;
+    if (imgN === 0) {
+      u03status = 'pending';
+      u03note = '[auto] No images in this HTML slice — check other pages manually.';
+    } else if (missRatio <= 0.35) {
       u03status = 'pass';
-      u03note = `[auto] ${html.imageTags} <img> tag(s); rough alt check passed (decorative images may false-positive).`;
+      u03note = `[auto] ${imgN} image(s); ${miss} missing alt attribute (empty alt="" is OK for decorative).`;
+    } else if (missRatio <= 0.6) {
+      u03status = 'pending';
+      u03note = `[auto] ~${miss}/${imgN} images lack alt — review important images; decorative may use alt="".`;
     } else {
       u03status = 'fail';
-      u03note = `[auto] ~${html.imagesMissingOrEmptyAlt}/${html.imageTags} images missing or empty alt — fix or mark decorative images appropriately.`;
+      u03note = `[auto] ~${miss}/${imgN} images missing alt attribute — add alt text for content images.`;
     }
   }
 
@@ -1040,8 +1067,9 @@ function buildAutoChecks(requestedUrl, finalUrl, statusCode, headers, html, robo
     s01status = 'pass';
     s01note = `[auto] Strong security header coverage (${secScore}) — full penetration test still recommended separately.`;
   } else if (secScore === 0 && html.hasHttps) {
-    s01status = 'fail';
-    s01note = '[auto] HTTPS served but few or no common security headers detected — review server configuration.';
+    s01status = 'pending';
+    s01note =
+      '[auto] HTTPS OK; optional security headers not all present — common on CDNs; review if policy requires strict headers.';
   }
 
   byId.set('S01', { id: 'S01', status: s01status, note: s01note });
@@ -1261,45 +1289,45 @@ function buildAutoChecksForErrorResponse(statusCode, finalUrl, requestedUrl) {
 }
 
 /** Merge console / page-issue signals into checklist rows after browser pass. */
-function enrichAutoChecksFromPageIssues(autoChecks, pageIssues) {
+function enrichAutoChecksFromPageIssues(autoChecks, pageIssues, scanMeta) {
   if (!Array.isArray(autoChecks) || !autoChecks.length) return autoChecks;
-  const sum = pageIssues && pageIssues.summary ? pageIssues.summary : {};
+  const items = (pageIssues && pageIssues.items) || [];
+  const sum = summarizeMaterialIssues(items, scanMeta || { consoleCapture: pageIssues && pageIssues.consoleCapture });
   const errs = Number(sum.errors) || 0;
   const warns = Number(sum.warns) || 0;
-  const cap = String((pageIssues && pageIssues.consoleCapture) || '');
+  const cap = String((scanMeta && scanMeta.consoleCapture) || (pageIssues && pageIssues.consoleCapture) || '');
   const byId = new Map(autoChecks.map((ac) => [ac.id, { ...ac }]));
 
-  if (errs > 0) {
+  if (errs >= 4) {
     byId.set('P03', {
       id: 'P03',
       status: 'fail',
-      note: `[auto] ${errs} error(s) from browser console / network on this scan.`,
+      note: `[auto] ${errs} material console/network error(s) on this scan (third-party/ad-block noise excluded).`,
     });
-    if (errs >= 2) {
-      byId.set('U02', {
-        id: 'U02',
-        status: 'fail',
-        note: '[auto] Failed resources or broken requests in console — verify internal links and assets.',
-      });
-    }
-    byId.set('P01', {
-      id: 'P01',
+    byId.set('U02', {
+      id: 'U02',
       status: 'fail',
-      note: '[auto] Console/network errors often hurt performance scores — run Lighthouse after fixes.',
+      note: '[auto] Multiple failed resources in console — verify broken assets or links.',
     });
-  } else if (/playwright|serverless-puppeteer|vercel-http-console/i.test(cap)) {
+  } else if (errs >= 1) {
+    byId.set('P03', {
+      id: 'P03',
+      status: 'pending',
+      note: `[auto] ${errs} console error(s) — review; may be third-party tags or non-blocking.`,
+    });
+  } else if (/playwright|serverless-puppeteer|vercel-http-console|html-only/i.test(cap)) {
     byId.set('P03', {
       id: 'P03',
       status: 'pass',
-      note: '[auto] No console errors captured in this browser pass (spot-check other pages).',
+      note: '[auto] No material console errors on this pass (spot-check other pages).',
     });
   }
 
-  if (warns >= 3 && byId.get('P03') && byId.get('P03').status !== 'fail') {
+  if (warns >= 8 && byId.get('P03') && byId.get('P03').status !== 'fail') {
     byId.set('P03', {
       id: 'P03',
-      status: 'fail',
-      note: `[auto] ${warns} warning(s) in console — review before go-live.`,
+      status: 'pending',
+      note: `[auto] ${warns} console warning(s) — review if any affect UX.`,
     });
   }
 
@@ -1956,7 +1984,9 @@ async function handleScan(req, res) {
       cachedConsolePw,
       { onServerless: onServerlessDeploy, deepHttpScan }
     );
-    autoChecks = enrichAutoChecksFromPageIssues(autoChecks, pageIssues);
+    autoChecks = enrichAutoChecksFromPageIssues(autoChecks, pageIssues, {
+      consoleCapture: pageIssues.consoleCapture,
+    });
     if (pageIssues.items.length) {
       for (const it of pageIssues.items) {
         if (it.severity === 'error' || it.severity === 'warn') {

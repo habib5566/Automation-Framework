@@ -90,11 +90,24 @@ function issuesFromAvailability(availability, statusCode) {
   return issues;
 }
 
+/** Benign third-party / ad-blocker / infra noise — do not tank site scores. */
+function isNoisyConsoleMessage(msg) {
+  const m = String(msg || '');
+  if (/Browser console capture failed on server/i.test(m)) return true;
+  if (/Third-party script in HTML/i.test(m)) return true;
+  if (/ERR_BLOCKED_BY_CLIENT|net::ERR_ABORTED|Non-Error promise rejection/i.test(m)) return true;
+  if (/favicon\.ico|google-analytics|googletagmanager|gtag\/js|doubleclick|facebook\.net|hotjar|clarity\.ms|adservice|analytics\.js|chrome-extension/i.test(m)) {
+    return true;
+  }
+  return false;
+}
+
 function issuesFromPlaywrightConsole(logs) {
   const issues = [];
   if (!Array.isArray(logs)) return issues;
   for (const entry of logs.slice(0, 40)) {
     if (!entry || !entry.text) continue;
+    if (isNoisyConsoleMessage(entry.text)) continue;
     const t = String(entry.type || '').toLowerCase();
     if (t === 'error' || t === 'pageerror') {
       issues.push({
@@ -133,6 +146,18 @@ function summarizeIssues(issues) {
   return { errors, warns, total: issues.length };
 }
 
+/** Count only issues that should affect checklist pass/fail and health scores. */
+function summarizeMaterialIssues(issues, scanMeta) {
+  const cap = scanMeta && scanMeta.consoleCapture ? String(scanMeta.consoleCapture) : '';
+  const htmlOnly = /html-only|vercel-empty|vercel-failed|vercel-http/i.test(cap);
+  const filtered = (issues || []).filter((it) => {
+    if (isNoisyConsoleMessage(it.message)) return false;
+    if (htmlOnly && it.kind === 'console' && it.severity === 'warn') return false;
+    return true;
+  });
+  return { ...summarizeIssues(filtered), filtered };
+}
+
 /** UI counts — script/HTTP failures count as errors; infra-only browser-fail line separate. */
 function computeConsoleDisplaySummary(items, scanMeta) {
   const list = Array.isArray(items) ? items : [];
@@ -145,9 +170,11 @@ function computeConsoleDisplaySummary(items, scanMeta) {
       infra++;
       continue;
     }
+    if (isNoisyConsoleMessage(msg)) continue;
     if (
       it.severity === 'error' ||
-      /Script returned HTTP [45]\d|Failed to load resource|net::ERR_/i.test(msg)
+      (/Script returned HTTP [45]\d|Failed to load resource|net::ERR_/i.test(msg) &&
+        !/ERR_BLOCKED_BY_CLIENT|ERR_ABORTED/i.test(msg))
     ) {
       errors++;
     } else if (it.severity === 'warn') {
@@ -171,7 +198,9 @@ module.exports = {
   issuesFromHtmlScriptHints,
   issuesFromAvailability,
   issuesFromPlaywrightConsole,
+  isNoisyConsoleMessage,
   mergeIssues,
   summarizeIssues,
+  summarizeMaterialIssues,
   computeConsoleDisplaySummary,
 };
