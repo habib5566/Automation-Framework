@@ -1575,6 +1575,10 @@
               Tunnel = your PC must stay on. For sharing with clients, leave this <strong>empty</strong> and use Production URL only.
               See <code>go-live-audit/VERCEL-NO-TUNNEL-URDU.md</code>.
             </p>
+            <label class="chk-wrap" style="margin-top:0.65rem">
+              <input type="checkbox" id="useTunnelOnLive" />
+              <span>Use tunnel for scan <span class="label-hint">(PC tunnel on hona chahiye)</span></span>
+            </label>
             <button type="button" class="secondary" id="btnClearScanApiBase" style="margin-top:0.5rem">
               Clear tunnel — use Vercel scan only
             </button>
@@ -1832,20 +1836,22 @@
       /** On Vercel/live: default same-origin scan; tunnel optional for local-quality results. */
       function applyVercelNoTunnelDefaults() {
         if (!useSameOriginApiByDefault()) return;
+        if (typeof state.tunnelLiveEnabled !== 'boolean') state.tunnelLiveEnabled = false;
         const banner = document.getElementById('vercelNoTunnelBanner');
         if (banner) {
           banner.hidden = false;
           banner.innerHTML =
-            '<strong>Live link (no tunnel):</strong> Scan API base <strong>khali</strong> rakho — clients ke liye.<br/>' +
-            '<strong>Local jaisa result chahiye?</strong> PC par <code>npm run go-live:audit:tunnel</code>, tunnel URL yahan paste karo (neeche Scan API base).';
+            '<strong>Live scan:</strong> Default = isi site ka <code>/api/scan</code> (tunnel OFF).<br/>' +
+            '<strong>Local jaisa?</strong> PC par tunnel → URL paste → checkbox <strong>Use tunnel for scan</strong> ON.';
         }
         const details = document.getElementById('tunnelApiBaseDetails');
-        if (details && state.apiBaseUrl) details.open = true;
+        if (details) details.open = !!state.tunnelLiveEnabled;
         if (apiBaseEl) {
           apiBaseEl.disabled = false;
-          apiBaseEl.placeholder =
-            'Khali = Vercel scan | Tunnel https://… = local PC scan (perfect result)';
+          apiBaseEl.placeholder = 'Tunnel https://… (sirf jab checkbox ON ho)';
         }
+        const tunnelChk = document.getElementById('useTunnelOnLive');
+        if (tunnelChk) tunnelChk.checked = !!state.tunnelLiveEnabled;
       }
 
       function mergeWatchSummaries(target, batch) {
@@ -2625,6 +2631,13 @@
         return normalizeScanApiBase(state.apiBaseUrl);
       }
 
+      /** On Vercel: ignore saved tunnel unless user explicitly enables it (stops ngrok errors). */
+      function effectiveApiBase() {
+        if (!isVercelHost()) return activeScanApiBase();
+        if (state.tunnelLiveEnabled && activeScanApiBase()) return activeScanApiBase();
+        return '';
+      }
+
       function needsNgrokBypassHeaders(urlOrBase) {
         return /ngrok-free\.app|\.ngrok\.io|\.ngrok\.app/i.test(String(urlOrBase || ''));
       }
@@ -2634,7 +2647,7 @@
           'Content-Type': 'application/json',
           Accept: 'application/json',
         };
-        const base = activeScanApiBase();
+        const base = effectiveApiBase();
         if (needsNgrokBypassHeaders(base)) {
           headers['ngrok-skip-browser-warning'] = 'true';
         }
@@ -2644,13 +2657,13 @@
       }
 
       function pingEndpoint() {
-        const base = activeScanApiBase();
+        const base = effectiveApiBase();
         if (base) return base + '/api/ping';
         return '/api/ping';
       }
 
       function scanEndpoint() {
-        const base = activeScanApiBase();
+        const base = effectiveApiBase();
         if (base) return base + '/api/scan';
         return '/api/scan';
       }
@@ -2682,6 +2695,12 @@
       }
 
       async function sanitizeBrokenTunnelBase() {
+        if (isVercelHost() && !state.tunnelLiveEnabled) {
+          if (state.apiBaseUrl) {
+            /* keep URL in field for copy but do not use for API */
+          }
+          return false;
+        }
         const base = activeScanApiBase();
         if (!base) return false;
         try {
@@ -2723,13 +2742,13 @@
       }
 
       function runtimeEndpoint() {
-        const base = normalizeScanApiBase(state.apiBaseUrl);
+        const base = effectiveApiBase();
         if (base) return base + '/api/runtime';
         return '/api/runtime';
       }
 
       function emailStatusEndpoint() {
-        const base = normalizeScanApiBase(state.apiBaseUrl);
+        const base = effectiveApiBase();
         if (base) return base + '/api/email-status';
         return '/api/email-status';
       }
@@ -2793,13 +2812,13 @@
       }
 
       function brandsEndpoint() {
-        const base = normalizeScanApiBase(state.apiBaseUrl);
+        const base = effectiveApiBase();
         if (base) return base + '/api/brands';
         return '/api/brands';
       }
 
       function watchRunEndpoint() {
-        const base = normalizeScanApiBase(state.apiBaseUrl);
+        const base = effectiveApiBase();
         if (base) return base + '/api/watch/run';
         return '/api/watch/run';
       }
@@ -3916,6 +3935,17 @@
         gmailAppPasswordEl.addEventListener('input', persistGmailCreds);
       }
 
+      const useTunnelOnLiveEl = document.getElementById('useTunnelOnLive');
+      if (useTunnelOnLiveEl) {
+        useTunnelOnLiveEl.addEventListener('change', function () {
+          state.tunnelLiveEnabled = !!useTunnelOnLiveEl.checked;
+          saveState(state);
+          applyVercelNoTunnelDefaults();
+          probeScanBackend();
+          loadEmailConfigStatus();
+        });
+      }
+
       document.getElementById('btnScan').addEventListener('click', async () => {
         const url = siteEl ? siteEl.value.trim() : '';
         state.siteUrl = url;
@@ -3980,7 +4010,7 @@
         }, 2200);
         try {
           const scanBody = { url, captureConsole: true };
-          const tunnelBase = normalizeScanApiBase(state.apiBaseUrl);
+          const tunnelBase = effectiveApiBase();
           const scanApiEndpoint = scanEndpoint();
           if (tunnelBase) scanBody.scanApiBase = tunnelBase;
           const brandScan = brandNameEl ? brandNameEl.value.trim() : '';
@@ -4012,7 +4042,25 @@
             scanApiEndpoint,
             Object.assign({}, buildApiFetchInit('POST', scanBody), { cache: 'no-store' })
           );
-          const data = await res.json().catch(() => ({}));
+          const rawScan = await res.text().catch(function () {
+            return '';
+          });
+          let data = {};
+          try {
+            data = rawScan ? JSON.parse(rawScan) : {};
+          } catch (parseErr) {
+            if (/network authentication required/i.test(rawScan)) {
+              state.tunnelLiveEnabled = false;
+              if (useTunnelOnLiveEl) useTunnelOnLiveEl.checked = false;
+              resetScanApiBase();
+              saveState(state);
+              out.hidden = false;
+              out.innerHTML =
+                '<div class="scan-msg scan-msg-warn"><strong>Tunnel block (ngrok).</strong> Tunnel band kar diya — dubara <strong>Run quick scan</strong> dabao (ab Vercel scan chalega). Local jaisa chahiye to naya tunnel URL + checkbox ON.</div>';
+              return;
+            }
+            data = { ok: false, error: 'Server returned non-JSON. Check Scan API base or redeploy.' };
+          }
           if (!res.ok || data.ok === false) {
             out.hidden = false;
             clearAutoFilledRows();
