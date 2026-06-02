@@ -1876,7 +1876,7 @@
           return true;
         }
         try {
-          const r = await fetch(emailStatusEndpoint(), { method: 'GET' });
+          const r = await fetch(emailStatusEndpoint(), buildApiFetchInit('GET'));
           const data = await r.json().catch(function () {
             return {};
           });
@@ -2454,7 +2454,7 @@
         grid.innerHTML = '<p class="brands-hub-intro">Loading brands…</p>';
         let watchBrands = [];
         try {
-          const r = await fetch(brandsEndpoint(), { method: 'GET' });
+          const r = await fetch(brandsEndpoint(), buildApiFetchInit('GET'));
           const data = await r.json().catch(function () {
             return {};
           });
@@ -2601,6 +2601,28 @@
         }
       }
 
+      function activeScanApiBase() {
+        return normalizeScanApiBase(state.apiBaseUrl);
+      }
+
+      function needsNgrokBypassHeaders(urlOrBase) {
+        return /ngrok-free\.app|\.ngrok\.io|\.ngrok\.app/i.test(String(urlOrBase || ''));
+      }
+
+      function buildApiFetchInit(method, bodyObj) {
+        const headers = {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        };
+        const base = activeScanApiBase();
+        if (needsNgrokBypassHeaders(base)) {
+          headers['ngrok-skip-browser-warning'] = 'true';
+        }
+        const init = { method: method || 'GET', headers };
+        if (bodyObj !== undefined) init.body = JSON.stringify(bodyObj);
+        return init;
+      }
+
       function scanEndpoint() {
         const base = normalizeScanApiBase(state.apiBaseUrl);
         if (base) return base + '/api/scan';
@@ -2639,7 +2661,10 @@
             typeof AbortSignal !== 'undefined' && AbortSignal.timeout
               ? AbortSignal.timeout(8000)
               : undefined;
-          const r = await fetch(emailStatusEndpoint(), { method: 'GET', signal: sig });
+          const r = await fetch(
+            emailStatusEndpoint(),
+            Object.assign({}, buildApiFetchInit('GET'), { signal: sig })
+          );
           const data = await r.json().catch(function () {
             return {};
           });
@@ -2702,7 +2727,7 @@
 
       async function refreshWatchBrandsCache() {
         try {
-          const r = await fetch(brandsEndpoint(), { method: 'GET' });
+          const r = await fetch(brandsEndpoint(), buildApiFetchInit('GET'));
           const data = await r.json().catch(function () {
             return {};
           });
@@ -2743,7 +2768,7 @@
         const ul = document.getElementById('brandWatchList');
         if (!ul) return;
         try {
-          const r = await fetch(brandsEndpoint(), { method: 'GET' });
+          const r = await fetch(brandsEndpoint(), buildApiFetchInit('GET'));
           const data = await r.json().catch(function () {
             return {};
           });
@@ -2810,11 +2835,10 @@
       }
 
       async function saveBrandToWatch(name, url) {
-        const r = await fetch(brandsEndpoint(), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: name, url: url, enabled: true }),
-        });
+        const r = await fetch(
+          brandsEndpoint(),
+          buildApiFetchInit('POST', { name: name, url: url, enabled: true })
+        );
         const data = await r.json().catch(function () {
           return {};
         });
@@ -3300,7 +3324,10 @@
             ? AbortSignal.timeout(12000)
             : undefined;
         try {
-          const r = await fetch(runtimeEndpoint(), { method: 'GET', signal: sig });
+          const r = await fetch(
+            runtimeEndpoint(),
+            Object.assign({}, buildApiFetchInit('GET'), { signal: sig })
+          );
           const data = await r.json().catch(function () {
             return {};
           });
@@ -3603,14 +3630,30 @@
             ? AbortSignal.timeout(12000)
             : undefined;
         try {
-          const r = await fetch(ep, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: '' }),
-            signal: sig,
-          });
+          const r = await fetch(
+            ep,
+            Object.assign({}, buildApiFetchInit('POST', { url: '' }), { signal: sig })
+          );
           const ct = (r.headers.get('content-type') || '').toLowerCase();
-          const data = ct.includes('application/json') ? await r.json().catch(function () { return {}; }) : {};
+          let data = {};
+          let rawText = '';
+          if (ct.includes('application/json')) {
+            data = await r.json().catch(function () {
+              return {};
+            });
+          } else {
+            rawText = await r.text().catch(function () {
+              return '';
+            });
+          }
+
+          if (/network authentication required/i.test(rawText)) {
+            showBackendBanner(
+              'warn',
+              '<strong>ngrok ne request block ki.</strong> PC par dubara tunnel chalao: <code>npm run go-live:audit:tunnel</code> (Windows par localtunnel default). Naya https URL paste karo — purana URL mat use karo.<br/>Ya <strong>Scan API base khali</strong> karo taake sirf Vercel <code>/api/scan</code> use ho.'
+            );
+            return;
+          }
 
           if (r.status === 401 || r.status === 403) {
             showBackendBanner(
@@ -3648,12 +3691,20 @@
 
           hideBackendBanner();
         } catch (e) {
+          const em = String(e.message || e);
+          if (/network authentication required/i.test(em)) {
+            showBackendBanner(
+              'warn',
+              '<strong>ngrok block.</strong> Tunnel URL galat/purana hai. Naya tunnel start karo ya Scan API base <strong>khali</strong> rakho (Vercel scan).'
+            );
+            return;
+          }
           showBackendBanner(
             'bad',
             '<strong>Cannot reach scan API.</strong> Tried <code>' +
               escapeHtml(ep) +
               '</code>. Check <strong>Scan API base</strong>, your network, or run locally: <code>npm run go-live:audit</code> → <code>http://localhost:3940</code>.<br/><br/><small>' +
-              escapeHtml(e.message || String(e)) +
+              escapeHtml(em) +
               '</small>'
           );
         }
@@ -3853,12 +3904,10 @@
           const notifyTok = notifyTokEl && notifyTokEl.value.trim();
           if (notifyTok) scanBody.notifyToken = notifyTok;
 
-          const res = await fetch(scanApiEndpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            cache: 'no-store',
-            body: JSON.stringify(scanBody),
-          });
+          const res = await fetch(
+            scanApiEndpoint,
+            Object.assign({}, buildApiFetchInit('POST', scanBody), { cache: 'no-store' })
+          );
           const data = await res.json().catch(() => ({}));
           if (!res.ok || data.ok === false) {
             out.hidden = false;
@@ -4389,14 +4438,17 @@
               typeof AbortSignal !== 'undefined' && AbortSignal.timeout
                 ? AbortSignal.timeout(120000)
                 : undefined;
-            const r = await fetch(watchRunEndpoint(), {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(
-                Object.assign({}, watchBody, { offset: offset, limit: batchSize })
-              ),
-              signal: sig,
-            });
+            const r = await fetch(
+              watchRunEndpoint(),
+              Object.assign(
+                {},
+                buildApiFetchInit(
+                  'POST',
+                  Object.assign({}, watchBody, { offset: offset, limit: batchSize })
+                ),
+                { signal: sig }
+              )
+            );
             const data = await r.json().catch(function () {
               return {};
             });
