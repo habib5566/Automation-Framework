@@ -15,7 +15,6 @@
     "api/scan.js": {
       "maxDuration": 60,
       "memory": 2048,
-      "runtime": "nodejs20.x",
       "includeFiles": "node_modules/@sparticuz/chromium/**"
     },
     "api/ping.js": {
@@ -36,7 +35,6 @@
     "api/watch/run.js": {
       "maxDuration": 60,
       "memory": 2048,
-      "runtime": "nodejs20.x",
       "includeFiles": "node_modules/@sparticuz/chromium/**"
     }
   }
