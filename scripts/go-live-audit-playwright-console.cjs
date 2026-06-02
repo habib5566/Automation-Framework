@@ -120,6 +120,10 @@ async function captureWithServerlessPuppeteer(url, opts) {
   const pack = loadSparticuzPack();
   const puppeteer = require('puppeteer-core');
 
+  // Vercel functions have tight time limits; fail fast to avoid "server did not respond in time".
+  const timeoutMs = Math.min(Number(opts && opts.timeoutMs) || 24_000, 25_000);
+  const waitAfterMs = Math.min(Number(opts && opts.waitAfterMs) || 5000, 4000);
+
   if (typeof pack.setGraphicsMode === 'function') {
     pack.setGraphicsMode(false);
   }
@@ -151,7 +155,8 @@ async function captureWithServerlessPuppeteer(url, opts) {
     executablePath,
     headless: typeof pack.headless === 'boolean' ? pack.headless : true,
     ignoreHTTPSErrors: true,
-    protocolTimeout: 120_000,
+    // Keep protocol + launch time bounded on serverless
+    protocolTimeout: 55_000,
   };
   if (pack.defaultViewport) {
     launchOpts.defaultViewport = pack.defaultViewport;
@@ -161,12 +166,15 @@ async function captureWithServerlessPuppeteer(url, opts) {
   for (let attempt = 0; attempt < 2; attempt++) {
     let browser;
     try {
-      browser = await puppeteer.launch(launchOpts);
+      browser = await puppeteer.launch({
+        ...launchOpts,
+        timeout: 35_000,
+      });
       const page = await browser.newPage();
       await page.setUserAgent(
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
       );
-      const result = await collectPuppeteerConsoleLogs(page, url, opts);
+      const result = await collectPuppeteerConsoleLogs(page, url, { timeoutMs, waitAfterMs });
       await browser.close().catch(() => {});
       return result;
     } catch (e) {

@@ -59,7 +59,8 @@ async function scanOneBrand(brand, requestJson) {
     sendEmail: true,
     emailReport: true,
     securityWatch: true,
-    captureConsole: true,
+    // Avoid Vercel 60s timeouts when Chromium is unstable.
+    captureConsole: !isServerlessWatch(),
     reportEmail: getAlertEmail(),
   };
   mergeWatchSmtpFromRequest(json, requestJson);

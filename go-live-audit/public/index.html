@@ -1820,7 +1820,12 @@
           state.apiBaseUrl = '';
           saveState(state);
         }
-        if (apiBaseEl) apiBaseEl.value = '';
+        if (apiBaseEl) {
+          apiBaseEl.value = '';
+          // Prevent accidental tunnel persistence on shared links.
+          apiBaseEl.disabled = true;
+          apiBaseEl.placeholder = 'Disabled on live — uses same-origin /api/scan (no tunnel)';
+        }
       }
 
       function mergeWatchSummaries(target, batch) {

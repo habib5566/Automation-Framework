@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "updatedAt": "2026-06-01T08:44:59.254Z",
+  "updatedAt": "2026-06-02T05:58:12.744Z",
   "brands": [
     {
       "name": "Example Brand",
       "url": "https://example.com",
       "enabled": true,
       "addedAt": "2026-05-19T00:00:00.000Z",
-      "lastScanAt": "2026-05-29T10:34:06.717Z",
+      "lastScanAt": "2026-06-01T12:23:51.025Z",
       "lastAlertLevel": "ok",
       "lastUrl": "https://example.com/",
       "baselineFingerprint": {
@@ -17,14 +17,14 @@
         "iframeCount": 0,
         "formCount": 0
       },
-      "baselineAt": "2026-05-29T10:34:06.717Z"
+      "baselineAt": "2026-06-01T12:23:51.025Z"
     },
     {
       "name": "weboptimax",
       "url": "https://logura.com/",
       "enabled": true,
       "addedAt": "2026-05-20T07:07:11.166Z",
-      "lastScanAt": "2026-05-29T10:34:22.779Z",
+      "lastScanAt": "2026-06-01T12:24:11.382Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://logura.com/",
       "baselineFingerprint": {
@@ -35,8 +35,14 @@
         "formCount": 0
       },
       "baselineAt": "2026-05-20T09:25:25.985Z",
-      "lastAlertAt": "2026-05-29T10:34:22.779Z",
+      "lastAlertAt": "2026-06-01T12:24:11.382Z",
       "alertHistory": [
+        {
+          "at": "2026-06-01T12:24:11.382Z",
+          "level": "warn",
+          "critical": 0,
+          "warns": 17
+        },
         {
           "at": "2026-05-29T10:34:22.779Z",
           "level": "warn",
@@ -104,7 +110,7 @@
       "url": "https://vettedlogos.com/",
       "enabled": true,
       "addedAt": "2026-05-20T10:47:30.962Z",
-      "lastScanAt": "2026-05-29T11:34:04.394Z",
+      "lastScanAt": "2026-06-01T12:24:51.096Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://vettedlogos.com/",
       "baselineFingerprint": {
@@ -115,8 +121,14 @@
         "formCount": 0
       },
       "baselineAt": "2026-05-21T12:07:38.211Z",
-      "lastAlertAt": "2026-05-29T11:34:04.394Z",
+      "lastAlertAt": "2026-06-01T12:24:51.096Z",
       "alertHistory": [
+        {
+          "at": "2026-06-01T12:24:51.096Z",
+          "level": "warn",
+          "critical": 0,
+          "warns": 10
+        },
         {
           "at": "2026-05-29T11:34:04.394Z",
           "level": "warn",
@@ -172,16 +184,16 @@
       "url": "https://www.designcentura.com/",
       "enabled": true,
       "addedAt": "2026-05-21T12:54:06.667Z",
-      "lastScanAt": "2026-05-29T10:35:16.131Z",
+      "lastScanAt": "2026-06-02T05:37:26.913Z",
       "lastAlertLevel": "warn",
-      "lastUrl": "https://www.designcentura.com/"
+      "lastUrl": "https://www.designcentura.com/portfolio.php"
     },
     {
       "name": "vett",
       "url": "https://vettedlogos.com/",
       "enabled": true,
       "addedAt": "2026-05-22T07:25:29.286Z",
-      "lastScanAt": "2026-05-29T10:35:43.927Z",
+      "lastScanAt": "2026-06-01T12:25:39.414Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://vettedlogos.com/"
     },
@@ -190,7 +202,7 @@
       "url": "https://vettedlogos.com/",
       "enabled": true,
       "addedAt": "2026-05-22T08:08:20.504Z",
-      "lastScanAt": "2026-05-29T10:36:21.805Z",
+      "lastScanAt": "2026-06-01T12:26:06.713Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://vettedlogos.com/"
     },
@@ -199,7 +211,7 @@
       "url": "https://www.designcentura.com/",
       "enabled": true,
       "addedAt": "2026-05-22T08:37:05.276Z",
-      "lastScanAt": "2026-05-29T10:36:40.520Z",
+      "lastScanAt": "2026-06-01T12:26:25.475Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://www.designcentura.com/"
     },
@@ -208,7 +220,7 @@
       "url": "https://logoorbit.com/",
       "enabled": true,
       "addedAt": "2026-05-22T08:40:00.596Z",
-      "lastScanAt": "2026-05-29T10:37:03.085Z",
+      "lastScanAt": "2026-06-01T12:26:57.814Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://www.logoorbit.com/"
     },
@@ -217,7 +229,7 @@
       "url": "https://websiteoptimax.com/",
       "enabled": true,
       "addedAt": "2026-05-22T09:01:36.987Z",
-      "lastScanAt": "2026-05-29T10:37:12.582Z",
+      "lastScanAt": "2026-06-01T12:27:07.642Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://websiteoptimax.com/"
     },
@@ -226,7 +238,7 @@
       "url": "https://vettedlogos.com/",
       "enabled": true,
       "addedAt": "2026-05-22T10:54:27.340Z",
-      "lastScanAt": "2026-05-29T11:31:08.893Z",
+      "lastScanAt": "2026-06-01T12:27:34.772Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://vettedlogos.com/"
     },
@@ -235,7 +247,7 @@
       "url": "https://websiteoptimax.com",
       "enabled": true,
       "addedAt": "2026-05-25T05:50:57.750Z",
-      "lastScanAt": "2026-06-01T08:44:58.640Z",
+      "lastScanAt": "2026-06-01T12:27:44.690Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://websiteoptimax.com/"
     },
@@ -244,7 +256,7 @@
       "url": "https://www.designcentura.com/",
       "enabled": true,
       "addedAt": "2026-05-25T07:39:30.519Z",
-      "lastScanAt": "2026-05-29T10:38:10.761Z",
+      "lastScanAt": "2026-06-01T12:41:32.541Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://www.designcentura.com/"
     },
@@ -253,7 +265,7 @@
       "url": "https://www.designcentura.com/",
       "enabled": true,
       "addedAt": "2026-05-25T10:16:08.780Z",
-      "lastScanAt": "2026-05-29T10:38:30.827Z",
+      "lastScanAt": "2026-06-01T12:28:22.268Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://www.designcentura.com/",
       "lastAlertAt": "2026-05-25T11:33:05.374Z",
@@ -289,9 +301,35 @@
       "url": "https://logura.com/",
       "enabled": true,
       "addedAt": "2026-05-26T06:49:12.433Z",
-      "lastScanAt": "2026-05-29T10:38:45.188Z",
+      "lastScanAt": "2026-06-01T12:28:37.358Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://logura.com/"
+    },
+    {
+      "name": "Appxide",
+      "url": "https://appxide.com/",
+      "enabled": true,
+      "addedAt": "2026-06-01T12:31:09.120Z",
+      "lastScanAt": "2026-06-02T05:58:12.744Z",
+      "lastAlertLevel": "warn",
+      "lastUrl": "https://appxide.com/"
+    },
+    {
+      "name": "Searchoptimax",
+      "url": "https://searchoptimax.com/",
+      "enabled": true,
+      "addedAt": "2026-06-01T12:39:22.732Z",
+      "lastScanAt": "2026-06-01T12:39:22.732Z",
+      "lastAlertLevel": "ok",
+      "lastUrl": "https://searchoptimax.com/",
+      "baselineFingerprint": {
+        "hash": "0650fdca3c5b6c91",
+        "title": "Digital Marketing Agency | Best Marketing Solution | Search Optimax",
+        "scriptSrcs": 2,
+        "iframeCount": 0,
+        "formCount": 0
+      },
+      "baselineAt": "2026-06-01T12:39:22.732Z"
     }
   ]
 }
