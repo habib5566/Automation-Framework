@@ -7,7 +7,7 @@
     "GO_LIVE_AUDIT_EMAIL_ALWAYS": "1",
     "GO_LIVE_AUDIT_ALERT_EMAIL": "habib.developer8899@gmail.com",
     "GO_LIVE_AUDIT_SMTP_PRESET": "gmail",
-    "AWS_LAMBDA_JS_RUNTIME": "nodejs22.x"
+    "AWS_LAMBDA_JS_RUNTIME": "nodejs20.x"
   },
   "installCommand": "npm install --omit=dev",
   "buildCommand": "npm run build",
@@ -15,7 +15,7 @@
     "api/scan.js": {
       "maxDuration": 60,
       "memory": 2048,
-      "runtime": "nodejs22.x",
+      "runtime": "nodejs20.x",
       "includeFiles": "node_modules/@sparticuz/chromium/**"
     },
     "api/ping.js": {
@@ -36,7 +36,7 @@
     "api/watch/run.js": {
       "maxDuration": 60,
       "memory": 2048,
-      "runtime": "nodejs22.x",
+      "runtime": "nodejs20.x",
       "includeFiles": "node_modules/@sparticuz/chromium/**"
     }
   }
