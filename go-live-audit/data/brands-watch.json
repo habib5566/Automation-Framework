@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-06-03T07:45:24.094Z",
+  "updatedAt": "2026-06-03T10:27:41.614Z",
   "brands": [
     {
       "name": "Example Brand",
@@ -306,11 +306,11 @@
       "lastUrl": "https://logura.com/"
     },
     {
-      "name": "Appxide",
+      "name": "appxide",
       "url": "https://appxide.com/",
       "enabled": true,
       "addedAt": "2026-06-01T12:31:09.120Z",
-      "lastScanAt": "2026-06-02T11:27:21.139Z",
+      "lastScanAt": "2026-06-03T10:21:48.079Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://appxide.com/"
     },
@@ -341,11 +341,11 @@
       "lastUrl": "https://vettedlogos.com/"
     },
     {
-      "name": "dc",
+      "name": "DC",
       "url": "https://www.designcentura.com/",
       "enabled": true,
       "addedAt": "2026-06-02T11:58:10.808Z",
-      "lastScanAt": "2026-06-03T07:45:23.469Z",
+      "lastScanAt": "2026-06-03T10:27:41.580Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://www.designcentura.com/"
     }

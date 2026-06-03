@@ -1757,8 +1757,8 @@ async function handleScan(req, res) {
           cachedPw !== undefined && cachedPw !== null
             ? cachedPw
             : await captureBrowserConsole(pageUrl || requestedUrl, {
-                timeoutMs: onServerless ? 28_000 : 18_000,
-                waitAfterMs: onServerless ? 6000 : 3000,
+                timeoutMs: onServerless ? (watchBatch ? 12_000 : 28_000) : 18_000,
+                waitAfterMs: onServerless ? (watchBatch ? 2500 : 6000) : 3000,
               });
         if (onServerless && htmlBody) {
           pw = await augmentConsoleWithStaticFallback(pw, htmlBody, pageUrl || requestedUrl, onServerless);
@@ -1852,9 +1852,11 @@ async function handleScan(req, res) {
 
     const { isServerlessChromiumRuntime } = require('./go-live-audit-playwright-console.cjs');
     const onServerlessDeploy = isServerlessChromiumRuntime();
+    const watchBatch = !!(json.watchBatch);
     let cachedConsolePw = null;
     const wantConsoleOnServerless =
       onServerlessDeploy &&
+      !watchBatch &&
       json.captureConsole !== false &&
       process.env.GO_LIVE_AUDIT_NO_PLAYWRIGHT_CONSOLE !== '1' &&
       statusCode >= 200 &&
@@ -1880,9 +1882,9 @@ async function handleScan(req, res) {
         if (statusCode >= 200 && statusCode < 400 && html.isHtmlDocument) {
           try {
             followUpSamples = await fetchDeepFollowUpSamples(finalUrl, body, fetchUrl, {
-              maxPages: 3,
-              maxTotalMs: 20_000,
-              perPageTimeoutMs: 8_000,
+              maxPages: watchBatch ? 1 : 3,
+              maxTotalMs: watchBatch ? 10_000 : 20_000,
+              perPageTimeoutMs: watchBatch ? 6_000 : 8_000,
               helpers: { collectSameOriginPageUrls, fetchFollowUpSameOriginSamples },
             });
             deepHttpScan = true;
@@ -1892,8 +1894,8 @@ async function handleScan(req, res) {
         }
         if (wantConsoleOnServerless) {
           cachedConsolePw = await captureBrowserConsole(finalUrl || requestedUrl, {
-            timeoutMs: 22_000,
-            waitAfterMs: 4500,
+            timeoutMs: watchBatch ? 12_000 : 22_000,
+            waitAfterMs: watchBatch ? 2500 : 4500,
           });
         }
       } else {

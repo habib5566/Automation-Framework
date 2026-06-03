@@ -63,8 +63,8 @@ async function scanOneBrand(brand, requestJson) {
     skipEmail: true,
     watchBatch: true,
     securityWatch: true,
-    // Match single-brand scan (UI sends captureConsole: true) so scores align.
-    captureConsole: requestJson.captureConsole !== false,
+    // Vercel: skip full Chromium per brand (60s limit) — scores still match single scan on Vercel (HTTP + checklist).
+    captureConsole: isServerlessWatch() ? false : requestJson.captureConsole !== false,
     reportEmail: getAlertEmail(),
   };
   if (requestJson.scanApiBase) json.scanApiBase = requestJson.scanApiBase;

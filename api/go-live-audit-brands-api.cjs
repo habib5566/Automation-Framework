@@ -74,6 +74,17 @@ async function handleBrandsPost(req, res, sendJson) {
   sendJson(res, 400, { ok: false, error: 'Send { name, url } or { replace: true, brands: [] }' });
 }
 
+function apiErrorString(err) {
+  if (err == null) return 'Unknown error';
+  if (typeof err === 'string') return err;
+  if (typeof err === 'object' && err.message) return String(err.message);
+  try {
+    return JSON.stringify(err).slice(0, 500);
+  } catch {
+    return String(err);
+  }
+}
+
 async function handleWatchRun(req, res, sendJson) {
   let requestJson = {};
   try {
@@ -82,9 +93,12 @@ async function handleWatchRun(req, res, sendJson) {
   } catch {
     requestJson = {};
   }
-  runWatchPass(requestJson)
-    .then((summary) => sendJson(res, 200, { ok: true, summary, enabled: listEnabledBrands().length }))
-    .catch((e) => sendJson(res, 500, { ok: false, error: String(e.message || e) }));
+  try {
+    const summary = await runWatchPass(requestJson);
+    sendJson(res, 200, { ok: true, summary, enabled: listEnabledBrands().length });
+  } catch (e) {
+    sendJson(res, 500, { ok: false, error: apiErrorString(e) });
+  }
 }
 
 async function handleWatchDigest(req, res, sendJson) {
@@ -104,7 +118,7 @@ async function handleWatchDigest(req, res, sendJson) {
     const digestEmail = await maybeSendWatchDigestEmail(requestJson, entries);
     sendJson(res, 200, { ok: true, digestEmail, brandCount: entries.length });
   } catch (e) {
-    sendJson(res, 500, { ok: false, error: String(e.message || e) });
+    sendJson(res, 500, { ok: false, error: apiErrorString(e) });
   }
 }
 

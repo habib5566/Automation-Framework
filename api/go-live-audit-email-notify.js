@@ -754,6 +754,9 @@ function buildWatchDigestEntry(brand, result) {
     overallLevel: os.level || null,
     performancePercent: bm.performancePercent != null ? bm.performancePercent : null,
     performanceGrade: bm.performanceGrade || null,
+    siteHealthPercent: bm.siteHealthPercent != null ? bm.siteHealthPercent : null,
+    checklistPercent: bm.checklistPercent != null ? bm.checklistPercent : null,
+    passRatePercent: bm.passRatePercent != null ? bm.passRatePercent : null,
     pass: (os.counts && os.counts.pass) || 0,
     fail: (os.counts && os.counts.fail) || 0,
     pending: (os.counts && os.counts.pending) || 0,
@@ -800,6 +803,14 @@ function buildWatchDigestPlainText(entries) {
     lines.push('  HTTP: ' + (e.statusCode != null ? e.statusCode : '—') + ' · ' + (e.availabilityHeadline || '—'));
     if (e.performancePercent != null) {
       lines.push('  Site score: ' + e.performancePercent + '% (grade ' + (e.performanceGrade || '—') + ')');
+      if (e.siteHealthPercent != null || e.checklistPercent != null) {
+        lines.push(
+          '  Breakdown: HTTP health ' +
+            (e.siteHealthPercent != null ? e.siteHealthPercent + '%' : '—') +
+            ' · Checklist pass ' +
+            (e.checklistPercent != null ? e.checklistPercent + '%' : e.passRatePercent != null ? e.passRatePercent + '%' : '—')
+        );
+      }
     }
     lines.push('  Overall: ' + (e.overallHeadline || '—'));
     lines.push(
@@ -830,7 +841,16 @@ function buildWatchDigestHtml(entries) {
         : '<span style="color:#c2410c">Check URL</span>';
     const score =
       e.performancePercent != null
-        ? escapeHtmlForEmail(String(e.performancePercent)) + '% · ' + escapeHtmlForEmail(e.performanceGrade || '—')
+        ? escapeHtmlForEmail(String(e.performancePercent)) +
+          '% · ' +
+          escapeHtmlForEmail(e.performanceGrade || '—') +
+          (e.checklistPercent != null
+            ? '<br/><span style="font-size:11px;color:#64748b">Checklist ' +
+              escapeHtmlForEmail(String(e.checklistPercent)) +
+              '% · HTTP ' +
+              escapeHtmlForEmail(e.siteHealthPercent != null ? String(e.siteHealthPercent) : '—') +
+              '%</span>'
+            : '')
         : '—';
     rows +=
       '<tr><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0"><strong>' +

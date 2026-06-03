@@ -1881,7 +1881,7 @@
           sendEmail: true,
           emailReport: true,
           sendWatchDigest: true,
-          captureConsole: true,
+          captureConsole: !isVercelHost(),
         };
         const tunnelBaseWatch = effectiveApiBase();
         if (tunnelBaseWatch) watchBody.scanApiBase = tunnelBaseWatch;
@@ -1928,6 +1928,23 @@
         if (emailBox) emailBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         if (gmailAppPasswordEl) gmailAppPasswordEl.focus();
         return false;
+      }
+
+      function formatApiError(err, fallback) {
+        if (err == null || err === '') return fallback || 'Unknown error';
+        if (typeof err === 'string') return err;
+        if (typeof err === 'object') {
+          if (err.message && typeof err.message === 'string') return err.message;
+          if (err.error) return formatApiError(err.error, fallback);
+          if (err.code && err.message) return String(err.code) + ': ' + String(err.message);
+          try {
+            const s = JSON.stringify(err);
+            if (s && s !== '{}') return s.slice(0, 400);
+          } catch (e) {
+            /* ignore */
+          }
+        }
+        return String(err);
       }
 
       function humanizeEmailSendError(msg) {
@@ -4647,11 +4664,11 @@
             });
             if (!r.ok || data.ok === false) {
               alert(
-                data.error
-                  ? 'Watch failed: ' + data.error
-                  : 'Watch failed: HTTP ' +
-                      r.status +
-                      ' — redeploy after git push (needs api/watch/run.js).'
+                'Watch failed: ' +
+                  formatApiError(
+                    data.error || data.message || data,
+                    'HTTP ' + r.status + ' — redeploy latest code (api/watch/run.js).'
+                  )
               );
               return;
             }
@@ -4705,7 +4722,9 @@
                 }
               } else if (!dr.ok) {
                 merged.emailsFailed = 1;
-                merged.digestEmail = { error: digestData.error || 'Digest HTTP ' + dr.status };
+                merged.digestEmail = {
+                  error: formatApiError(digestData.error, 'Digest HTTP ' + dr.status),
+                };
               }
             } catch (digestErr) {
               merged.emailsFailed = 1;
