@@ -732,6 +732,68 @@ async function maybeSendScanEmail(requestJson, scanResponse) {
   }
 }
 
+/** Full scan JSON for digest PDF/email (same fields as single-scan; no huge HTML blobs). */
+function compactScanPayloadForDigest(result) {
+  const r = result || {};
+  if (!r || typeof r !== 'object') return null;
+  const pageItems = (r.pageIssues && r.pageIssues.items) || [];
+  return {
+    ok: r.ok !== false,
+    brandName: r.brandName || null,
+    requestedUrl: r.requestedUrl || null,
+    finalUrl: r.finalUrl || null,
+    statusCode: r.statusCode != null ? r.statusCode : null,
+    contentType: r.contentType || null,
+    availability: r.availability || null,
+    overallSummary: r.overallSummary || null,
+    brandMatrix: r.brandMatrix || null,
+    vulnerabilities: r.vulnerabilities || null,
+    security: r.security || null,
+    autoChecks: Array.isArray(r.autoChecks) ? r.autoChecks : [],
+    pageIssues: {
+      items: pageItems.slice(0, 100),
+      summary: (r.pageIssues && r.pageIssues.summary) || { errors: 0, warns: 0, total: 0 },
+    },
+    consoleIssues: r.consoleIssues || null,
+    siteStack: r.siteStack
+      ? Object.assign({}, r.siteStack, {
+          items: (r.siteStack.items || []).slice(0, 20),
+        })
+      : null,
+    scanMeta: r.scanMeta || null,
+    robotsTxt: r.robotsTxt || null,
+    scanWarnings: (r.scanWarnings || []).slice(0, 30),
+    xRobotsTag: r.xRobotsTag != null ? r.xRobotsTag : null,
+    disclaimer: r.disclaimer || null,
+  };
+}
+
+/** Accept compact rows or raw { scanPayload } from browser watch (same path as quick scan). */
+function normalizeDigestEntries(entries) {
+  const raw = Array.isArray(entries) ? entries.filter(Boolean) : [];
+  const out = [];
+  for (const e of raw) {
+    if (!e) continue;
+    if (e.scanPayload && typeof e.scanPayload === 'object' && !e.performancePercent) {
+      const sp = e.scanPayload;
+      const brand = {
+        name: sp.brandName || e.brandName,
+        url: sp.requestedUrl || e.url,
+      };
+      out.push(buildWatchDigestEntry(brand, sp));
+      continue;
+    }
+    if (e.scanPayload && typeof e.scanPayload === 'object') {
+      const row = Object.assign({}, e);
+      row.scanPayload = compactScanPayloadForDigest(e.scanPayload);
+      out.push(row);
+      continue;
+    }
+    out.push(e);
+  }
+  return out;
+}
+
 /** Compact row for combined “all brands” watch email. */
 function buildWatchDigestEntry(brand, result) {
   const { brandStorageKey } = require('./go-live-audit-brand-reports.cjs');
@@ -769,6 +831,7 @@ function buildWatchDigestEntry(brand, result) {
     consoleCapture: sm.consoleCapture || null,
     error: r.error ? String(r.error).slice(0, 200) : null,
     reportKey: brandStorageKey(r.brandName || b.name, b.url || r.requestedUrl),
+    scanPayload: compactScanPayloadForDigest(r),
   };
 }
 
@@ -827,7 +890,10 @@ async function buildWatchPerBrandPdfAttachments(entries) {
     } catch {
       stored = null;
     }
-    const payload = scanPayloadForDigestPdf(e, stored);
+    const payload =
+      e.scanPayload && typeof e.scanPayload === 'object'
+        ? e.scanPayload
+        : scanPayloadForDigestPdf(e, stored);
     try {
       const pdf = await buildScanReportPdf(payload);
       if (pdf && pdf.buffer && pdf.filename) {
@@ -904,6 +970,11 @@ function buildWatchDigestPlainText(entries) {
     );
     if (e.securityHeadline) lines.push('  Security: ' + e.securityHeadline);
     if (e.securityAlert) lines.push('  ⚠ SECURITY ALERT — review this brand');
+    if (e.scanPayload && typeof e.scanPayload === 'object') {
+      lines.push('');
+      lines.push('──────── Full report (same as single scan): ' + (e.brandName || '—') + ' ────────');
+      lines.push(buildPlainText(e.scanPayload));
+    }
   }
   lines.push('');
   lines.push('— End of combined watch report. Each brand has its own PDF attached (same style as single-brand scan).');
@@ -952,9 +1023,7 @@ function buildWatchDigestHtml(entries) {
       (e.securityAlert ? '<br/><span style="color:#b91c1c">⚠ Alert</span>' : '') +
       '</td></tr>';
   }
-  return (
-    '<!DOCTYPE html><html><head><meta charset="utf-8"/></head>' +
-    '<body style="font-family:Segoe UI,Calibri,Arial,sans-serif;background:#f4f6f8;margin:0;padding:20px">' +
+  const summaryTable =
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:720px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px">' +
     '<tr><td style="padding:16px 20px;background:#1e3a5f;color:#fff;font-size:18px;font-weight:600">' +
     escapeHtmlForEmail(getEmailFromDisplayName()) +
@@ -971,7 +1040,24 @@ function buildWatchDigestHtml(entries) {
     '<tbody>' +
     rows +
     '</tbody></table></td></tr>' +
-    '<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#64748b">Automated watch · Check spam if missing</td></tr></table></body></html>'
+    '<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#64748b">Automated watch · Check spam if missing</td></tr></table>';
+
+  let detailBlocks = '';
+  for (const e of list) {
+    if (!e || !e.scanPayload || typeof e.scanPayload !== 'object') continue;
+    detailBlocks +=
+      '<div style="max-width:720px;margin:16px auto;padding:16px 20px;background:#fff;border:1px solid #e2e8f0;border-radius:8px">' +
+      '<h2 style="margin:0 0 12px;font-size:16px;color:#1e3a5f">' +
+      escapeHtmlForEmail(e.brandName || 'Brand') +
+      ' — detailed report</h2>' +
+      buildHtmlEmail(e.scanPayload, { pdfAttached: false }) +
+      '</div>';
+  }
+  return (
+    '<!DOCTYPE html><html><head><meta charset="utf-8"/></head><body style="font-family:Segoe UI,Calibri,Arial,sans-serif;background:#f4f6f8;margin:0;padding:20px">' +
+    summaryTable +
+    detailBlocks +
+    '</body></html>'
   );
 }
 
@@ -981,7 +1067,7 @@ function buildWatchDigestHtml(entries) {
  * @param {Array<Record<string, unknown>>} entries from buildWatchDigestEntry
  */
 async function maybeSendWatchDigestEmail(requestJson, entries) {
-  const list = Array.isArray(entries) ? entries.filter(Boolean) : [];
+  const list = normalizeDigestEntries(entries);
   if (!list.length) return { skipped: true, reason: 'No brands in digest' };
 
   const resolved = resolveRecipient(requestJson);

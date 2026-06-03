@@ -1602,7 +1602,7 @@
             <ul class="brand-watch-list" id="brandWatchList"></ul>
             <button type="button" class="secondary" id="btnWatchAll">Run watch now (all brands)</button>
             <p class="label-hint" style="margin-top:0.35rem">
-              Scans all brands (same depth as single-brand scan), then sends <strong>one combined email</strong> with a summary table plus <strong>one PDF per brand</strong> (not separate emails).
+              Scans all brands using the <strong>same scan as Run quick scan</strong>, then <strong>one combined email</strong> with full detail per brand + <strong>one PDF per brand</strong> (not separate emails).
             </p>
             <div id="watchSummaryPanel" class="watch-summary-panel" hidden role="status" aria-live="polite"></div>
           </div>
@@ -4707,6 +4707,166 @@
         }
       }
 
+      function snapshotFromScanResult(data) {
+        if (!data || typeof data !== 'object') return null;
+        const os = data.overallSummary || {};
+        const counts = os.counts || {};
+        const bm = data.brandMatrix || {};
+        const sec = data.security || {};
+        const av = data.availability || {};
+        return {
+          brandName: data.brandName || null,
+          url: data.requestedUrl || data.finalUrl || null,
+          consoleCapture: data.scanMeta && data.scanMeta.consoleCapture ? data.scanMeta.consoleCapture : null,
+          browserScanOk: !!(data.scanMeta && data.scanMeta.browserScanOk),
+          pass: counts.pass || 0,
+          fail: counts.fail || 0,
+          pending: counts.pending || 0,
+          headline: os.headline || (sec && sec.headline) || null,
+          overallLevel: os.level || null,
+          availabilityState: av.state || null,
+          httpStatus: data.statusCode != null ? data.statusCode : null,
+          performancePercent: bm.performancePercent != null ? bm.performancePercent : null,
+          performanceGrade: bm.performanceGrade || null,
+          passRatePercent: bm.passRatePercent != null ? bm.passRatePercent : null,
+          alert: !!(sec.shouldAlert || sec.alertLevel === 'critical'),
+          siteUp: av.state === 'up' || (data.statusCode >= 200 && data.statusCode < 400),
+        };
+      }
+
+      async function sendWatchDigestEmail(merged, watchBody, btn) {
+        const digestEntries = (merged.brands || [])
+          .map(function (b) {
+            if (b.scanPayload) return { scanPayload: b.scanPayload };
+            return b.digest;
+          })
+          .filter(Boolean);
+        if (!digestEntries.length || (merged.digestEmail && merged.digestEmail.sent)) return;
+        btn.textContent = 'Sending combined email…';
+        try {
+          const digestSig =
+            typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+              ? AbortSignal.timeout(120000)
+              : undefined;
+          const dr = await fetch(
+            watchDigestEndpoint(),
+            Object.assign(
+              {},
+              buildApiFetchInit(
+                'POST',
+                Object.assign({}, watchBody, { sendWatchDigest: true, entries: digestEntries })
+              ),
+              { signal: digestSig }
+            )
+          );
+          const digestData = await dr.json().catch(function () {
+            return {};
+          });
+          if (dr.ok && digestData.digestEmail) {
+            merged.digestEmail = digestData.digestEmail;
+            if (digestData.digestEmail.sent) {
+              merged.emailsSent = 1;
+              merged.emailsFailed = 0;
+            } else if (digestData.digestEmail.error) {
+              merged.emailsFailed = 1;
+            } else if (digestData.digestEmail.skipped) {
+              merged.emailsSkipped = 1;
+            }
+          } else if (!dr.ok) {
+            merged.emailsFailed = 1;
+            merged.digestEmail = {
+              error: formatApiError(digestData.error, 'Digest HTTP ' + dr.status),
+            };
+          }
+        } catch (digestErr) {
+          merged.emailsFailed = 1;
+          merged.digestEmail = { error: String((digestErr && digestErr.message) || digestErr) };
+        }
+      }
+
+      /** Live/Vercel: same POST /api/scan as “Run quick scan” so scores + PDF match single scan. */
+      async function runWatchAllViaQuickScan(btn, merged, watchBody) {
+        const brands = (await refreshWatchBrandsCache()).filter(function (b) {
+          return b && b.enabled !== false && b.url;
+        });
+        if (!brands.length) {
+          alert('No brands in watch list. Add brands first.');
+          return;
+        }
+        merged.totalBrands = brands.length;
+        for (let i = 0; i < brands.length; i++) {
+          const brand = brands[i];
+          btn.textContent = 'Watching ' + (i + 1) + '/' + brands.length + ' (quick scan)…';
+          const scanBody = {
+            url: brand.url,
+            brandName: brand.name,
+            captureConsole: true,
+            skipEmail: true,
+            sendEmail: false,
+            emailReport: false,
+            securityWatch: true,
+          };
+          const sig =
+            typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+              ? AbortSignal.timeout(120000)
+              : undefined;
+          let data = {};
+          try {
+            const res = await fetch(
+              scanEndpoint(),
+              Object.assign({}, buildApiFetchInit('POST', scanBody), { signal: sig, cache: 'no-store' })
+            );
+            const raw = await res.text().catch(function () {
+              return '';
+            });
+            try {
+              data = raw ? JSON.parse(raw) : {};
+            } catch (parseErr) {
+              alert(
+                'Watch scan failed for ' +
+                  brand.name +
+                  ': ' +
+                  classifyNonJsonResponse(raw, res.status, scanEndpoint())
+              );
+              return;
+            }
+            if (!res.ok || data.ok === false) {
+              alert(
+                'Watch scan failed for ' +
+                  brand.name +
+                  ': ' +
+                  formatApiError(data.error || data, 'HTTP ' + res.status)
+              );
+              return;
+            }
+          } catch (scanErr) {
+            alert('Watch scan failed for ' + brand.name + ': ' + String(scanErr.message || scanErr));
+            return;
+          }
+          const sec = data.security || {};
+          merged.brands.push({
+            name: brand.name,
+            url: brand.url,
+            ok: data.ok !== false,
+            securityAlert: !!(sec.shouldAlert || sec.alertLevel === 'critical'),
+            email: {
+              status: 'digest_pending',
+              reason: 'Combined email after all brands',
+            },
+            snapshot: snapshotFromScanResult(data),
+            scanPayload: data,
+          });
+          merged.scanned += 1;
+          if (merged.brands[merged.brands.length - 1].securityAlert) merged.alerts += 1;
+          renderWatchSummaryPanel(merged, {
+            inProgress: i + 1 < brands.length,
+            done: i + 1,
+            total: brands.length,
+          });
+        }
+        await sendWatchDigestEmail(merged, watchBody, btn);
+      }
+
       document.getElementById('btnWatchAll').addEventListener('click', async function () {
         const btn = document.getElementById('btnWatchAll');
         if (!(await ensureEmailReadyBeforeWatch())) return;
@@ -4732,14 +4892,20 @@
           alertEmail: DEFAULT_ALERT_EMAIL,
         };
         try {
+          if (isLiveAuditHost()) {
+            await runWatchAllViaQuickScan(btn, merged, watchBody);
+            saveWatchSummary(merged);
+            renderWatchSummaryPanel(merged, { inProgress: false });
+            maybeNotifyWatchDone(merged);
+            loadBrandWatchList();
+            return;
+          }
           while (true) {
             const done = total != null ? Math.min(offset, total) : offset;
             btn.textContent =
               total != null
                 ? 'Watching ' + done + '/' + total + '…'
-                : isVercelHost()
-                  ? 'Watching (1 brand per step on Vercel)…'
-                  : 'Watching all brands…';
+                : 'Watching all brands…';
             const sig =
               typeof AbortSignal !== 'undefined' && AbortSignal.timeout
                 ? AbortSignal.timeout(120000)
@@ -4780,53 +4946,7 @@
             if (!s.hasMore || s.nextOffset == null) break;
             offset = s.nextOffset;
           }
-          const digestEntries = (merged.brands || [])
-            .map(function (b) {
-              return b.digest;
-            })
-            .filter(Boolean);
-          if (digestEntries.length && !(merged.digestEmail && merged.digestEmail.sent)) {
-            btn.textContent = 'Sending combined email…';
-            try {
-              const digestSig =
-                typeof AbortSignal !== 'undefined' && AbortSignal.timeout
-                  ? AbortSignal.timeout(120000)
-                  : undefined;
-              const dr = await fetch(
-                watchDigestEndpoint(),
-                Object.assign(
-                  {},
-                  buildApiFetchInit(
-                    'POST',
-                    Object.assign({}, watchBody, { sendWatchDigest: true, entries: digestEntries })
-                  ),
-                  { signal: digestSig }
-                )
-              );
-              const digestData = await dr.json().catch(function () {
-                return {};
-              });
-              if (dr.ok && digestData.digestEmail) {
-                merged.digestEmail = digestData.digestEmail;
-                if (digestData.digestEmail.sent) {
-                  merged.emailsSent = 1;
-                  merged.emailsFailed = 0;
-                } else if (digestData.digestEmail.error) {
-                  merged.emailsFailed = 1;
-                } else if (digestData.digestEmail.skipped) {
-                  merged.emailsSkipped = 1;
-                }
-              } else if (!dr.ok) {
-                merged.emailsFailed = 1;
-                merged.digestEmail = {
-                  error: formatApiError(digestData.error, 'Digest HTTP ' + dr.status),
-                };
-              }
-            } catch (digestErr) {
-              merged.emailsFailed = 1;
-              merged.digestEmail = { error: String((digestErr && digestErr.message) || digestErr) };
-            }
-          }
+          await sendWatchDigestEmail(merged, watchBody, btn);
           saveWatchSummary(merged);
           renderWatchSummaryPanel(merged, { inProgress: false });
           maybeNotifyWatchDone(merged);
