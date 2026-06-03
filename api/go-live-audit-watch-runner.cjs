@@ -54,6 +54,7 @@ function mergeWatchSmtpFromRequest(json, requestJson) {
 }
 
 async function scanOneBrand(brand, requestJson) {
+  requestJson = requestJson || {};
   const json = {
     url: brand.url,
     brandName: brand.name,
@@ -62,10 +63,11 @@ async function scanOneBrand(brand, requestJson) {
     skipEmail: true,
     watchBatch: true,
     securityWatch: true,
-    // Avoid Vercel 60s timeouts when Chromium is unstable.
-    captureConsole: !isServerlessWatch(),
+    // Match single-brand scan (UI sends captureConsole: true) so scores align.
+    captureConsole: requestJson.captureConsole !== false,
     reportEmail: getAlertEmail(),
   };
+  if (requestJson.scanApiBase) json.scanApiBase = requestJson.scanApiBase;
   mergeWatchSmtpFromRequest(json, requestJson);
   const result = await runScanInternal(json);
   return { brand, result };

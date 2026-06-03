@@ -53,7 +53,8 @@ function computeChecklistPercent(counts) {
 const DETECTED_FAIL_IDS = new Set(['I01', 'C01', 'U03', 'P03', 'U02']);
 
 /**
- * Site score from detected signals — spreads brands by checklist + issues (not flat 97% for all).
+ * Site score — same rules as a single-brand scan (HTTP health + Pass/Fail rows only).
+ * Manual-review (pending) rows do not lower the score; that kept watch reports at ~51% while single scan showed ~85%+.
  */
 function computeGenuinePerformancePercent({
   reachable,
@@ -79,46 +80,45 @@ function computeGenuinePerformancePercent({
   const counts = (overallSummary && overallSummary.counts) || {};
   const pass = counts.pass || 0;
   const fail = counts.fail || 0;
-  const pending = counts.pending || 0;
-  const na = counts.notScored || 0;
-  const total = pass + fail + pending + na;
+  const scored = pass + fail;
+
+  const siteHealth = computeSiteHealthPercent({
+    reachable,
+    statusCode,
+    availability,
+    piSum: siteIssuesSummary,
+    consoleSum: consoleDisplaySummary,
+  });
+  const checklistPct = computeChecklistPercent(counts);
+
+  let score;
+  if (checklistPct != null) {
+    const failHeavy = scored > 0 && fail / scored > 0.35;
+    score = failHeavy
+      ? clampPct(siteHealth * 0.55 + checklistPct * 0.45)
+      : clampPct(siteHealth * 0.6 + checklistPct * 0.4);
+  } else {
+    score = siteHealth;
+  }
 
   const siteErr = Number((siteIssuesSummary && siteIssuesSummary.errors) || 0);
-  const siteWarn = Number((siteIssuesSummary && siteIssuesSummary.warns) || 0);
   const consoleErr = Number((consoleDisplaySummary && consoleDisplaySummary.errors) || 0);
-  const consoleWarn = Number((consoleDisplaySummary && consoleDisplaySummary.warns) || 0);
   const critical = Number((security && security.criticalCount) || 0);
-  const secWarn = Number((security && security.warnCount) || 0);
 
-  let hardFails = 0;
   let allFails = 0;
   for (const ac of autoChecks || []) {
-    if (!ac || ac.status !== 'fail') continue;
-    allFails += 1;
-    if (DETECTED_FAIL_IDS.has(ac.id)) hardFails += 1;
+    if (ac && ac.status === 'fail') allFails += 1;
   }
 
-  let score = 90;
-  if (total > 0) {
-    const passShare = pass / total;
-    const failShare = fail / total;
-    const pendingShare = pending / total;
-    score = Math.round(58 + passShare * 32 - failShare * 28 - pendingShare * 14);
-  }
-
-  score -= Math.min(12, siteErr * 6);
-  score -= Math.min(6, siteWarn * 2);
-  score -= Math.min(10, consoleErr * 4);
-  score -= Math.min(6, consoleWarn * 1.5);
-  score -= Math.min(22, critical * 11);
-  score -= Math.min(10, secWarn * 1.2);
-  score -= Math.min(14, allFails * 3);
-  score -= Math.min(8, hardFails * 4);
+  score -= Math.min(12, allFails * 3);
+  score -= Math.min(18, critical * 9);
+  score -= Math.min(8, siteErr * 4);
+  score -= Math.min(6, consoleErr * 3);
 
   const lvl = overallSummary && overallSummary.level ? String(overallSummary.level) : '';
-  if (lvl === 'bad') score -= 22;
-  else if (lvl === 'concern') score -= 11;
-  else if (lvl === 'caution') score -= 6;
+  if (lvl === 'bad') score -= 15;
+  else if (lvl === 'concern') score -= 7;
+  else if (lvl === 'caution') score -= 3;
 
   return clampPct(score);
 }

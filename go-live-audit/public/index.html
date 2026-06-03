@@ -1881,7 +1881,10 @@
           sendEmail: true,
           emailReport: true,
           sendWatchDigest: true,
+          captureConsole: true,
         };
+        const tunnelBaseWatch = effectiveApiBase();
+        if (tunnelBaseWatch) watchBody.scanApiBase = tunnelBaseWatch;
         const appPassWatch = gmailAppPasswordEl ? gmailAppPasswordEl.value.trim().replace(/\s+/g, '') : '';
         const senderWatch = gmailSenderEl ? gmailSenderEl.value.trim() : '';
         if (appPassWatch.length >= 16 && !appPassWatch.includes('@')) {

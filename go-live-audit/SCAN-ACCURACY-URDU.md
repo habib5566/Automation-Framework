@@ -12,11 +12,9 @@ Sab brands **down** ya **bahut low score** dikhte thay jab sites browser mein th
 
 ## Performance % / Site score (latest)
 
-**Site score** ab sirf **detected** cheezen se banta hai:
-- HTTP 200 + site up → usually **85–95%**
-- Sirf **critical** security + **material** console/HTTP errors score kam karte hain
-- Manual checklist rows (**pending**) score **nahi** girate
-- **Checklist pass %** alag line hai — poora form, site score nahi
+**Site score** = **single scan jaisa** (watch aur quick scan same formula):
+- **HTTP health** + checklist **Pass/Fail** (pending/manual rows score **nahi** girate)
+- Watch ab bhi **captureConsole: true** use karta hai jaisa single scan
 
 ## Ab kya better hai
 - Vercel par **browser jaisa User-Agent** + **zyada timeout** (28s).
