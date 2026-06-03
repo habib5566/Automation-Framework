@@ -1602,7 +1602,7 @@
             <ul class="brand-watch-list" id="brandWatchList"></ul>
             <button type="button" class="secondary" id="btnWatchAll">Run watch now (all brands)</button>
             <p class="label-hint" style="margin-top:0.35rem">
-              Scans all brands, then sends <strong>one combined email</strong> with every brand’s results (not separate emails per brand).
+              Scans all brands (same depth as single-brand scan), then sends <strong>one combined email</strong> with a summary table plus <strong>one PDF per brand</strong> (not separate emails).
             </p>
             <div id="watchSummaryPanel" class="watch-summary-panel" hidden role="status" aria-live="polite"></div>
           </div>
@@ -1911,13 +1911,20 @@
           return true;
         }
         try {
-          const r = await fetch(emailStatusEndpoint(), buildApiFetchInit('GET'));
+          const sig =
+            typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+              ? AbortSignal.timeout(isVercelHost() ? 25000 : 12000)
+              : undefined;
+          const r = await fetch(
+            emailStatusEndpoint(),
+            Object.assign({}, buildApiFetchInit('GET'), { signal: sig })
+          );
           const data = await r.json().catch(function () {
             return {};
           });
           if (data.email && data.email.ready) return true;
         } catch (e) {
-          /* fall through */
+          /* fall through — form password above is enough */
         }
         alert(
           'Email bhejne ke liye:\n\n' +
@@ -2798,7 +2805,7 @@
         try {
           const sig =
             typeof AbortSignal !== 'undefined' && AbortSignal.timeout
-              ? AbortSignal.timeout(8000)
+              ? AbortSignal.timeout(isVercelHost() ? 25000 : 12000)
               : undefined;
           const r = await fetch(
             emailStatusEndpoint(),
@@ -4506,7 +4513,11 @@
             escapeHtml(String(n)) +
             ' brand(s) in a single report to <code>' +
             escapeHtml(to) +
-            '</code> (with PDF attachment). Check inbox + spam.</div>';
+            '</code>' +
+            (s.digestEmail && s.digestEmail.pdfCount
+              ? ' with <strong>' + escapeHtml(String(s.digestEmail.pdfCount)) + ' PDF(s)</strong> (one per brand).'
+              : ' (with PDF attachment(s)).') +
+            ' Check inbox + spam.</div>';
         }
         let table = '';
         if (Array.isArray(s.brands) && s.brands.length) {
@@ -4701,7 +4712,7 @@
             try {
               const digestSig =
                 typeof AbortSignal !== 'undefined' && AbortSignal.timeout
-                  ? AbortSignal.timeout(45000)
+                  ? AbortSignal.timeout(120000)
                   : undefined;
               const dr = await fetch(
                 watchDigestEndpoint(),

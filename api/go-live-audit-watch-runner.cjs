@@ -60,7 +60,7 @@ async function scanOneBrandThroughScanApi(brand, requestJson) {
     brandName: brand.name,
     captureConsole: requestJson.captureConsole !== false,
     skipEmail: true,
-    watchBatch: true,
+    watchBatch: false,
     securityWatch: true,
   };
   const headers = {
@@ -135,7 +135,7 @@ function buildScanJsonForBrand(brand, requestJson) {
     sendEmail: false,
     emailReport: false,
     skipEmail: true,
-    watchBatch: true,
+    watchBatch: false,
     securityWatch: true,
     captureConsole: requestJson.captureConsole !== false,
     reportEmail: getAlertEmail(),

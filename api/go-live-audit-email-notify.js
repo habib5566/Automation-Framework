@@ -734,6 +734,7 @@ async function maybeSendScanEmail(requestJson, scanResponse) {
 
 /** Compact row for combined “all brands” watch email. */
 function buildWatchDigestEntry(brand, result) {
+  const { brandStorageKey } = require('./go-live-audit-brand-reports.cjs');
   const r = result || {};
   const b = brand || {};
   const os = r.overallSummary || {};
@@ -767,7 +768,85 @@ function buildWatchDigestEntry(brand, result) {
     criticalCount: sec.criticalCount || 0,
     consoleCapture: sm.consoleCapture || null,
     error: r.error ? String(r.error).slice(0, 200) : null,
+    reportKey: brandStorageKey(r.brandName || b.name, b.url || r.requestedUrl),
   };
+}
+
+/** Build scan JSON for per-brand PDF (full stored report preferred). */
+function scanPayloadForDigestPdf(entry, storedReport) {
+  if (storedReport && storedReport.payload && typeof storedReport.payload === 'object') {
+    return storedReport.payload;
+  }
+  const e = entry || {};
+  return {
+    ok: e.ok !== false,
+    brandName: e.brandName,
+    requestedUrl: e.requestedUrl || e.url,
+    finalUrl: e.finalUrl || null,
+    statusCode: e.statusCode != null ? e.statusCode : null,
+    overallSummary: {
+      headline: e.overallHeadline || '—',
+      level: e.overallLevel || null,
+      counts: { pass: e.pass || 0, fail: e.fail || 0, pending: e.pending || 0 },
+    },
+    brandMatrix: {
+      performancePercent: e.performancePercent,
+      performanceGrade: e.performanceGrade,
+      siteHealthPercent: e.siteHealthPercent,
+      checklistPercent: e.checklistPercent,
+      passRatePercent: e.passRatePercent,
+    },
+    availability: {
+      headline: e.availabilityHeadline,
+      state: e.availabilityState,
+    },
+    security: {
+      headline: e.securityHeadline,
+      warnCount: e.securityWarns || 0,
+      criticalCount: e.criticalCount || 0,
+    },
+    scanMeta: { consoleCapture: e.consoleCapture || null },
+  };
+}
+
+/**
+ * One professional PDF per brand (same as single-scan email attachment).
+ * @returns {Promise<Array<{ filename: string, content: Buffer, contentType: string }>>}
+ */
+async function buildWatchPerBrandPdfAttachments(entries) {
+  const list = Array.isArray(entries) ? entries.filter(Boolean) : [];
+  if (!list.length) return [];
+  const { buildScanReportPdf } = require('./go-live-audit-email-pdf.cjs');
+  const { loadBrandReport } = require('./go-live-audit-brand-reports.cjs');
+  const out = [];
+  for (const e of list) {
+    if (!e || e.ok === false) continue;
+    let stored = null;
+    try {
+      stored = await loadBrandReport(e.reportKey || e.brandName);
+    } catch {
+      stored = null;
+    }
+    const payload = scanPayloadForDigestPdf(e, stored);
+    try {
+      const pdf = await buildScanReportPdf(payload);
+      if (pdf && pdf.buffer && pdf.filename) {
+        out.push({
+          filename: pdf.filename,
+          content: pdf.buffer,
+          contentType: 'application/pdf',
+        });
+      }
+    } catch (pdfErr) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[go-live-audit] digest PDF skipped for',
+        e.brandName || '—',
+        String((pdfErr && pdfErr.message) || pdfErr).slice(0, 80)
+      );
+    }
+  }
+  return out;
 }
 
 function buildWatchDigestSubject(entries) {
@@ -827,7 +906,7 @@ function buildWatchDigestPlainText(entries) {
     if (e.securityAlert) lines.push('  ⚠ SECURITY ALERT — review this brand');
   }
   lines.push('');
-  lines.push('— End of combined watch report. Individual brand PDFs are not attached; run a single-brand scan for a PDF.');
+  lines.push('— End of combined watch report. Each brand has its own PDF attached (same style as single-brand scan).');
   return lines.join('\n');
 }
 
@@ -934,15 +1013,15 @@ async function maybeSendWatchDigestEmail(requestJson, entries) {
     'go-live-audit@localhost';
   const fromField = buildFromField(fromEmail, getEmailFromDisplayName());
 
-  let pdfAttachment = null;
+  let pdfAttachments = [];
   try {
-    const { buildWatchDigestPdf } = require('./go-live-audit-email-pdf.cjs');
-    pdfAttachment = await buildWatchDigestPdf(list);
+    pdfAttachments = await buildWatchPerBrandPdfAttachments(list);
   } catch (pdfErr) {
     // eslint-disable-next-line no-console
-    console.warn('[go-live-audit] watch digest PDF skipped:', String((pdfErr && pdfErr.message) || pdfErr).slice(0, 100));
+    console.warn('[go-live-audit] watch digest PDFs skipped:', String((pdfErr && pdfErr.message) || pdfErr).slice(0, 100));
   }
 
+  const pdfCount = pdfAttachments.length;
   const mail = {
     from: fromField,
     sender: fromField,
@@ -950,23 +1029,21 @@ async function maybeSendWatchDigestEmail(requestJson, entries) {
     subject: buildWatchDigestSubject(list),
     text:
       buildWatchDigestPlainText(list) +
-      (pdfAttachment ? '\n\n— PDF summary of all brands is attached.\n' : ''),
+      (pdfCount
+        ? '\n\n— ' + pdfCount + ' PDF report(s) attached (one per brand, same as single scan).\n'
+        : ''),
     html:
       buildWatchDigestHtml(list) +
-      (pdfAttachment
-        ? '<p style="margin:12px 0 0;font-size:13px;color:#166534"><strong>PDF attached</strong> — all brands in one file.</p>'
+      (pdfCount
+        ? '<p style="margin:12px 0 0;font-size:13px;color:#166534"><strong>' +
+          pdfCount +
+          ' PDF(s) attached</strong> — one full scan report per brand.</p>'
         : ''),
     replyTo: fromField,
     headers: { 'X-Mailer': 'Go-Live-Check-List-Watch-Digest', 'Auto-Submitted': 'auto-generated' },
   };
-  if (pdfAttachment && pdfAttachment.buffer) {
-    mail.attachments = [
-      {
-        filename: pdfAttachment.filename,
-        content: pdfAttachment.buffer,
-        contentType: 'application/pdf',
-      },
-    ];
+  if (pdfAttachments.length) {
+    mail.attachments = pdfAttachments;
   }
 
   try {
@@ -975,27 +1052,28 @@ async function maybeSendWatchDigestEmail(requestJson, entries) {
     console.log(
       '[go-live-audit] watch digest email sent to',
       resolved.to,
-      '(' + list.length + ' brands)'
+      '(' + list.length + ' brands,',
+      pdfCount,
+      'PDF(s))'
     );
     return {
       sent: true,
       digest: true,
       brandCount: list.length,
+      pdfCount,
+      pdfFilenames: pdfAttachments.map((a) => a.filename),
       recipientMode: resolved.mode,
       sentTo: resolved.to,
       deliveryHint:
         'Combined watch report for ' +
         list.length +
-        ' brand(s). Check inbox and spam for ' +
+        ' brand(s) with ' +
+        pdfCount +
+        ' PDF attachment(s). Check inbox and spam for ' +
         resolved.to +
         '.' +
-        (sendMeta.usedPort587 ? ' (port 587)' : '') +
-        (pdfAttachment && pdfAttachment.filename ? ' PDF: ' + pdfAttachment.filename : ''),
+        (sendMeta.usedPort587 ? ' (port 587)' : ''),
     };
-    if (pdfAttachment && pdfAttachment.filename) {
-      out.pdfAttached = true;
-      out.pdfFilename = pdfAttachment.filename;
-    }
   } catch (e) {
     const msg = String((e && e.message) || e);
     // eslint-disable-next-line no-console

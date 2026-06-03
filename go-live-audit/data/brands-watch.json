@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-06-03T10:27:41.614Z",
+  "updatedAt": "2026-06-03T11:34:38.185Z",
   "brands": [
     {
       "name": "Example Brand",
@@ -110,7 +110,7 @@
       "url": "https://vettedlogos.com/",
       "enabled": true,
       "addedAt": "2026-05-20T10:47:30.962Z",
-      "lastScanAt": "2026-06-02T11:47:23.404Z",
+      "lastScanAt": "2026-06-03T11:30:04.373Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://vettedlogos.com/",
       "baselineFingerprint": {
@@ -332,11 +332,11 @@
       "baselineAt": "2026-06-01T12:39:22.732Z"
     },
     {
-      "name": "Vetted logos",
+      "name": "Vetted Logos",
       "url": "https://vettedlogos.com/",
       "enabled": true,
       "addedAt": "2026-06-02T11:47:23.447Z",
-      "lastScanAt": "2026-06-02T11:53:00.991Z",
+      "lastScanAt": "2026-06-03T11:34:38.169Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://vettedlogos.com/"
     },
@@ -348,6 +348,12 @@
       "lastScanAt": "2026-06-03T10:27:41.580Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://www.designcentura.com/"
+    },
+    {
+      "name": "Vettexd logos",
+      "url": "https://vettedlogos.com/",
+      "enabled": true,
+      "addedAt": "2026-06-03T11:30:04.784Z"
     }
   ]
 }
