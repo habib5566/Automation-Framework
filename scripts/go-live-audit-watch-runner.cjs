@@ -28,13 +28,17 @@ function watchBatchLimit(requestJson) {
   return isServerlessWatch() ? 1 : 9999;
 }
 
-/** Same host as Quick scan (POST /api/scan) — each brand gets its own serverless scan on Vercel. */
-function getSelfScanApiBase() {
+/** Public site URL for optional external /api/scan (must be UI origin — not VERCEL_URL alone). */
+function getSelfScanApiBase(requestJson) {
+  const uiOrigin = String(
+    (requestJson && (requestJson.publicOrigin || requestJson.scanPublicOrigin)) || ''
+  )
+    .trim()
+    .replace(/\/$/, '');
+  if (uiOrigin && /^https?:\/\//i.test(uiOrigin)) return uiOrigin;
   const pub = String(process.env.GO_LIVE_AUDIT_PUBLIC_URL || '').trim().replace(/\/$/, '');
   if (pub) return pub;
-  const vercel = String(process.env.VERCEL_URL || '').trim();
-  if (vercel) return 'https://' + vercel.replace(/^https?:\/\//, '');
-  return 'http://127.0.0.1:3000';
+  return '';
 }
 
 /**
@@ -42,7 +46,15 @@ function getSelfScanApiBase() {
  */
 async function scanOneBrandThroughScanApi(brand, requestJson) {
   const remoteBase = String((requestJson && requestJson.scanApiBase) || '').trim().replace(/\/$/, '');
-  const base = remoteBase || getSelfScanApiBase();
+  const base = remoteBase || getSelfScanApiBase(requestJson);
+  if (!base) {
+    throw new Error('No public scan URL — use in-process watch scan');
+  }
+  const bypass = String(
+    process.env.VERCEL_AUTOMATION_BYPASS_SECRET ||
+      process.env.GO_LIVE_AUDIT_VERCEL_BYPASS ||
+      ''
+  ).trim();
   const body = {
     url: brand.url,
     brandName: brand.name,
@@ -58,6 +70,7 @@ async function scanOneBrandThroughScanApi(brand, requestJson) {
     'Bypass-Tunnel-Reminder': 'true',
     'ngrok-skip-browser-warning': 'true',
   };
+  if (bypass) headers['x-vercel-protection-bypass'] = bypass;
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 58_000);
   let r;
@@ -115,11 +128,7 @@ function mergeWatchSmtpFromRequest(json, requestJson) {
   }
 }
 
-async function scanOneBrand(brand, requestJson) {
-  requestJson = requestJson || {};
-  if (isServerlessWatch()) {
-    return scanOneBrandThroughScanApi(brand, requestJson);
-  }
+function buildScanJsonForBrand(brand, requestJson) {
   const json = {
     url: brand.url,
     brandName: brand.name,
@@ -133,8 +142,50 @@ async function scanOneBrand(brand, requestJson) {
   };
   if (requestJson.scanApiBase) json.scanApiBase = requestJson.scanApiBase;
   mergeWatchSmtpFromRequest(json, requestJson);
-  const result = await runScanInternal(json);
-  return { brand, result };
+  return json;
+}
+
+async function scanOneBrand(brand, requestJson) {
+  requestJson = requestJson || {};
+  const json = buildScanJsonForBrand(brand, requestJson);
+
+  // In-process scan (reliable on Vercel watch/run). External /api/scan only when UI sends publicOrigin.
+  const canTryExternal =
+    !!(requestJson.scanApiBase || getSelfScanApiBase(requestJson)) && requestJson.useExternalScanApi === true;
+  if (canTryExternal) {
+    try {
+      return await scanOneBrandThroughScanApi(brand, requestJson);
+    } catch (extErr) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[go-live-watch]',
+        brand.name,
+        'external scan failed — in-process fallback:',
+        String((extErr && extErr.message) || extErr).slice(0, 100)
+      );
+    }
+  }
+
+  try {
+    const result = await runScanInternal(json);
+    return { brand, result };
+  } catch (e) {
+    const msg = String((e && e.message) || e);
+    return {
+      brand,
+      result: {
+        ok: false,
+        brandName: brand.name,
+        requestedUrl: brand.url,
+        error: msg,
+        availability: {
+          state: 'unreachable',
+          headline: 'Watch scan failed on server',
+          detail: msg.slice(0, 240),
+        },
+      },
+    };
+  }
 }
 
 function summarizeEmailReport(email) {
@@ -256,14 +307,26 @@ async function runWatchPass(requestJson) {
         ok: result.ok !== false,
       });
     } catch (e) {
-      emailsFailed += 1;
-      console.error('  ✗', brand.name, String(e.message || e));
+      const errMsg = String((e && e.message) || e);
+      console.error('  ✗', brand.name, errMsg);
+      const failResult = {
+        ok: false,
+        brandName: brand.name,
+        requestedUrl: brand.url,
+        error: errMsg,
+        availability: {
+          state: 'unreachable',
+          headline: 'Watch scan error',
+          detail: errMsg.slice(0, 240),
+        },
+      };
       brandRows.push({
         name: brand.name,
         url: brand.url,
         securityAlert: false,
-        email: { status: 'failed', error: String(e.message || e).slice(0, 240) },
-        snapshot: null,
+        email: { status: 'failed', error: errMsg.slice(0, 240) },
+        digest: buildWatchDigestEntry(brand, failResult),
+        snapshot: extractBrandScanSummary(failResult),
         ok: false,
       });
     }

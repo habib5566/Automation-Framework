@@ -1882,6 +1882,7 @@
           emailReport: true,
           sendWatchDigest: true,
           captureConsole: true,
+          publicOrigin: typeof location !== 'undefined' && location.origin ? location.origin : '',
         };
         const tunnelBaseWatch = effectiveApiBase();
         if (tunnelBaseWatch) watchBody.scanApiBase = tunnelBaseWatch;
@@ -4522,7 +4523,9 @@
                   : '—';
             const siteCell =
               b.ok === false
-                ? '✗ unreachable'
+                ? snap.httpStatus
+                  ? '✗ HTTP ' + snap.httpStatus
+                  : '✗ scan error'
                 : snap.siteUp === false
                   ? '⚠ check URL'
                   : snap.httpStatus

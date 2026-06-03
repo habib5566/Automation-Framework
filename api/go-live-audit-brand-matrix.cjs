@@ -246,7 +246,7 @@ function buildBrandMatrix({
 }
 
 /** Compact row for multi-brand watch summary (UI + API). */
-function   extractBrandScanSummary(result) {
+function extractBrandScanSummary(result) {
   if (!result || typeof result !== 'object') return null;
   const os = result.overallSummary || {};
   const counts = os.counts || {};
@@ -270,7 +270,6 @@ function   extractBrandScanSummary(result) {
     performancePercent: bm.performancePercent != null ? bm.performancePercent : null,
     performanceGrade: bm.performanceGrade || null,
     passRatePercent: bm.passRatePercent != null ? bm.passRatePercent : null,
-    consoleCapture: sm.consoleCapture || null,
     alert: !!(sec.shouldAlert || sec.alertLevel === 'critical'),
     siteUp: av.state === 'up' || (result.statusCode >= 200 && result.statusCode < 400),
   };
