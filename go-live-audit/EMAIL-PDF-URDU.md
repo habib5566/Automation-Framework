@@ -20,6 +20,10 @@ Sender name: **Go Live Check List** (agar Gmail profile name bhi wahi ho).
 
 File name example: `Go-Live-Report-BrandName-2026-06-02.pdf`
 
+## Watch — ek hi email (sab brands)
+
+**Run watch now (all brands)** ab har brand par alag email nahi bhejta. Sab scan ke baad **ek combined email** aati hai jisme table + har brand ka score/summary hota hai.
+
 ## PDF band karna
 
 Vercel → Environment Variables:

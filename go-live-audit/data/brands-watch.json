@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-06-02T11:58:10.808Z",
+  "updatedAt": "2026-06-03T07:45:24.094Z",
   "brands": [
     {
       "name": "Example Brand",
@@ -341,10 +341,13 @@
       "lastUrl": "https://vettedlogos.com/"
     },
     {
-      "name": "DC",
+      "name": "dc",
       "url": "https://www.designcentura.com/",
       "enabled": true,
-      "addedAt": "2026-06-02T11:58:10.808Z"
+      "addedAt": "2026-06-02T11:58:10.808Z",
+      "lastScanAt": "2026-06-03T07:45:23.469Z",
+      "lastAlertLevel": "warn",
+      "lastUrl": "https://www.designcentura.com/"
     }
   ]
 }

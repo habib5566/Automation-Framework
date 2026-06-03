@@ -8,6 +8,7 @@ const {
   isReadOnlyDatastore,
 } = require('./go-live-audit-brand-watch.cjs');
 const { runWatchPass } = require('./go-live-audit-watch-runner.cjs');
+const { maybeSendWatchDigestEmail } = require('./go-live-audit-email-notify.js');
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -86,4 +87,25 @@ async function handleWatchRun(req, res, sendJson) {
     .catch((e) => sendJson(res, 500, { ok: false, error: String(e.message || e) }));
 }
 
-module.exports = { handleBrandsGet, handleBrandsPost, handleWatchRun };
+async function handleWatchDigest(req, res, sendJson) {
+  let requestJson = {};
+  try {
+    const raw = await readBody(req);
+    if (raw) requestJson = JSON.parse(raw);
+  } catch {
+    requestJson = {};
+  }
+  const entries = requestJson.entries || requestJson.digestEntries;
+  if (!Array.isArray(entries) || !entries.length) {
+    sendJson(res, 400, { ok: false, error: 'Send { entries: [...] } from completed watch run' });
+    return;
+  }
+  try {
+    const digestEmail = await maybeSendWatchDigestEmail(requestJson, entries);
+    sendJson(res, 200, { ok: true, digestEmail, brandCount: entries.length });
+  } catch (e) {
+    sendJson(res, 500, { ok: false, error: String(e.message || e) });
+  }
+}
+
+module.exports = { handleBrandsGet, handleBrandsPost, handleWatchRun, handleWatchDigest };

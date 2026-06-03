@@ -14,6 +14,7 @@ const { listEnabledBrands } = require('./go-live-audit-brand-watch.cjs');
 const { runScanInternal } = require('./go-live-audit-core');
 const { getAlertEmail } = require('./go-live-audit-defaults.cjs');
 const { extractBrandScanSummary } = require('./go-live-audit-brand-matrix.cjs');
+const { buildWatchDigestEntry, maybeSendWatchDigestEmail } = require('./go-live-audit-email-notify.js');
 
 function isServerlessWatch() {
   return !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
@@ -56,8 +57,10 @@ async function scanOneBrand(brand, requestJson) {
   const json = {
     url: brand.url,
     brandName: brand.name,
-    sendEmail: true,
-    emailReport: true,
+    sendEmail: false,
+    emailReport: false,
+    skipEmail: true,
+    watchBatch: true,
     securityWatch: true,
     // Avoid Vercel 60s timeouts when Chromium is unstable.
     captureConsole: !isServerlessWatch(),
@@ -91,7 +94,7 @@ async function runWatchPass(requestJson) {
   const brands = allBrands.slice(offset, offset + limit);
   const totalBrands = allBrands.length;
   const hasMore = offset + brands.length < totalBrands;
-  const nextOffset = hasMore ? offset + brands.length : null;
+  const nextOffset = hasMore ? offset + brands.length : null; 
 
   if (!totalBrands) {
     console.log(
@@ -146,6 +149,7 @@ async function runWatchPass(requestJson) {
   let emailsFailed = 0;
   let emailsSkipped = 0;
   const brandRows = [];
+  const digestEntries = [];
 
   for (const brand of brands) {
     try {
@@ -164,29 +168,24 @@ async function runWatchPass(requestJson) {
         }
       }
       const sec = result.security || {};
-      const email = result.emailReport || {};
-      const emailSummary = summarizeEmailReport(email);
+      const digest = buildWatchDigestEntry(brand, result);
+      digestEntries.push(digest);
+      const emailSummary = {
+        status: 'digest_pending',
+        reason: 'Per-brand email off — combined report after all brands finish',
+      };
       if (sec.shouldAlert || sec.alertLevel === 'critical') {
         alerts += 1;
         console.log('  ⚠ ALERT', sec.headline || sec.alertLevel);
       } else {
         console.log('  ✓', sec.headline || 'OK');
       }
-      if (emailSummary.status === 'sent') {
-        emailsSent += 1;
-        console.log('  Email sent →', emailSummary.to);
-      } else if (emailSummary.status === 'skipped') {
-        emailsSkipped += 1;
-        console.log('  Email NOT sent (skipped):', emailSummary.reason || '');
-      } else if (emailSummary.status === 'failed') {
-        emailsFailed += 1;
-        console.log('  Email NOT sent (error):', emailSummary.error || '');
-      }
       brandRows.push({
         name: brand.name,
         url: brand.url,
         securityAlert: !!(sec.shouldAlert || sec.alertLevel === 'critical'),
         email: emailSummary,
+        digest,
         snapshot: extractBrandScanSummary(result),
         ok: result.ok !== false,
       });
@@ -203,16 +202,38 @@ async function runWatchPass(requestJson) {
       });
     }
   }
+  let digestEmail = null;
+  const wantDigest =
+    requestJson.sendWatchDigest !== false &&
+    requestJson.sendEmail !== false &&
+    requestJson.emailReport !== false;
+  const allBrandsThisRun = offset === 0 && !hasMore && digestEntries.length >= totalBrands;
+
+  if (wantDigest && digestEntries.length > 0 && allBrandsThisRun) {
+    try {
+      digestEmail = await maybeSendWatchDigestEmail(requestJson, digestEntries);
+      if (digestEmail && digestEmail.sent) {
+        emailsSent = 1;
+        console.log('[go-live-watch] Combined digest email sent →', digestEmail.sentTo || alertEmail);
+      } else if (digestEmail && digestEmail.skipped) {
+        emailsSkipped = 1;
+        console.log('[go-live-watch] Digest email skipped:', digestEmail.reason || '');
+      } else if (digestEmail && digestEmail.error) {
+        emailsFailed = 1;
+        console.log('[go-live-watch] Digest email failed:', digestEmail.error || '');
+      }
+    } catch (digestErr) {
+      emailsFailed = 1;
+      digestEmail = { error: String((digestErr && digestErr.message) || digestErr).slice(0, 240) };
+      console.warn('[go-live-watch] Digest email error:', digestEmail.error);
+    }
+  }
+
   console.log(
     '[go-live-watch] Batch done.',
     alerts,
-    'alert(s); email sent:',
-    emailsSent,
-    'skipped:',
-    emailsSkipped,
-    'failed:',
-    emailsFailed,
-    hasMore ? '(more brands remain)' : '(all done)',
+    'alert(s); digest email:',
+    digestEmail && digestEmail.sent ? 'sent' : hasMore ? 'pending (more brands)' : 'client will send',
     '→',
     alertEmail
   );
@@ -224,6 +245,9 @@ async function runWatchPass(requestJson) {
     emailsSkipped,
     emailsFailed,
     brands: brandRows,
+    digestEntries,
+    digestEmail,
+    digestPending: wantDigest && digestEntries.length > 0 && !digestEmail,
     totalBrands,
     offset,
     limit,

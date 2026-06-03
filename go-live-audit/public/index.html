@@ -1601,6 +1601,9 @@
             <strong>Automatic watch</strong> — all saved brands scanned on schedule (<code>npm run go-live:watch:daemon</code>).
             <ul class="brand-watch-list" id="brandWatchList"></ul>
             <button type="button" class="secondary" id="btnWatchAll">Run watch now (all brands)</button>
+            <p class="label-hint" style="margin-top:0.35rem">
+              Scans all brands, then sends <strong>one combined email</strong> with every brand’s results (not separate emails per brand).
+            </p>
             <div id="watchSummaryPanel" class="watch-summary-panel" hidden role="status" aria-live="polite"></div>
           </div>
           <div class="email-options" aria-label="Email report options">
@@ -1866,6 +1869,7 @@
         if (Array.isArray(batch.brands)) {
           target.brands = (target.brands || []).concat(batch.brands);
         }
+        if (batch.digestEmail) target.digestEmail = batch.digestEmail;
         return target;
       }
 
@@ -1876,6 +1880,7 @@
           reportEmail: DEFAULT_ALERT_EMAIL,
           sendEmail: true,
           emailReport: true,
+          sendWatchDigest: true,
         };
         const appPassWatch = gmailAppPasswordEl ? gmailAppPasswordEl.value.trim().replace(/\s+/g, '') : '';
         const senderWatch = gmailSenderEl ? gmailSenderEl.value.trim() : '';
@@ -2834,6 +2839,12 @@
         const base = effectiveApiBase();
         if (base) return base + '/api/watch/run';
         return '/api/watch/run';
+      }
+
+      function watchDigestEndpoint() {
+        const base = effectiveApiBase();
+        if (base) return base + '/api/watch/digest-email';
+        return '/api/watch/digest-email';
       }
 
       const BRANDS_LS = 'goLiveAuditBrandsWatch';
@@ -4413,6 +4424,7 @@
       function watchEmailStatusLabel(em) {
         if (!em) return '—';
         if (em.status === 'sent') return '✓ Sent';
+        if (em.status === 'digest_pending') return '→ Combined';
         if (em.status === 'skipped') return 'Skipped';
         if (em.status === 'failed') return 'Failed';
         return em.status || '—';
@@ -4446,39 +4458,39 @@
           stats +=
             ' · <strong>' +
             (s.alerts || 0) +
-            '</strong> security alert(s) · Email sent: <strong>' +
-            (s.emailsSent || 0) +
-            '</strong> · skipped: ' +
-            (s.emailsSkipped || 0) +
-            ' · failed: ' +
-            (s.emailsFailed || 0) +
-            ' → <code>' +
+            '</strong> security alert(s) · Combined email: <strong>' +
+            (s.emailsSent > 0 || (s.digestEmail && s.digestEmail.sent) ? '1 sent' : s.emailsFailed > 0 ? 'failed' : 'not sent') +
+            '</strong> → <code>' +
             escapeHtml(to) +
             '</code></p>';
         } else {
           stats += ' — <em>keep this tab open until finished</em></p>';
         }
         let emailBanner = '';
-        if (!opts.inProgress && !(s.emailsSent > 0)) {
+        const digestOk = s.digestEmail && s.digestEmail.sent;
+        if (!opts.inProgress && !(s.emailsSent > 0 || digestOk)) {
           emailBanner =
             '<div class="scan-msg scan-msg-warn" style="margin:0.5rem 0">' +
-            '<strong>No email in inbox.</strong> ' +
-            (isVercelHost()
-              ? 'Paste <strong>Sender Gmail</strong> + 16-char <strong>App Password</strong> below, then Watch again — OR Vercel env <code>GO_LIVE_AUDIT_SMTP_USER</code> + <code>GO_LIVE_AUDIT_SMTP_PASS</code> → Redeploy.'
-              : 'Run <code>npm run go-live:email-setup</code>, restart server, OR paste App Password below — then Watch again.') +
+            '<strong>Combined watch email not sent.</strong> ' +
+            (s.digestEmail && s.digestEmail.error
+              ? escapeHtml(String(s.digestEmail.error).slice(0, 200))
+              : isVercelHost()
+                ? 'Paste <strong>Sender Gmail</strong> + App Password below, or set Vercel SMTP env → Redeploy.'
+                : 'Run <code>npm run go-live:email-setup</code> or paste App Password below, then Watch again.') +
             '</div>';
-        } else if (!opts.inProgress && s.emailsSent > 0) {
+        } else if (!opts.inProgress && (s.emailsSent > 0 || digestOk)) {
+          const n = (s.digestEmail && s.digestEmail.brandCount) || (s.brands && s.brands.length) || s.scanned || 0;
           emailBanner =
-            '<div class="scan-msg scan-msg-ok" style="margin:0.5rem 0"><strong>Email:</strong> ' +
-            s.emailsSent +
-            ' report(s) sent to <code>' +
+            '<div class="scan-msg scan-msg-ok" style="margin:0.5rem 0"><strong>One combined email sent</strong> — all ' +
+            escapeHtml(String(n)) +
+            ' brand(s) in a single report to <code>' +
             escapeHtml(to) +
-            '</code> — check inbox + spam.</div>';
+            '</code>. Check inbox + spam.</div>';
         }
         let table = '';
         if (Array.isArray(s.brands) && s.brands.length) {
           table =
-            '<table class="watch-summary-table"><thead><tr><th>Brand</th><th>Site</th><th>Score</th><th>Email</th><th>Console</th><th>Pass/Fail</th></tr></thead><tbody>';
+            '<table class="watch-summary-table"><thead><tr><th>Brand</th><th>Site</th><th>Score</th><th>Console</th><th>Pass/Fail</th></tr></thead><tbody>';
           for (const b of s.brands) {
             const snap = b.snapshot || {};
             const cap = snap.consoleCapture ? String(snap.consoleCapture) : '—';
@@ -4511,8 +4523,6 @@
               escapeHtml(siteCell) +
               '</td><td>' +
               escapeHtml(scoreCell) +
-              '</td><td>' +
-              escapeHtml(watchEmailStatusLabel(b.email)) +
               '</td><td><code>' +
               escapeHtml(cap.slice(0, 28)) +
               '</code></td><td>' +
@@ -4653,6 +4663,51 @@
             });
             if (!s.hasMore || s.nextOffset == null) break;
             offset = s.nextOffset;
+          }
+          const digestEntries = (merged.brands || [])
+            .map(function (b) {
+              return b.digest;
+            })
+            .filter(Boolean);
+          if (digestEntries.length && !(merged.digestEmail && merged.digestEmail.sent)) {
+            btn.textContent = 'Sending combined email…';
+            try {
+              const digestSig =
+                typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+                  ? AbortSignal.timeout(45000)
+                  : undefined;
+              const dr = await fetch(
+                watchDigestEndpoint(),
+                Object.assign(
+                  {},
+                  buildApiFetchInit(
+                    'POST',
+                    Object.assign({}, watchBody, { sendWatchDigest: true, entries: digestEntries })
+                  ),
+                  { signal: digestSig }
+                )
+              );
+              const digestData = await dr.json().catch(function () {
+                return {};
+              });
+              if (dr.ok && digestData.digestEmail) {
+                merged.digestEmail = digestData.digestEmail;
+                if (digestData.digestEmail.sent) {
+                  merged.emailsSent = 1;
+                  merged.emailsFailed = 0;
+                } else if (digestData.digestEmail.error) {
+                  merged.emailsFailed = 1;
+                } else if (digestData.digestEmail.skipped) {
+                  merged.emailsSkipped = 1;
+                }
+              } else if (!dr.ok) {
+                merged.emailsFailed = 1;
+                merged.digestEmail = { error: digestData.error || 'Digest HTTP ' + dr.status };
+              }
+            } catch (digestErr) {
+              merged.emailsFailed = 1;
+              merged.digestEmail = { error: String((digestErr && digestErr.message) || digestErr) };
+            }
           }
           saveWatchSummary(merged);
           renderWatchSummaryPanel(merged, { inProgress: false });

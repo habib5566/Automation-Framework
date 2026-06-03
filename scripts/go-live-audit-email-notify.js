@@ -732,8 +732,228 @@ async function maybeSendScanEmail(requestJson, scanResponse) {
   }
 }
 
+/** Compact row for combined “all brands” watch email. */
+function buildWatchDigestEntry(brand, result) {
+  const r = result || {};
+  const b = brand || {};
+  const os = r.overallSummary || {};
+  const av = r.availability || {};
+  const bm = r.brandMatrix || {};
+  const sec = r.security || {};
+  return {
+    brandName: r.brandName || b.name || '—',
+    url: b.url || r.requestedUrl || r.finalUrl || '—',
+    requestedUrl: r.requestedUrl || b.url || '—',
+    finalUrl: r.finalUrl || null,
+    ok: r.ok !== false,
+    statusCode: r.statusCode != null ? r.statusCode : null,
+    availabilityHeadline: av.headline || av.state || '—',
+    availabilityState: av.state || null,
+    siteUp: av.state === 'up' || (r.statusCode >= 200 && r.statusCode < 400),
+    overallHeadline: os.headline || '—',
+    overallLevel: os.level || null,
+    performancePercent: bm.performancePercent != null ? bm.performancePercent : null,
+    performanceGrade: bm.performanceGrade || null,
+    pass: (os.counts && os.counts.pass) || 0,
+    fail: (os.counts && os.counts.fail) || 0,
+    securityHeadline: sec.headline || null,
+    securityAlert: !!(sec.shouldAlert || sec.alertLevel === 'critical'),
+    criticalCount: sec.criticalCount || 0,
+    error: r.error ? String(r.error).slice(0, 200) : null,
+  };
+}
+
+function buildWatchDigestSubject(entries) {
+  const n = (entries || []).length;
+  const alerts = (entries || []).filter((e) => e && e.securityAlert).length;
+  const down = (entries || []).filter((e) => e && !e.siteUp && e.ok).length;
+  let tail = 'all OK';
+  if (alerts > 0) tail = alerts + ' alert(s)';
+  else if (down > 0) tail = down + ' need attention';
+  return getEmailFromDisplayName() + ' — Watch report — ' + n + ' brand(s) — ' + tail;
+}
+
+function buildWatchDigestPlainText(entries) {
+  const list = entries || [];
+  const lines = [];
+  lines.push(getEmailFromDisplayName() + ' — combined watch report (all brands)');
+  lines.push('Time (UTC): ' + new Date().toISOString());
+  lines.push('Brands scanned: ' + list.length);
+  lines.push(
+    'Security alerts: ' +
+      list.filter((e) => e && e.securityAlert).length +
+      ' · Sites not up: ' +
+      list.filter((e) => e && e.ok && !e.siteUp).length
+  );
+  lines.push('');
+  lines.push('════════════════════════════════════════');
+  for (const e of list) {
+    lines.push('');
+    lines.push('▸ ' + (e.brandName || '—'));
+    lines.push('  URL: ' + (e.url || '—'));
+    if (!e.ok) {
+      lines.push('  Scan: FAILED — ' + (e.error || 'unknown error'));
+      continue;
+    }
+    lines.push('  HTTP: ' + (e.statusCode != null ? e.statusCode : '—') + ' · ' + (e.availabilityHeadline || '—'));
+    if (e.performancePercent != null) {
+      lines.push('  Site score: ' + e.performancePercent + '% (grade ' + (e.performanceGrade || '—') + ')');
+    }
+    lines.push('  Overall: ' + (e.overallHeadline || '—'));
+    lines.push('  Checklist: Pass ' + (e.pass || 0) + ' · Fail ' + (e.fail || 0));
+    if (e.securityHeadline) lines.push('  Security: ' + e.securityHeadline);
+    if (e.securityAlert) lines.push('  ⚠ SECURITY ALERT — review this brand');
+  }
+  lines.push('');
+  lines.push('— End of combined watch report. Individual brand PDFs are not attached; run a single-brand scan for a PDF.');
+  return lines.join('\n');
+}
+
+function buildWatchDigestHtml(entries) {
+  const list = entries || [];
+  const alertN = list.filter((e) => e && e.securityAlert).length;
+  let rows = '';
+  for (const e of list) {
+    const status = !e.ok
+      ? '<span style="color:#b91c1c">Scan failed</span>'
+      : e.siteUp
+        ? '<span style="color:#15803d">Up</span>'
+        : '<span style="color:#c2410c">Check URL</span>';
+    const score =
+      e.performancePercent != null
+        ? escapeHtmlForEmail(String(e.performancePercent)) + '% · ' + escapeHtmlForEmail(e.performanceGrade || '—')
+        : '—';
+    rows +=
+      '<tr><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0"><strong>' +
+      escapeHtmlForEmail(e.brandName || '—') +
+      '</strong><br/><span style="font-size:12px;color:#64748b">' +
+      escapeHtmlForEmail(e.url || '—') +
+      '</span></td>' +
+      '<td style="padding:8px 10px;border-bottom:1px solid #e2e8f0">' +
+      status +
+      '<br/>HTTP ' +
+      escapeHtmlForEmail(e.statusCode != null ? String(e.statusCode) : '—') +
+      '</td>' +
+      '<td style="padding:8px 10px;border-bottom:1px solid #e2e8f0">' +
+      score +
+      '</td>' +
+      '<td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-size:13px">' +
+      escapeHtmlForEmail((e.overallHeadline || '—').slice(0, 120)) +
+      (e.securityAlert ? '<br/><span style="color:#b91c1c">⚠ Alert</span>' : '') +
+      '</td></tr>';
+  }
+  return (
+    '<!DOCTYPE html><html><head><meta charset="utf-8"/></head>' +
+    '<body style="font-family:Segoe UI,Calibri,Arial,sans-serif;background:#f4f6f8;margin:0;padding:20px">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:720px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px">' +
+    '<tr><td style="padding:16px 20px;background:#1e3a5f;color:#fff;font-size:18px;font-weight:600">' +
+    escapeHtmlForEmail(getEmailFromDisplayName()) +
+    ' — All brands watch report</td></tr>' +
+    '<tr><td style="padding:16px 20px;color:#334155;font-size:14px">' +
+    '<p style="margin:0 0 8px"><strong>' +
+    list.length +
+    ' brand(s)</strong> scanned in one watch run.' +
+    (alertN ? ' <span style="color:#b91c1c">' + alertN + ' security alert(s).</span>' : '') +
+    '</p></td></tr>' +
+    '<tr><td style="padding:0 12px 16px">' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;border-collapse:collapse">' +
+    '<thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px 10px">Brand</th><th style="text-align:left;padding:8px 10px">Status</th><th style="text-align:left;padding:8px 10px">Score</th><th style="text-align:left;padding:8px 10px">Summary</th></tr></thead>' +
+    '<tbody>' +
+    rows +
+    '</tbody></table></td></tr>' +
+    '<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#64748b">Automated watch · Check spam if missing</td></tr></table></body></html>'
+  );
+}
+
+/**
+ * One email after all brands in a watch run (not per-brand).
+ * @param {Record<string, unknown>} requestJson SMTP + recipient from watch UI
+ * @param {Array<Record<string, unknown>>} entries from buildWatchDigestEntry
+ */
+async function maybeSendWatchDigestEmail(requestJson, entries) {
+  const list = Array.isArray(entries) ? entries.filter(Boolean) : [];
+  if (!list.length) return { skipped: true, reason: 'No brands in digest' };
+
+  const resolved = resolveRecipient(requestJson);
+  if (!resolved.to) {
+    return { skipped: true, reason: resolved.reason || 'No recipient' };
+  }
+
+  const uiSmtp = smtpFromRequestBody(requestJson);
+  if (
+    process.env.GO_LIVE_AUDIT_ALLOW_MAILPIT_FOR_GMAIL !== '1' &&
+    reportEmailRequiresInternetSmtp(resolved.to) &&
+    smtpHostIsLocalMailpit() &&
+    !envSmtpConfigured() &&
+    !uiSmtp
+  ) {
+    return { skipped: true, reason: GMAIL_SMTP_REQUIRED_MSG };
+  }
+
+  const t = resolveTransport(requestJson, resolved.to);
+  if (t.error) {
+    return t.error.includes('[GMAIL_SMTP_REQUIRED]') ? { skipped: true, reason: t.error } : { error: t.error };
+  }
+
+  const fromEmail =
+    (t.cfg && t.cfg.fromEmail) ||
+    (process.env.GO_LIVE_AUDIT_EMAIL_FROM || '').trim() ||
+    (process.env.GO_LIVE_AUDIT_SMTP_USER || '').trim() ||
+    (t.cfg && t.cfg.user) ||
+    'go-live-audit@localhost';
+  const fromField = buildFromField(fromEmail, getEmailFromDisplayName());
+
+  const mail = {
+    from: fromField,
+    sender: fromField,
+    to: resolved.to,
+    subject: buildWatchDigestSubject(list),
+    text: buildWatchDigestPlainText(list),
+    html: buildWatchDigestHtml(list),
+    replyTo: fromField,
+    headers: { 'X-Mailer': 'Go-Live-Check-List-Watch-Digest', 'Auto-Submitted': 'auto-generated' },
+  };
+
+  try {
+    const sendMeta = await sendMailWithGmailFallback(t.transport, mail, t.cfg || {});
+    // eslint-disable-next-line no-console
+    console.log(
+      '[go-live-audit] watch digest email sent to',
+      resolved.to,
+      '(' + list.length + ' brands)'
+    );
+    return {
+      sent: true,
+      digest: true,
+      brandCount: list.length,
+      recipientMode: resolved.mode,
+      sentTo: resolved.to,
+      deliveryHint:
+        'Combined watch report for ' +
+        list.length +
+        ' brand(s). Check inbox and spam for ' +
+        resolved.to +
+        '.' +
+        (sendMeta.usedPort587 ? ' (port 587)' : ''),
+    };
+  } catch (e) {
+    const msg = String((e && e.message) || e);
+    // eslint-disable-next-line no-console
+    console.warn('[go-live-audit] watch digest email failed:', msg);
+    if (/Invalid login|535|EAUTH|authentication failed/i.test(msg)) {
+      return { error: msg, reason: NOT_APP_PASSWORD_HINT };
+    }
+    return { error: msg };
+  }
+}
+
 module.exports = {
   maybeSendScanEmail,
+  maybeSendWatchDigestEmail,
+  buildWatchDigestEntry,
+  buildWatchDigestPlainText,
+  buildWatchDigestHtml,
+  buildWatchDigestSubject,
   scanNeedsDangerEmail,
   looksLikeGoogleAppPassword,
   buildPlainText,

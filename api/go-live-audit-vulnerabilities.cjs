@@ -72,20 +72,7 @@ function buildVulnerabilities({ security, siteStack, pageIssues, siteIssues, con
     });
   }
 
-  const mat =
-    consoleIssues && consoleIssues.materialSummary
-      ? consoleIssues.materialSummary
-      : null;
-  const consoleItems =
-    mat && consoleIssues && consoleIssues.displaySummary
-      ? (consoleIssues.items || []).filter((it) => {
-          const msg = String((it && it.message) || '');
-          if (isNoisyConsoleMessage(msg)) return false;
-          return it.severity === 'error';
-        })
-      : (consoleIssues && consoleIssues.items) || [];
-
-  for (const it of consoleItems.slice(0, 12)) {
+  for (const it of ((consoleIssues && consoleIssues.items) || []).slice(0, 20)) {
     if (!it) continue;
     const msg = String(it.message || '');
     if (browserFailed && /Browser console capture failed on server/i.test(msg)) continue;
