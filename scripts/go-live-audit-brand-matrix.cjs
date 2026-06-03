@@ -16,19 +16,28 @@ function clampPct(n) {
   return Math.min(100, Math.max(0, Math.round(Number(n) || 0)));
 }
 
-/** Site health from HTTP + console + availability (not checklist alone). */
+/** Site health from HTTP + material site/console signals (not raw noisy console). */
 function computeSiteHealthPercent({ reachable, statusCode, availability, piSum, consoleSum }) {
   if (!reachable) return 0;
   const sc = Number(statusCode) || 0;
   const avState = availability && availability.state ? String(availability.state) : '';
-  if (sc >= 500 || avState === 'server_error') return 8;
-  if (['dns_failed', 'connection_refused', 'timeout', 'unreachable'].includes(avState)) return 0;
-  if (sc >= 400) return 22;
+  if (sc >= 500 || sc === 521 || avState === 'server_error') return 8;
+  if (['dns_failed', 'connection_refused', 'timeout', 'unreachable', 'connection_reset'].includes(avState)) {
+    return 0;
+  }
+  // Host responded — 404/403 is a URL/access issue, not “site down”.
+  if (sc === 404 || avState === 'page_not_found') return 58;
+  if (sc >= 400 && sc < 500) return 48;
 
-  let h = 92;
-  h -= Math.min(28, (piSum.errors || 0) * 6);
-  h -= Math.min(12, (piSum.warns || 0) * 2);
-  h -= Math.min(22, (consoleSum.errors || 0) * 4);
+  const consoleErrors =
+    consoleSum && consoleSum.errors != null ? Number(consoleSum.errors) : 0;
+  let h = 94;
+  h -= Math.min(20, (piSum.errors || 0) * 5);
+  h -= Math.min(10, (piSum.warns || 0) * 2);
+  h -= Math.min(18, consoleErrors * 3);
+  if (avState === 'up' && sc >= 200 && sc < 300 && (piSum.errors || 0) === 0 && consoleErrors === 0) {
+    h = Math.max(h, 88);
+  }
   return clampPct(h);
 }
 
@@ -37,9 +46,61 @@ function computeChecklistPercent(counts) {
   const fail = counts.fail || 0;
   const scored = pass + fail;
   if (!scored) return null;
-  const raw = (pass / scored) * 100;
-  const penalized = raw - Math.min(18, fail * 2);
-  return clampPct(penalized);
+  return clampPct((pass / scored) * 100);
+}
+
+/** Checklist rows where Fail = something the scanner actually detected on the live page. */
+const DETECTED_FAIL_IDS = new Set(['I01', 'C01', 'U03', 'P03', 'U02']);
+
+/**
+ * Genuine site score from what the scan detected (HTTP + material issues + critical threats).
+ * Does not mix in manual-review (pending) rows or soft checklist noise.
+ */
+function computeGenuinePerformancePercent({
+  reachable,
+  statusCode,
+  availability,
+  siteIssuesSummary,
+  consoleDisplaySummary,
+  security,
+  autoChecks,
+}) {
+  if (!reachable) return 0;
+  const sc = Number(statusCode) || 0;
+  const avState = availability && availability.state ? String(availability.state) : '';
+
+  if (sc >= 500 || sc === 521 || avState === 'server_error') return clampPct(6);
+  if (['dns_failed', 'connection_refused', 'timeout', 'unreachable', 'connection_reset'].includes(avState)) {
+    return 0;
+  }
+  if (sc === 404 || avState === 'page_not_found') return 54;
+  if (sc >= 400 && sc < 500) return 46;
+
+  const siteErr = Number((siteIssuesSummary && siteIssuesSummary.errors) || 0);
+  const consoleErr = Number((consoleDisplaySummary && consoleDisplaySummary.errors) || 0);
+  const critical = Number((security && security.criticalCount) || 0);
+
+  let hardFails = 0;
+  for (const ac of autoChecks || []) {
+    if (!ac || ac.status !== 'fail') continue;
+    if (DETECTED_FAIL_IDS.has(ac.id)) hardFails += 1;
+  }
+
+  let score = 97;
+  score -= Math.min(14, siteErr * 7);
+  score -= Math.min(12, consoleErr * 4);
+  score -= Math.min(24, critical * 12);
+  score -= Math.min(10, hardFails * 5);
+
+  const liveOk =
+    (avState === 'up' || (sc >= 200 && sc < 300)) &&
+    siteErr === 0 &&
+    consoleErr === 0 &&
+    critical === 0;
+  if (liveOk && hardFails === 0) score = Math.max(score, 92);
+  else if (liveOk && hardFails <= 1) score = Math.max(score, 85);
+
+  return clampPct(score);
 }
 
 /**
@@ -52,10 +113,13 @@ function buildBrandMatrix({
   availability,
   overallSummary,
   pageIssues,
+  siteIssuesSummary,
   siteStack,
   requestedUrl,
   finalUrl,
   consoleDisplaySummary,
+  security,
+  autoChecks,
 }) {
   const counts = (overallSummary && overallSummary.counts) || {
     pass: 0,
@@ -63,10 +127,15 @@ function buildBrandMatrix({
     pending: 0,
     notScored: 0,
   };
-  const piSum = (pageIssues && pageIssues.summary) || { errors: 0, warns: 0, total: 0 };
-  const consoleSum =
-    consoleDisplaySummary ||
-    pickConsoleIssues(pageIssues).summary;
+  const piSum =
+    siteIssuesSummary ||
+    pickNonConsoleIssues(pageIssues).summary ||
+    { errors: 0, warns: 0, total: 0 };
+  const consoleSum = consoleDisplaySummary || {
+    errors: 0,
+    warns: 0,
+    total: 0,
+  };
   const sc = Number(statusCode) || 0;
 
   const siteHealth = computeSiteHealthPercent({
@@ -78,19 +147,15 @@ function buildBrandMatrix({
   });
   const checklistPct = computeChecklistPercent(counts);
 
-  let performancePercent;
-  const pending = counts.pending || 0;
-  if (checklistPct != null) {
-    const autoScored = (counts.pass || 0) + (counts.fail || 0);
-    const failHeavy = autoScored > 0 && (counts.fail || 0) / autoScored > 0.35;
-    if (pending > autoScored && !failHeavy) {
-      performancePercent = clampPct(siteHealth * 0.75 + checklistPct * 0.25);
-    } else {
-      performancePercent = clampPct(siteHealth * 0.6 + checklistPct * 0.4);
-    }
-  } else {
-    performancePercent = siteHealth;
-  }
+  const performancePercent = computeGenuinePerformancePercent({
+    reachable,
+    statusCode,
+    availability,
+    siteIssuesSummary: piSum,
+    consoleDisplaySummary: consoleSum,
+    security,
+    autoChecks,
+  });
 
   let grade = 'F';
   if (performancePercent >= 88) grade = 'A';
@@ -134,8 +199,13 @@ function buildBrandMatrix({
       { key: 'url', label: 'Scanned URL', value: requestedUrl || '—' },
       { key: 'final', label: 'Final URL', value: finalUrl || requestedUrl || '—' },
       { key: 'brand', label: 'Brand', value: brandName || '—' },
-      { key: 'performance', label: 'Performance rate', value: performancePercent + '%' },
-      { key: 'siteHealth', label: 'Site health score', value: siteHealth + '%' },
+      { key: 'performance', label: 'Live site score (detected)', value: performancePercent + '%' },
+      { key: 'siteHealth', label: 'HTTP / runtime health', value: siteHealth + '%' },
+      {
+        key: 'checklistPct',
+        label: 'Checklist pass rate (all rows)',
+        value: checklistPct != null ? checklistPct + '%' : '—',
+      },
       { key: 'grade', label: 'Grade', value: grade },
       {
         key: 'checklist',
@@ -160,6 +230,8 @@ function extractBrandScanSummary(result) {
   const counts = os.counts || {};
   const sm = result.scanMeta || {};
   const sec = result.security || {};
+  const av = result.availability || {};
+  const osLevel = os.level || null;
   return {
     brandName: result.brandName || null,
     url: result.requestedUrl || result.finalUrl || null,
@@ -168,13 +240,22 @@ function extractBrandScanSummary(result) {
     pass: counts.pass || 0,
     fail: counts.fail || 0,
     pending: counts.pending || 0,
-    headline: sec.headline || null,
+    headline: (os.headline || sec.headline || null),
+    overallLevel: osLevel,
+    availabilityState: av.state || null,
+    httpStatus: result.statusCode != null ? result.statusCode : null,
+    performancePercent:
+      result.brandMatrix && result.brandMatrix.performancePercent != null
+        ? result.brandMatrix.performancePercent
+        : null,
     alert: !!(sec.shouldAlert || sec.alertLevel === 'critical'),
+    siteUp: av.state === 'up' || (result.statusCode >= 200 && result.statusCode < 400),
   };
 }
 
 module.exports = {
   buildBrandMatrix,
+  computeGenuinePerformancePercent,
   pickConsoleIssues,
   pickNonConsoleIssues,
   extractBrandScanSummary,

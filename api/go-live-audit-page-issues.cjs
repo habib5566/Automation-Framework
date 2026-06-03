@@ -9,16 +9,24 @@ function detectHtmlRuntimeIssues(body) {
   const lower = html.toLowerCase();
   const issues = [];
 
+  const shortPage = html.length < 12_000;
   const patterns = [
     { re: /ChunkLoadError|Loading chunk \d+ failed/i, label: 'Chunk load failure (JS bundle)' },
     { re: /Hydration failed|Text content does not match/i, label: 'React hydration mismatch' },
-    { re: /Uncaught\s+(?:TypeError|ReferenceError|Error)/i, label: 'Uncaught JavaScript error in page source' },
+    {
+      re: /Uncaught\s+(?:TypeError|ReferenceError):/i,
+      label: 'Uncaught JavaScript error in page source',
+    },
     { re: /Application error: a client-side exception/i, label: 'Next.js client-side exception' },
     { re: /__NEXT_DATA__[^]*?"err"\s*:/i, label: 'Next.js __NEXT_DATA__ contains error' },
-    { re: /This site can(?:'|&#39;)t be reached|ERR_CONNECTION_REFUSED/i, label: 'Browser-style connection error text' },
-    { re: /502 Bad Gateway|503 Service Unavailable|504 Gateway Timeout/i, label: 'Gateway / server error page text' },
-    { re: /console\.error\s*\(/i, label: 'console.error() call in inline script' },
   ];
+  if (shortPage) {
+    patterns.push(
+      { re: /This site can(?:'|&#39;)t be reached|ERR_CONNECTION_REFUSED/i, label: 'Browser-style connection error text' },
+      { re: /<title[^>]*>[^<]*502 Bad Gateway/i, label: '502 error page (title)' },
+      { re: /<h1[^>]*>[^<]*502 Bad Gateway/i, label: '502 error page (heading)' }
+    );
+  }
 
   for (const p of patterns) {
     if (p.re.test(html)) {
@@ -65,17 +73,23 @@ function issuesFromAvailability(availability, statusCode) {
   const sc = Number(statusCode) || 0;
   const av = availability || {};
 
-  if (sc >= 500) {
+  if (sc >= 500 || sc === 521) {
     issues.push({
       kind: 'http',
       severity: 'error',
       message: `Site returned HTTP ${sc} — likely down or broken (${av.headline || 'server error'})`,
     });
+  } else if (sc === 404) {
+    issues.push({
+      kind: 'http',
+      severity: 'warn',
+      message: `HTTP 404 — host is up but this path was not found (${av.detail || ''})`.trim(),
+    });
   } else if (sc >= 400) {
     issues.push({
       kind: 'http',
       severity: 'warn',
-      message: `HTTP ${sc} — ${av.headline || 'request problem'}`,
+      message: `HTTP ${sc} — ${av.headline || 'request problem'} (server responded; check URL or access)`,
     });
   }
 
@@ -99,6 +113,10 @@ function isNoisyConsoleMessage(msg) {
   if (/favicon\.ico|google-analytics|googletagmanager|gtag\/js|doubleclick|facebook\.net|hotjar|clarity\.ms|adservice|analytics\.js|chrome-extension/i.test(m)) {
     return true;
   }
+  if (/ResizeObserver loop|Non-passive event listener|preload.*not used|cookie.*will be soon blocked/i.test(m)) {
+    return true;
+  }
+  if (/Failed to load resource.*(analytics|pixel|tracking|ads)/i.test(m)) return true;
   return false;
 }
 

@@ -1,7 +1,9 @@
 'use strict';
 
+const { isNoisyConsoleMessage } = require('./go-live-audit-page-issues.cjs');
+
 /**
- * Unified vulnerability / risk list for UI + email (threats + outdated stack + site issues).
+ * Unified vulnerability / risk list for UI + email (material findings only).
  */
 function buildVulnerabilities({ security, siteStack, pageIssues, siteIssues, consoleIssues, scanMeta }) {
   const items = [];
@@ -19,6 +21,8 @@ function buildVulnerabilities({ security, siteStack, pageIssues, siteIssues, con
   const sec = security || {};
   let baselineAdded = false;
   for (const t of sec.threats || []) {
+    if (t.severity === 'info') continue;
+    if (t.id === 'console_error' && t.kind === 'console') continue;
     const sev = t.severity === 'critical' ? 'critical' : t.severity === 'warn' ? 'high' : 'medium';
     if (t.kind === 'integrity' && /fingerprint|changed since/i.test(String(t.message || ''))) {
       if (baselineAdded) continue;
@@ -46,7 +50,7 @@ function buildVulnerabilities({ security, siteStack, pageIssues, siteIssues, con
   }
 
   for (const it of (siteStack && siteStack.items) || []) {
-    if (!it || (it.alert !== 'bad' && it.alert !== 'warn')) continue;
+    if (!it || it.alert !== 'bad') continue;
     add({
       id: 'stack_' + (it.id || it.label),
       severity: it.alert === 'bad' ? 'high' : 'medium',
@@ -60,21 +64,23 @@ function buildVulnerabilities({ security, siteStack, pageIssues, siteIssues, con
   if (browserFailed) {
     add({
       id: 'browser_capture_failed',
-      severity: 'high',
+      severity: 'low',
       category: 'infrastructure',
-      title: 'Real browser scan unavailable on Vercel (Chromium)',
+      title: 'Deep browser console not run on this server (HTTP scan still used)',
       detail: (scanMeta.consoleCaptureDetail || 'Chromium could not launch').slice(0, 220),
       source: 'scan-meta',
     });
   }
 
-  for (const it of (consoleIssues && consoleIssues.items) || []) {
+  for (const it of ((consoleIssues && consoleIssues.items) || []).slice(0, 20)) {
     if (!it) continue;
     const msg = String(it.message || '');
     if (browserFailed && /Browser console capture failed on server/i.test(msg)) continue;
-    let sev = it.severity === 'error' ? 'high' : it.severity === 'warn' ? 'medium' : 'low';
-    if (/Script returned HTTP [45]\d|Failed to load resource|net::ERR_/i.test(msg)) {
-      sev = 'high';
+    if (isNoisyConsoleMessage(msg)) continue;
+    if (it.severity !== 'error') continue;
+    let sev = 'high';
+    if (!/Script returned HTTP [45]\d|Failed to load resource|net::ERR_/i.test(msg)) {
+      sev = 'medium';
     }
     add({
       id: 'console_' + msg.slice(0, 36),
@@ -91,8 +97,8 @@ function buildVulnerabilities({ security, siteStack, pageIssues, siteIssues, con
   const issueSrc = siteIssues && siteIssues.items && siteIssues.items.length ? siteIssues : pageIssues;
   for (const it of (issueSrc && issueSrc.items) || []) {
     if (!it || it.kind === 'console') continue;
-    const sev = it.severity === 'error' ? 'medium' : it.severity === 'warn' ? 'low' : 'info';
-    if (sev === 'info') continue;
+    if (it.severity !== 'error') continue;
+    const sev = 'medium';
     add({
       id: 'issue_' + (it.kind || 'site') + '_' + String(it.message || '').slice(0, 40),
       severity: sev,

@@ -14,7 +14,7 @@ const RULES = [
   { id: 'sql_error', severity: 'warn', kind: 'exposure', re: /SQL syntax.*MySQL|ORA-\d{5}|PostgreSQL.*ERROR|sqlite3\.OperationalError/i, message: 'Database error exposed in page (possible SQLi probe)' },
   { id: 'git_exposed', severity: 'critical', kind: 'exposure', re: /\[core\]\s*repositoryformatversion|ref:\s*refs\/heads\/main/i, message: 'Possible .git repository content exposed in HTML' },
   { id: 'env_leak', severity: 'critical', kind: 'exposure', re: /APP_KEY=base64:|DB_PASSWORD=|AWS_SECRET_ACCESS_KEY=/i, message: 'Possible .env / secrets leaked in response' },
-  { id: 'base64_blob', severity: 'warn', kind: 'malware', re: /[A-Za-z0-9+/]{500,}={0,2}/, message: 'Very large base64 blob in HTML (check for injected payload)' },
+  { id: 'base64_blob', severity: 'info', kind: 'malware', re: /[A-Za-z0-9+/]{4000,}={0,2}/, message: 'Very large base64 blob in HTML (often inline assets — review if unexpected)' },
   { id: 'external_password_form', severity: 'warn', kind: 'phishing', re: /<form[^>]+action\s*=\s*["']https?:\/\/(?!localhost)[^"']+["'][^>]*(?:password|login)/i, message: 'Login form posts to external domain' },
 ];
 
@@ -77,12 +77,18 @@ function detectSecurityThreats(opts) {
   const pi = opts.pageIssues;
   if (pi && Array.isArray(pi.items)) {
     for (const it of pi.items) {
-      if (it.kind === 'availability' || (it.severity === 'error' && it.kind === 'http')) {
+      const msg = String(it.message || '');
+      const isDownAvailability = it.kind === 'availability' && it.severity === 'error';
+      const isServerHttp =
+        it.kind === 'http' &&
+        it.severity === 'error' &&
+        /HTTP 5\d\d|HTTP 521|likely down|server error/i.test(msg);
+      if (isDownAvailability || isServerHttp) {
         add({
           id: 'site_down',
           kind: 'availability',
           severity: 'critical',
-          message: it.message || 'Site unreachable or HTTP error',
+          message: msg || 'Site unreachable or HTTP server error',
         });
       }
     }
@@ -90,15 +96,20 @@ function detectSecurityThreats(opts) {
 
   const ci = opts.consoleIssues;
   if (ci && Array.isArray(ci.items)) {
+    const { isNoisyConsoleMessage } = require('./go-live-audit-page-issues.cjs');
+    let consoleWarns = 0;
     for (const it of ci.items.slice(0, 15)) {
-      if (it.severity === 'error') {
-        add({
-          id: 'console_error',
-          kind: 'console',
-          severity: 'warn',
-          message: 'Console: ' + String(it.message || '').slice(0, 200),
-        });
-      }
+      if (it.severity !== 'error') continue;
+      const msg = String(it.message || '');
+      if (isNoisyConsoleMessage(msg)) continue;
+      consoleWarns += 1;
+      if (consoleWarns > 6) break;
+      add({
+        id: 'console_error',
+        kind: 'console',
+        severity: 'warn',
+        message: 'Console: ' + msg.slice(0, 200),
+      });
     }
   }
 

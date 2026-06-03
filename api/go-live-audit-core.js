@@ -87,19 +87,12 @@ function enrichScanReportPayload(payload, ctx) {
     total: materialSum.total,
   };
   payload.siteIssues = pickNonConsoleIssues(pageIssues);
-  payload.brandMatrix = buildBrandMatrix({
-    brandName: ctx.brandName || payload.brandName,
-    reachable: ctx.reachable,
-    statusCode: ctx.statusCode,
-    availability: payload.availability,
-    overallSummary: payload.overallSummary,
-    pageIssues,
-    siteStack: payload.siteStack,
-    requestedUrl: payload.requestedUrl,
-    finalUrl: payload.finalUrl,
-    consoleDisplaySummary: payload.consoleIssues.displaySummary,
-  });
-
+  const siteMat = summarizeMaterialIssues(payload.siteIssues.items || [], payload.scanMeta);
+  payload.siteIssues.summary = {
+    errors: siteMat.errors,
+    warns: siteMat.warns,
+    total: siteMat.total,
+  };
   const brandName = ctx.brandName || payload.brandName;
   let baseline = null;
   if (brandName) {
@@ -115,6 +108,22 @@ function enrichScanReportPayload(payload, ctx) {
     pageIssues,
     consoleIssues: payload.consoleIssues,
     baseline,
+  });
+
+  payload.brandMatrix = buildBrandMatrix({
+    brandName: ctx.brandName || payload.brandName,
+    reachable: ctx.reachable,
+    statusCode: ctx.statusCode,
+    availability: payload.availability,
+    overallSummary: payload.overallSummary,
+    pageIssues,
+    siteIssuesSummary: payload.siteIssues.summary,
+    siteStack: payload.siteStack,
+    requestedUrl: payload.requestedUrl,
+    finalUrl: payload.finalUrl,
+    consoleDisplaySummary: payload.consoleIssues.displaySummary,
+    security: payload.security,
+    autoChecks: payload.autoChecks,
   });
   try {
     payload.securityWatch = recordScanForBrand(brandName, payload);
@@ -216,14 +225,34 @@ function isBlockedHost(hostname) {
   return false;
 }
 
+function isServerlessFetchRuntime() {
+  return !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+}
+
+function defaultFetchOpts() {
+  const onSrv = isServerlessFetchRuntime();
+  const ua =
+    String(process.env.GO_LIVE_AUDIT_FETCH_UA || '').trim() ||
+    (onSrv
+      ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 GoLiveAudit/1.0'
+      : 'Mozilla/5.0 (compatible; GoLiveAudit/1.0; +https://github.com/)');
+  return {
+    timeoutMs: onSrv ? 28_000 : 20_000,
+    userAgent: ua,
+  };
+}
+
 function fetchUrlOnce(targetUrl, maxRedirects = 5, fetchOpts = {}) {
+  const defs = defaultFetchOpts();
   const timeoutMs =
     typeof fetchOpts === 'object' &&
     fetchOpts != null &&
     fetchOpts.timeoutMs != null &&
     Number.isFinite(Number(fetchOpts.timeoutMs))
       ? Math.min(60_000, Math.max(3000, Number(fetchOpts.timeoutMs)))
-      : 18_000;
+      : defs.timeoutMs;
+  const userAgent =
+    (fetchOpts && fetchOpts.userAgent) || defs.userAgent;
   const forceInsecure = !!(fetchOpts && fetchOpts.forceInsecure);
   return new Promise((resolve, reject) => {
     const tryOnce = (urlStr, redirectsLeft) => {
@@ -250,8 +279,9 @@ function fetchUrlOnce(targetUrl, maxRedirects = 5, fetchOpts = {}) {
         path: u.pathname + u.search,
         method: 'GET',
         headers: {
-          'User-Agent': 'Automation-Framework-GoLiveAudit/1.0',
-          Accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
+          'User-Agent': userAgent,
+          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
         },
         timeout: timeoutMs,
       };
@@ -541,7 +571,7 @@ function buildOverallSummary({
     };
   }
 
-  if (counts.fail >= 5) {
+  if (counts.fail >= 7) {
     const ids = failedItems.map((f) => f.id).join(', ');
     return {
       level: 'concern',
@@ -552,7 +582,7 @@ function buildOverallSummary({
     };
   }
 
-  if (counts.fail >= 2 && counts.fail < 5) {
+  if (counts.fail >= 3 && counts.fail < 7) {
     const ids = failedItems.map((f) => f.id).join(', ');
     return {
       level: 'caution',
@@ -1082,21 +1112,26 @@ function buildAutoChecks(requestedUrl, finalUrl, statusCode, headers, html, robo
       : '[auto] No obvious SSR markers — confirm SPA vs SSR architecture with your team.',
   });
 
-  byId.set('R01', {
-    id: 'R01',
-    status: html.hasViewport ? 'pass' : 'fail',
-    note: html.hasViewport
-      ? '[auto] viewport meta tag present — still test on real devices.'
-      : '[auto] Missing viewport meta — high risk for mobile layout.',
-  });
+  let r01status = 'pending';
+  let r01note =
+    '[auto] viewport meta not in HTML — may be injected by JS; confirm mobile layout in browser.';
+  if (html.hasViewport) {
+    r01status = 'pass';
+    r01note = '[auto] viewport meta tag present — still test on real devices.';
+  } else if (statusCode >= 200 && statusCode < 400 && html.hasTitle) {
+    r01status = 'pending';
+    r01note =
+      '[auto] No viewport in static HTML but page title exists — common on SPAs; verify mobile in browser.';
+  }
+  byId.set('R01', { id: 'R01', status: r01status, note: r01note });
 
+  const u01FewInteractive = html.interactiveApprox <= 0;
   byId.set('U01', {
     id: 'U01',
-    status: html.interactiveApprox > 0 ? 'pending' : 'fail',
-    note:
-      html.interactiveApprox > 0
-        ? `[auto] ~${html.interactiveApprox} buttons/links — exercise clicks and routing manually or with Playwright.`
-        : '[auto] Very few interactive elements in HTML — verify content loaded as expected.',
+    status: u01FewInteractive ? 'pending' : 'pending',
+    note: u01FewInteractive
+      ? '[auto] Few/no links or buttons in raw HTML — common on JS-heavy sites (React/Vue). Page may still be fine; verify in a real browser.'
+      : `[auto] ~${html.interactiveApprox} buttons/links — exercise clicks and routing manually or with Playwright.`,
   });
 
   byId.set('U02', {
@@ -1298,7 +1333,7 @@ function enrichAutoChecksFromPageIssues(autoChecks, pageIssues, scanMeta) {
   const cap = String((scanMeta && scanMeta.consoleCapture) || (pageIssues && pageIssues.consoleCapture) || '');
   const byId = new Map(autoChecks.map((ac) => [ac.id, { ...ac }]));
 
-  if (errs >= 4) {
+  if (errs >= 12) {
     byId.set('P03', {
       id: 'P03',
       status: 'fail',
@@ -1306,8 +1341,8 @@ function enrichAutoChecksFromPageIssues(autoChecks, pageIssues, scanMeta) {
     });
     byId.set('U02', {
       id: 'U02',
-      status: 'fail',
-      note: '[auto] Multiple failed resources in console — verify broken assets or links.',
+      status: 'pending',
+      note: '[auto] Several failed resources in console — verify broken assets or links.',
     });
   } else if (errs >= 1) {
     byId.set('P03', {
@@ -1749,7 +1784,7 @@ async function handleScan(req, res) {
 
     let bundle;
     try {
-      bundle = await fetchUrl(requestedUrl);
+      bundle = await fetchUrl(requestedUrl, 5, defaultFetchOpts());
     } catch (fetchErr) {
       const availability = classifyAvailabilityError(fetchErr);
       const downChecks = buildAutoChecksForErrorResponse(0, requestedUrl, requestedUrl);

@@ -2547,7 +2547,7 @@
               (pct != null
                 ? '<p class="brand-card-pct' +
                   pctClass +
-                  '">Performance: ' +
+                  '">Site score: ' +
                   escapeHtml(String(pct)) +
                   '% · Grade ' +
                   escapeHtml((bm && bm.performanceGrade) || '—') +
@@ -3219,7 +3219,7 @@
           '">' +
           escapeHtml(String(pct)) +
           '%</div>' +
-          '<div class="brand-matrix-grade">Performance rate · Grade ' +
+          '<div class="brand-matrix-grade">Live site score (from scan) · Grade ' +
           escapeHtml(brandMatrix.performanceGrade || '—') +
           (brandMatrix.host ? ' · ' + escapeHtml(brandMatrix.host) : '') +
           '</div></div></div>';
@@ -3381,7 +3381,7 @@
         if (!src || !Array.isArray(src.items)) {
           panel.className = 'site-stack-panel stack-neutral';
           panel.innerHTML =
-            '<p class="site-stack-title">Brand issues (site down · HTTP · console)</p>' +
+            '<p class="site-stack-title">Brand issues (HTTP · availability · runtime)</p>' +
             '<p class="site-stack-headline">Run a scan first</p>' +
             '<p class="site-stack-sub stack-empty-hint">Enter <strong>Brand name</strong> and URL, then scan.</p>';
           return;
@@ -4478,7 +4478,7 @@
         let table = '';
         if (Array.isArray(s.brands) && s.brands.length) {
           table =
-            '<table class="watch-summary-table"><thead><tr><th>Brand</th><th>Scan</th><th>Email</th><th>Console</th><th>Pass/Fail</th></tr></thead><tbody>';
+            '<table class="watch-summary-table"><thead><tr><th>Brand</th><th>Site</th><th>Score</th><th>Email</th><th>Console</th><th>Pass/Fail</th></tr></thead><tbody>';
           for (const b of s.brands) {
             const snap = b.snapshot || {};
             const cap = snap.consoleCapture ? String(snap.consoleCapture) : '—';
@@ -4488,14 +4488,29 @@
                 : b.ok === false
                   ? 'error'
                   : '—';
-            const rowClass = b.ok === false || cap.includes('failed') ? ' class="watch-row-fail"' : '';
+            const siteCell =
+              b.ok === false
+                ? '✗ unreachable'
+                : snap.siteUp === false
+                  ? '⚠ check URL'
+                  : snap.httpStatus
+                    ? '✓ HTTP ' + snap.httpStatus
+                    : '✓ up';
+            const scoreCell =
+              snap.performancePercent != null ? snap.performancePercent + '%' : '—';
+            const rowClass =
+              b.ok === false || (snap.siteUp === false && snap.availabilityState !== 'page_not_found')
+                ? ' class="watch-row-fail"'
+                : '';
             table +=
               '<tr' +
               rowClass +
               '><td><strong>' +
               escapeHtml(b.name || '—') +
               '</strong></td><td>' +
-              (b.ok === false ? '✗ Error' : '✓ OK') +
+              escapeHtml(siteCell) +
+              '</td><td>' +
+              escapeHtml(scoreCell) +
               '</td><td>' +
               escapeHtml(watchEmailStatusLabel(b.email)) +
               '</td><td><code>' +
