@@ -4,6 +4,24 @@
  * @see go-live-audit/EMAIL.md
  */
 const { getAlertEmail } = require('./go-live-audit-defaults.cjs');
+
+const DEFAULT_FROM_DISPLAY_NAME = 'Go Live Check List';
+
+function getEmailFromDisplayName() {
+  const n = String(process.env.GO_LIVE_AUDIT_EMAIL_FROM_NAME || '').trim();
+  return n || DEFAULT_FROM_DISPLAY_NAME;
+}
+
+/** Nodemailer From — object form is most reliable for inbox display name. */
+function buildFromField(email, displayName) {
+  const addr = String(email || '').trim();
+  if (!addr || !addr.includes('@')) {
+    return { name: DEFAULT_FROM_DISPLAY_NAME, address: 'go-live-audit@localhost' };
+  }
+  const name = String(displayName || getEmailFromDisplayName()).trim() || DEFAULT_FROM_DISPLAY_NAME;
+  return { name: name.replace(/[\r\n"]/g, ' ').trim(), address: addr };
+}
+
 function isLikelyEmail(s) {
   const t = String(s || '').trim();
   if (t.length < 6 || t.length > 254 || /[\s;,]/.test(t)) return false;
@@ -50,7 +68,7 @@ function resolveRecipient(requestJson) {
 function buildPlainText(scanResponse) {
   const o = scanResponse || {};
   const lines = [];
-  lines.push('Go-Live Audit — brand alert report');
+  lines.push(getEmailFromDisplayName() + ' — website scan report');
   lines.push('Time (UTC): ' + new Date().toISOString());
   if (o.brandName) lines.push('Brand: ' + o.brandName);
   if (o.vulnerabilities && Array.isArray(o.vulnerabilities.items) && o.vulnerabilities.items.length) {
@@ -238,11 +256,23 @@ function escapeHtmlForEmail(s) {
 
 function buildHtmlEmail(scanResponse) {
   const plain = buildPlainText(scanResponse);
+  const brand = scanResponse && scanResponse.brandName ? escapeHtmlForEmail(scanResponse.brandName) : '';
+  const title = getEmailFromDisplayName();
   return (
-    '<!DOCTYPE html><html><head><meta charset="utf-8"/></head><body style="font-family:system-ui,Segoe UI,sans-serif;background:#0a0e14;color:#e2e8f0;padding:16px">' +
-    '<pre style="white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.5;margin:0">' +
+    '<!DOCTYPE html><html><head><meta charset="utf-8"/></head>' +
+    '<body style="font-family:Segoe UI,Calibri,Arial,sans-serif;background:#f4f6f8;margin:0;padding:20px">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px">' +
+    '<tr><td style="padding:16px 20px;background:#1e3a5f;color:#ffffff;font-size:18px;font-weight:600">' +
+    escapeHtmlForEmail(title) +
+    (brand ? ' — ' + brand : '') +
+    '</td></tr>' +
+    '<tr><td style="padding:16px 20px;color:#334155;font-size:14px;line-height:1.55">' +
+    '<pre style="white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;margin:0;color:#334155">' +
     escapeHtmlForEmail(plain) +
-    '</pre></body></html>'
+    '</pre></td></tr>' +
+    '<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#64748b">' +
+    'Automated website check · Reply not monitored · Mark as not spam if this lands in Junk' +
+    '</td></tr></table></body></html>'
   );
 }
 
@@ -259,15 +289,17 @@ function buildSubject(scanResponse) {
   let short = String(head).replace(/\s+/g, ' ').trim().slice(0, 60);
   if (o.vulnerabilities && o.vulnerabilities.summary && o.vulnerabilities.summary.critical > 0) {
     short =
-      'VULN ' + o.vulnerabilities.summary.critical + ' critical — ' + (o.vulnerabilities.headline || short);
+      (o.vulnerabilities.summary.critical || 0) +
+      ' critical finding(s) — ' +
+      (o.vulnerabilities.headline || short);
   } else if (o.security && o.security.alertLevel === 'critical') {
-    short = 'SECURITY ' + (o.security.criticalCount || 0) + ' critical — ' + short;
+    short = 'Security review needed — ' + short;
   } else if (o.security && o.security.shouldAlert) {
-    short = 'Security alert — ' + short;
+    short = 'Security notice — ' + short;
   } else if (o.pageIssues && o.pageIssues.summary && o.pageIssues.summary.errors > 0) {
-    short = 'ALERT ' + o.pageIssues.summary.errors + ' issue(s) — ' + short;
+    short = (o.pageIssues.summary.errors || 0) + ' issue(s) found — ' + short;
   }
-  const prefix = brand ? '[Go-Live] ' + brand + ' — ' : '[Go-Live Audit] ';
+  const prefix = brand ? brand + ' — ' : 'Website scan — ';
   return prefix + host + ' — ' + short;
 }
 
@@ -361,8 +393,8 @@ function smtpFromRequestBody(requestJson) {
   const host = String(requestJson.smtpHost || 'smtp.gmail.com').trim();
   const port = Number(requestJson.smtpPort || 465);
   const secure = requestJson.smtpSecure != null ? requestJson.smtpSecure === true || requestJson.smtpSecure === '1' : port === 465;
-  const from = String(requestJson.smtpFrom || requestJson.emailFrom || user).trim();
-  return { host, port, secure, user, pass, from, source: 'ui' };
+  const fromEmail = String(requestJson.smtpFrom || requestJson.emailFrom || user).trim();
+  return { host, port, secure, user, pass, fromEmail, source: 'ui' };
 }
 
 function envSmtpConfigured() {
@@ -474,7 +506,7 @@ function createTransportFromEnv() {
     secure: process.env.GO_LIVE_AUDIT_SMTP_SECURE === '1',
     user,
     pass,
-    from:
+    fromEmail:
       (process.env.GO_LIVE_AUDIT_EMAIL_FROM || '').trim() ||
       user ||
       'go-live-audit@localhost',
@@ -564,18 +596,26 @@ async function maybeSendScanEmail(requestJson, scanResponse) {
     return { error: t.error };
   }
 
-  const from =
-    (t.cfg && t.cfg.from) ||
+  const fromEmail =
+    (t.cfg && t.cfg.fromEmail) ||
     (process.env.GO_LIVE_AUDIT_EMAIL_FROM || '').trim() ||
     (process.env.GO_LIVE_AUDIT_SMTP_USER || '').trim() ||
+    (t.cfg && t.cfg.user) ||
     'go-live-audit@localhost';
 
+  const fromField = buildFromField(fromEmail, getEmailFromDisplayName());
   const mail = {
-    from,
+    from: fromField,
+    sender: fromField,
     to: resolved.to,
     subject: buildSubject(scanResponse),
     text: buildPlainText(scanResponse),
     html: buildHtmlEmail(scanResponse),
+    replyTo: fromField,
+    headers: {
+      'X-Mailer': 'Go-Live-Check-List',
+      'Auto-Submitted': 'auto-generated',
+    },
   };
 
   try {
@@ -604,7 +644,12 @@ async function maybeSendScanEmail(requestJson, scanResponse) {
       out.deliveryHint =
         'Sent via Gmail (corporate TLS workaround). Check inbox and spam for ' + resolved.to + '.';
     } else if (t.cfg && t.cfg.source === 'ui') {
-      out.deliveryHint = 'Delivered via Gmail (App Password from this browser). Check inbox and spam for ' + resolved.to + '.';
+      out.deliveryHint =
+        'Delivered via Gmail. Inbox shows “' +
+        getEmailFromDisplayName() +
+        '” if Google Account name matches — see go-live-audit/EMAIL-SENDER-NAME.md. Check inbox and spam for ' +
+        resolved.to +
+        '.';
     } else if (localish) {
       out.deliveryHint =
         'SMTP is local Mailpit only — open http://localhost:8025 on this PC. For real Gmail, run npm run go-live:email-setup.';
