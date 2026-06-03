@@ -114,6 +114,7 @@ function computeGenuinePerformancePercent({
   score -= Math.min(18, critical * 9);
   score -= Math.min(8, siteErr * 4);
   score -= Math.min(6, consoleErr * 3);
+  score -= Math.min(8, (security && security.warnCount) || 0);
 
   const lvl = overallSummary && overallSummary.level ? String(overallSummary.level) : '';
   if (lvl === 'bad') score -= 15;
@@ -245,11 +246,12 @@ function buildBrandMatrix({
 }
 
 /** Compact row for multi-brand watch summary (UI + API). */
-function extractBrandScanSummary(result) {
+function   extractBrandScanSummary(result) {
   if (!result || typeof result !== 'object') return null;
   const os = result.overallSummary || {};
   const counts = os.counts || {};
   const sm = result.scanMeta || {};
+  const bm = result.brandMatrix || {};
   const sec = result.security || {};
   const av = result.availability || {};
   const osLevel = os.level || null;
@@ -265,10 +267,10 @@ function extractBrandScanSummary(result) {
     overallLevel: osLevel,
     availabilityState: av.state || null,
     httpStatus: result.statusCode != null ? result.statusCode : null,
-    performancePercent:
-      result.brandMatrix && result.brandMatrix.performancePercent != null
-        ? result.brandMatrix.performancePercent
-        : null,
+    performancePercent: bm.performancePercent != null ? bm.performancePercent : null,
+    performanceGrade: bm.performanceGrade || null,
+    passRatePercent: bm.passRatePercent != null ? bm.passRatePercent : null,
+    consoleCapture: sm.consoleCapture || null,
     alert: !!(sec.shouldAlert || sec.alertLevel === 'critical'),
     siteUp: av.state === 'up' || (result.statusCode >= 200 && result.statusCode < 400),
   };

@@ -740,6 +740,7 @@ function buildWatchDigestEntry(brand, result) {
   const av = r.availability || {};
   const bm = r.brandMatrix || {};
   const sec = r.security || {};
+  const sm = r.scanMeta || {};
   return {
     brandName: r.brandName || b.name || '—',
     url: b.url || r.requestedUrl || r.finalUrl || '—',
@@ -764,6 +765,7 @@ function buildWatchDigestEntry(brand, result) {
     securityHeadline: sec.headline || null,
     securityAlert: !!(sec.shouldAlert || sec.alertLevel === 'critical'),
     criticalCount: sec.criticalCount || 0,
+    consoleCapture: sm.consoleCapture || null,
     error: r.error ? String(r.error).slice(0, 200) : null,
   };
 }

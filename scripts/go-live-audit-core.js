@@ -1856,7 +1856,6 @@ async function handleScan(req, res) {
     let cachedConsolePw = null;
     const wantConsoleOnServerless =
       onServerlessDeploy &&
-      !watchBatch &&
       json.captureConsole !== false &&
       process.env.GO_LIVE_AUDIT_NO_PLAYWRIGHT_CONSOLE !== '1' &&
       statusCode >= 200 &&

@@ -28,6 +28,68 @@ function watchBatchLimit(requestJson) {
   return isServerlessWatch() ? 1 : 9999;
 }
 
+/** Same host as Quick scan (POST /api/scan) — each brand gets its own serverless scan on Vercel. */
+function getSelfScanApiBase() {
+  const pub = String(process.env.GO_LIVE_AUDIT_PUBLIC_URL || '').trim().replace(/\/$/, '');
+  if (pub) return pub;
+  const vercel = String(process.env.VERCEL_URL || '').trim();
+  if (vercel) return 'https://' + vercel.replace(/^https?:\/\//, '');
+  return 'http://127.0.0.1:3000';
+}
+
+/**
+ * Vercel watch: call /api/scan per brand (identical to single-brand scan in the UI).
+ */
+async function scanOneBrandThroughScanApi(brand, requestJson) {
+  const remoteBase = String((requestJson && requestJson.scanApiBase) || '').trim().replace(/\/$/, '');
+  const base = remoteBase || getSelfScanApiBase();
+  const body = {
+    url: brand.url,
+    brandName: brand.name,
+    captureConsole: requestJson.captureConsole !== false,
+    skipEmail: true,
+    watchBatch: true,
+    securityWatch: true,
+  };
+  const headers = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    'User-Agent': 'Automation-Framework-GoLiveAudit-Watch/1.0',
+    'Bypass-Tunnel-Reminder': 'true',
+    'ngrok-skip-browser-warning': 'true',
+  };
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), 58_000);
+  let r;
+  try {
+    r = await fetch(base + '/api/scan', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: ac.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+  const text = await r.text();
+  let result;
+  try {
+    result = JSON.parse(text || '{}');
+  } catch {
+    throw new Error('Scan API returned non-JSON (HTTP ' + r.status + '): ' + text.slice(0, 160));
+  }
+  if (!r.ok || result.ok === false) {
+    const errMsg =
+      typeof result.error === 'string'
+        ? result.error
+        : result.error && result.error.message
+          ? String(result.error.message)
+          : 'Scan failed HTTP ' + r.status;
+    throw new Error(errMsg);
+  }
+  return { brand, result };
+}
+
 function mergeWatchSmtpFromRequest(json, requestJson) {
   const uiPass = String(
     (requestJson && (requestJson.gmailAppPassword || requestJson.smtpPass)) || ''
@@ -55,6 +117,9 @@ function mergeWatchSmtpFromRequest(json, requestJson) {
 
 async function scanOneBrand(brand, requestJson) {
   requestJson = requestJson || {};
+  if (isServerlessWatch()) {
+    return scanOneBrandThroughScanApi(brand, requestJson);
+  }
   const json = {
     url: brand.url,
     brandName: brand.name,
@@ -63,8 +128,7 @@ async function scanOneBrand(brand, requestJson) {
     skipEmail: true,
     watchBatch: true,
     securityWatch: true,
-    // Vercel: skip full Chromium per brand (60s limit) — scores still match single scan on Vercel (HTTP + checklist).
-    captureConsole: isServerlessWatch() ? false : requestJson.captureConsole !== false,
+    captureConsole: requestJson.captureConsole !== false,
     reportEmail: getAlertEmail(),
   };
   if (requestJson.scanApiBase) json.scanApiBase = requestJson.scanApiBase;

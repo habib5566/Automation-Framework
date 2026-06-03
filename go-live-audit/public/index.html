@@ -1881,7 +1881,7 @@
           sendEmail: true,
           emailReport: true,
           sendWatchDigest: true,
-          captureConsole: !isVercelHost(),
+          captureConsole: true,
         };
         const tunnelBaseWatch = effectiveApiBase();
         if (tunnelBaseWatch) watchBody.scanApiBase = tunnelBaseWatch;
@@ -4529,7 +4529,11 @@
                     ? '✓ HTTP ' + snap.httpStatus
                     : '✓ up';
             const scoreCell =
-              snap.performancePercent != null ? snap.performancePercent + '%' : '—';
+              snap.performancePercent != null
+                ? snap.performancePercent +
+                  '%' +
+                  (snap.passRatePercent != null ? ' · checklist ' + snap.passRatePercent + '%' : '')
+                : '—';
             const rowClass =
               b.ok === false || (snap.siteUp === false && snap.availabilityState !== 'page_not_found')
                 ? ' class="watch-row-fail"'
