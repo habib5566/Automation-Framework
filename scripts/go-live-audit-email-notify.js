@@ -254,10 +254,17 @@ function escapeHtmlForEmail(s) {
     .replace(/"/g, '&quot;');
 }
 
-function buildHtmlEmail(scanResponse) {
-  const plain = buildPlainText(scanResponse);
+function buildHtmlEmail(scanResponse, opts) {
+  opts = opts || {};
   const brand = scanResponse && scanResponse.brandName ? escapeHtmlForEmail(scanResponse.brandName) : '';
   const title = getEmailFromDisplayName();
+  const os = scanResponse && scanResponse.overallSummary;
+  const summaryLine = os
+    ? escapeHtmlForEmail((os.headline || '') + (os.subline ? ' — ' + os.subline : ''))
+    : 'Scan completed.';
+  const pdfNote = opts.pdfAttached
+    ? '<p style="margin:0 0 12px;padding:10px 12px;background:#ecfdf5;border:1px solid #86efac;border-radius:6px;color:#166534;font-size:14px"><strong>PDF report attached</strong> — please open the PDF for the complete go-live audit (summary, performance, risks, security, and checklist).</p>'
+    : '';
   return (
     '<!DOCTYPE html><html><head><meta charset="utf-8"/></head>' +
     '<body style="font-family:Segoe UI,Calibri,Arial,sans-serif;background:#f4f6f8;margin:0;padding:20px">' +
@@ -267,9 +274,12 @@ function buildHtmlEmail(scanResponse) {
     (brand ? ' — ' + brand : '') +
     '</td></tr>' +
     '<tr><td style="padding:16px 20px;color:#334155;font-size:14px;line-height:1.55">' +
-    '<pre style="white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;margin:0;color:#334155">' +
-    escapeHtmlForEmail(plain) +
-    '</pre></td></tr>' +
+    pdfNote +
+    '<p style="margin:0 0 8px;font-size:15px;line-height:1.5"><strong>' +
+    summaryLine +
+    '</strong></p>' +
+    (brand ? '<p style="margin:0;color:#64748b">Brand: ' + brand + '</p>' : '') +
+    '</td></tr>' +
     '<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#64748b">' +
     'Automated website check · Reply not monitored · Mark as not spam if this lands in Junk' +
     '</td></tr></table></body></html>'
@@ -604,19 +614,41 @@ async function maybeSendScanEmail(requestJson, scanResponse) {
     'go-live-audit@localhost';
 
   const fromField = buildFromField(fromEmail, getEmailFromDisplayName());
+  let pdfAttachment = null;
+  try {
+    const { buildScanReportPdf } = require('./go-live-audit-email-pdf.cjs');
+    pdfAttachment = await buildScanReportPdf(scanResponse);
+  } catch (pdfErr) {
+    // eslint-disable-next-line no-console
+    console.warn('[go-live-audit] PDF report skipped:', String((pdfErr && pdfErr.message) || pdfErr).slice(0, 120));
+  }
+
   const mail = {
     from: fromField,
     sender: fromField,
     to: resolved.to,
     subject: buildSubject(scanResponse),
-    text: buildPlainText(scanResponse),
-    html: buildHtmlEmail(scanResponse),
+    text:
+      buildPlainText(scanResponse) +
+      (pdfAttachment
+        ? '\n\n— A PDF version of this report is attached to this email.\n'
+        : '\n\n— PDF attachment was not generated on this run.\n'),
+    html: buildHtmlEmail(scanResponse, { pdfAttached: !!pdfAttachment }),
     replyTo: fromField,
     headers: {
       'X-Mailer': 'Go-Live-Check-List',
       'Auto-Submitted': 'auto-generated',
     },
   };
+  if (pdfAttachment && pdfAttachment.buffer) {
+    mail.attachments = [
+      {
+        filename: pdfAttachment.filename,
+        content: pdfAttachment.buffer,
+        contentType: 'application/pdf',
+      },
+    ];
+  }
 
   try {
     const sendMeta = await sendMailWithGmailFallback(t.transport, mail, t.cfg || {});
@@ -655,6 +687,11 @@ async function maybeSendScanEmail(requestJson, scanResponse) {
         'SMTP is local Mailpit only — open http://localhost:8025 on this PC. For real Gmail, run npm run go-live:email-setup.';
     } else {
       out.deliveryHint = 'Sent via ' + smtpHost + '. Check inbox and spam for ' + resolved.to + '.';
+    }
+    if (pdfAttachment && pdfAttachment.filename) {
+      out.pdfAttached = true;
+      out.pdfFilename = pdfAttachment.filename;
+      out.deliveryHint = (out.deliveryHint || '') + ' PDF report attached: ' + pdfAttachment.filename;
     }
     return out;
   } catch (e) {

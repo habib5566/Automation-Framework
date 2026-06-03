@@ -37,6 +37,13 @@ if (!fs.existsSync(emailSrc)) {
 fs.copyFileSync(emailSrc, emailDest);
 console.log('Vercel: copied scripts/go-live-audit-email-notify.js → api/go-live-audit-email-notify.js');
 
+const emailPdfSrc = path.join(__dirname, 'go-live-audit-email-pdf.cjs');
+const emailPdfDest = path.join(__dirname, '..', 'api', 'go-live-audit-email-pdf.cjs');
+if (fs.existsSync(emailPdfSrc)) {
+  fs.copyFileSync(emailPdfSrc, emailPdfDest);
+  console.log('Vercel: copied scripts/go-live-audit-email-pdf.cjs → api/go-live-audit-email-pdf.cjs');
+}
+
 const smtpEnvSrc = path.join(__dirname, 'go-live-audit-smtp-env.cjs');
 const smtpEnvDest = path.join(__dirname, '..', 'api', 'go-live-audit-smtp-env.cjs');
 if (!fs.existsSync(smtpEnvSrc)) {

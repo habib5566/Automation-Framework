@@ -2004,7 +2004,20 @@
             er.deliveryHint && String(er.deliveryHint).trim()
               ? '<div class="email-fallback-hint">' + escapeHtml(String(er.deliveryHint)) + '</div>'
               : '';
-          return '<div class="scan-msg scan-msg-ok"><strong>Email</strong> — scan summary sent' + toHtml + '.' + hint + '</div>';
+          const pdfNote =
+            er.pdfAttached && er.pdfFilename
+              ? ' Professional PDF report attached (<code>' + escapeHtml(String(er.pdfFilename)) + '</code>).'
+              : er.pdfAttached
+                ? ' Professional PDF report attached.'
+                : '';
+          return (
+            '<div class="scan-msg scan-msg-ok"><strong>Email</strong> — scan summary sent' +
+            toHtml +
+            '.' +
+            pdfNote +
+            hint +
+            '</div>'
+          );
         }
         if (er.savedLocal && er.downloadPath) {
           const dl = escapeHtml(String(er.downloadPath));
