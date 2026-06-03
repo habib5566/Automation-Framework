@@ -212,4 +212,108 @@ async function buildScanReportPdf(scanResponse) {
   });
 }
 
-module.exports = { buildScanReportPdf, buildPdfFilename, pdfEnabled };
+/**
+ * Combined PDF for multi-brand watch digest email.
+ * @param {Array<Record<string, unknown>>} entries
+ */
+async function buildWatchDigestPdf(entries) {
+  if (!pdfEnabled()) return null;
+  const list = Array.isArray(entries) ? entries.filter(Boolean) : [];
+  if (!list.length) return null;
+  let PDFDocument;
+  try {
+    PDFDocument = require('pdfkit');
+  } catch {
+    return null;
+  }
+  const title = String(process.env.GO_LIVE_AUDIT_EMAIL_FROM_NAME || '').trim() || DEFAULT_TITLE;
+
+  return new Promise((resolve) => {
+    const doc = new PDFDocument({ size: 'A4', margin: 50, bufferPages: true });
+    const chunks = [];
+    doc.on('data', (c) => chunks.push(c));
+    doc.on('error', () => resolve(null));
+    doc.on('end', () => {
+      resolve({
+        buffer: Buffer.concat(chunks),
+        filename: 'Go-Live-Watch-All-Brands-' + new Date().toISOString().slice(0, 10) + '.pdf',
+      });
+    });
+
+    try {
+      doc.rect(0, 0, 595, 72).fill('#1e3a5f');
+      doc.fillColor('#ffffff').fontSize(20).font('Helvetica-Bold').text(title, 50, 28, { width: 495 });
+      doc.fontSize(11).font('Helvetica').text('All brands — watch report', 50, 52);
+      doc.fillColor('#334155');
+      doc.y = 88;
+      drawKeyValue(doc, 'Generated (UTC)', new Date().toISOString());
+      drawKeyValue(doc, 'Brands in report', String(list.length));
+      doc.moveDown(0.5);
+
+      drawSectionTitle(doc, 'Summary table');
+      const colBrand = 50;
+      const colScore = 200;
+      const colHttp = 260;
+      const colSum = 320;
+      doc.fontSize(9).font('Helvetica-Bold');
+      doc.text('Brand', colBrand, doc.y, { continued: true, width: 140 });
+      doc.text('Score', colScore, doc.y, { continued: true, width: 55 });
+      doc.text('HTTP', colHttp, doc.y, { continued: true, width: 55 });
+      doc.text('Summary', colSum, doc.y, { width: 220 });
+      doc.moveDown(0.35);
+      doc.font('Helvetica').fontSize(8);
+
+      for (const e of list) {
+        if (doc.y > 700) {
+          doc.addPage();
+          doc.fontSize(8).font('Helvetica');
+        }
+        const y0 = doc.y;
+        const scoreTxt =
+          e.performancePercent != null ? e.performancePercent + '% ' + (e.performanceGrade || '') : '—';
+        doc.text(safeText(e.brandName, 60), colBrand, y0, { width: 145 });
+        doc.text(scoreTxt, colScore, y0, { width: 55 });
+        doc.text(e.statusCode != null ? String(e.statusCode) : '—', colHttp, y0, { width: 50 });
+        doc.text(safeText(e.overallHeadline, 100), colSum, y0, { width: 220 });
+        doc.moveDown(0.55);
+      }
+
+      drawSectionTitle(doc, 'Per-brand detail');
+      for (const e of list) {
+        if (doc.y > 680) {
+          doc.addPage();
+          doc.fillColor('#334155').fontSize(10).font('Helvetica');
+        }
+        doc.font('Helvetica-Bold').fontSize(11).fillColor('#1e3a5f').text(safeText(e.brandName, 80));
+        doc.font('Helvetica').fontSize(9).fillColor('#334155');
+        drawKeyValue(doc, 'URL', e.url);
+        if (e.performancePercent != null) {
+          drawKeyValue(doc, 'Site score', e.performancePercent + '% (grade ' + (e.performanceGrade || '—') + ')');
+        }
+        drawKeyValue(doc, 'HTTP', e.statusCode != null ? String(e.statusCode) : '—');
+        drawKeyValue(doc, 'Availability', e.availabilityHeadline || '—');
+        drawKeyValue(doc, 'Overall', e.overallHeadline || '—');
+        drawKeyValue(
+          doc,
+          'Checklist',
+          'Pass ' + (e.pass || 0) + ' · Fail ' + (e.fail || 0) + ' · Manual ' + (e.pending || 0)
+        );
+        if (e.securityHeadline) drawKeyValue(doc, 'Security', e.securityHeadline);
+        doc.moveDown(0.4);
+      }
+
+      doc.moveDown(0.5);
+      doc.fontSize(8).fillColor('#94a3b8').text(
+        'Combined watch report — scores reflect checklist pass/fail, manual-review rows, and detected issues per site.',
+        50,
+        doc.y,
+        { width: 495 }
+      );
+      doc.end();
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+module.exports = { buildScanReportPdf, buildWatchDigestPdf, buildPdfFilename, pdfEnabled };

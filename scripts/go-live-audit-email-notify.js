@@ -756,6 +756,8 @@ function buildWatchDigestEntry(brand, result) {
     performanceGrade: bm.performanceGrade || null,
     pass: (os.counts && os.counts.pass) || 0,
     fail: (os.counts && os.counts.fail) || 0,
+    pending: (os.counts && os.counts.pending) || 0,
+    securityWarns: sec.warnCount || 0,
     securityHeadline: sec.headline || null,
     securityAlert: !!(sec.shouldAlert || sec.alertLevel === 'critical'),
     criticalCount: sec.criticalCount || 0,
@@ -800,7 +802,14 @@ function buildWatchDigestPlainText(entries) {
       lines.push('  Site score: ' + e.performancePercent + '% (grade ' + (e.performanceGrade || '—') + ')');
     }
     lines.push('  Overall: ' + (e.overallHeadline || '—'));
-    lines.push('  Checklist: Pass ' + (e.pass || 0) + ' · Fail ' + (e.fail || 0));
+    lines.push(
+      '  Checklist: Pass ' +
+        (e.pass || 0) +
+        ' · Fail ' +
+        (e.fail || 0) +
+        ' · Manual review ' +
+        (e.pending || 0)
+    );
     if (e.securityHeadline) lines.push('  Security: ' + e.securityHeadline);
     if (e.securityAlert) lines.push('  ⚠ SECURITY ALERT — review this brand');
   }
@@ -903,16 +912,40 @@ async function maybeSendWatchDigestEmail(requestJson, entries) {
     'go-live-audit@localhost';
   const fromField = buildFromField(fromEmail, getEmailFromDisplayName());
 
+  let pdfAttachment = null;
+  try {
+    const { buildWatchDigestPdf } = require('./go-live-audit-email-pdf.cjs');
+    pdfAttachment = await buildWatchDigestPdf(list);
+  } catch (pdfErr) {
+    // eslint-disable-next-line no-console
+    console.warn('[go-live-audit] watch digest PDF skipped:', String((pdfErr && pdfErr.message) || pdfErr).slice(0, 100));
+  }
+
   const mail = {
     from: fromField,
     sender: fromField,
     to: resolved.to,
     subject: buildWatchDigestSubject(list),
-    text: buildWatchDigestPlainText(list),
-    html: buildWatchDigestHtml(list),
+    text:
+      buildWatchDigestPlainText(list) +
+      (pdfAttachment ? '\n\n— PDF summary of all brands is attached.\n' : ''),
+    html:
+      buildWatchDigestHtml(list) +
+      (pdfAttachment
+        ? '<p style="margin:12px 0 0;font-size:13px;color:#166534"><strong>PDF attached</strong> — all brands in one file.</p>'
+        : ''),
     replyTo: fromField,
     headers: { 'X-Mailer': 'Go-Live-Check-List-Watch-Digest', 'Auto-Submitted': 'auto-generated' },
   };
+  if (pdfAttachment && pdfAttachment.buffer) {
+    mail.attachments = [
+      {
+        filename: pdfAttachment.filename,
+        content: pdfAttachment.buffer,
+        contentType: 'application/pdf',
+      },
+    ];
+  }
 
   try {
     const sendMeta = await sendMailWithGmailFallback(t.transport, mail, t.cfg || {});
@@ -934,8 +967,13 @@ async function maybeSendWatchDigestEmail(requestJson, entries) {
         ' brand(s). Check inbox and spam for ' +
         resolved.to +
         '.' +
-        (sendMeta.usedPort587 ? ' (port 587)' : ''),
+        (sendMeta.usedPort587 ? ' (port 587)' : '') +
+        (pdfAttachment && pdfAttachment.filename ? ' PDF: ' + pdfAttachment.filename : ''),
     };
+    if (pdfAttachment && pdfAttachment.filename) {
+      out.pdfAttached = true;
+      out.pdfFilename = pdfAttachment.filename;
+    }
   } catch (e) {
     const msg = String((e && e.message) || e);
     // eslint-disable-next-line no-console

@@ -53,8 +53,7 @@ function computeChecklistPercent(counts) {
 const DETECTED_FAIL_IDS = new Set(['I01', 'C01', 'U03', 'P03', 'U02']);
 
 /**
- * Genuine site score from what the scan detected (HTTP + material issues + critical threats).
- * Does not mix in manual-review (pending) rows or soft checklist noise.
+ * Site score from detected signals — spreads brands by checklist + issues (not flat 97% for all).
  */
 function computeGenuinePerformancePercent({
   reachable,
@@ -64,6 +63,7 @@ function computeGenuinePerformancePercent({
   consoleDisplaySummary,
   security,
   autoChecks,
+  overallSummary,
 }) {
   if (!reachable) return 0;
   const sc = Number(statusCode) || 0;
@@ -76,29 +76,49 @@ function computeGenuinePerformancePercent({
   if (sc === 404 || avState === 'page_not_found') return 54;
   if (sc >= 400 && sc < 500) return 46;
 
+  const counts = (overallSummary && overallSummary.counts) || {};
+  const pass = counts.pass || 0;
+  const fail = counts.fail || 0;
+  const pending = counts.pending || 0;
+  const na = counts.notScored || 0;
+  const total = pass + fail + pending + na;
+
   const siteErr = Number((siteIssuesSummary && siteIssuesSummary.errors) || 0);
+  const siteWarn = Number((siteIssuesSummary && siteIssuesSummary.warns) || 0);
   const consoleErr = Number((consoleDisplaySummary && consoleDisplaySummary.errors) || 0);
+  const consoleWarn = Number((consoleDisplaySummary && consoleDisplaySummary.warns) || 0);
   const critical = Number((security && security.criticalCount) || 0);
+  const secWarn = Number((security && security.warnCount) || 0);
 
   let hardFails = 0;
+  let allFails = 0;
   for (const ac of autoChecks || []) {
     if (!ac || ac.status !== 'fail') continue;
+    allFails += 1;
     if (DETECTED_FAIL_IDS.has(ac.id)) hardFails += 1;
   }
 
-  let score = 97;
-  score -= Math.min(14, siteErr * 7);
-  score -= Math.min(12, consoleErr * 4);
-  score -= Math.min(24, critical * 12);
-  score -= Math.min(10, hardFails * 5);
+  let score = 90;
+  if (total > 0) {
+    const passShare = pass / total;
+    const failShare = fail / total;
+    const pendingShare = pending / total;
+    score = Math.round(58 + passShare * 32 - failShare * 28 - pendingShare * 14);
+  }
 
-  const liveOk =
-    (avState === 'up' || (sc >= 200 && sc < 300)) &&
-    siteErr === 0 &&
-    consoleErr === 0 &&
-    critical === 0;
-  if (liveOk && hardFails === 0) score = Math.max(score, 92);
-  else if (liveOk && hardFails <= 1) score = Math.max(score, 85);
+  score -= Math.min(12, siteErr * 6);
+  score -= Math.min(6, siteWarn * 2);
+  score -= Math.min(10, consoleErr * 4);
+  score -= Math.min(6, consoleWarn * 1.5);
+  score -= Math.min(22, critical * 11);
+  score -= Math.min(10, secWarn * 1.2);
+  score -= Math.min(14, allFails * 3);
+  score -= Math.min(8, hardFails * 4);
+
+  const lvl = overallSummary && overallSummary.level ? String(overallSummary.level) : '';
+  if (lvl === 'bad') score -= 22;
+  else if (lvl === 'concern') score -= 11;
+  else if (lvl === 'caution') score -= 6;
 
   return clampPct(score);
 }
@@ -155,6 +175,7 @@ function buildBrandMatrix({
     consoleDisplaySummary: consoleSum,
     security,
     autoChecks,
+    overallSummary,
   });
 
   let grade = 'F';
