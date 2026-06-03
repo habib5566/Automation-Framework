@@ -1836,9 +1836,12 @@
         return isLiveAuditHost();
       }
 
-      /** On Vercel/live: default same-origin scan; tunnel optional for local-quality results. */
+      /** On live deploy: default same-origin scan; tunnel optional for local-quality results. */
       function applyVercelNoTunnelDefaults() {
         if (!useSameOriginApiByDefault()) return;
+        if (isLiveAuditHost() && !state.tunnelLiveEnabled && activeScanApiBase()) {
+          state.tunnelLiveEnabled = false;
+        }
         if (typeof state.tunnelLiveEnabled !== 'boolean') state.tunnelLiveEnabled = false;
         const banner = document.getElementById('vercelNoTunnelBanner');
         if (banner) {
@@ -2677,11 +2680,55 @@
         return normalizeScanApiBase(state.apiBaseUrl);
       }
 
-      /** On Vercel: ignore saved tunnel unless user explicitly enables it (stops ngrok errors). */
+      /**
+       * Live deploy (Vercel or custom domain): same-origin /api/* unless tunnel checkbox ON.
+       * Custom domains are NOT *.vercel.app — old code wrongly used saved ngrok URL → non-JSON errors.
+       */
       function effectiveApiBase() {
-        if (!isVercelHost()) return activeScanApiBase();
+        if (!isLiveAuditHost()) return activeScanApiBase();
         if (state.tunnelLiveEnabled && activeScanApiBase()) return activeScanApiBase();
         return '';
+      }
+
+      function classifyNonJsonResponse(rawText, status, endpoint) {
+        const sample = String(rawText || '').slice(0, 800).toLowerCase();
+        const ep = endpoint || '/api/scan';
+        if (status === 401 || status === 403 || /deployment protection|vercel authentication|login to vercel/i.test(sample)) {
+          return (
+            'Vercel Deployment Protection is blocking <code>' +
+            escapeHtml(ep) +
+            '</code>. Project → Settings → Deployment Protection → Production → Off, then refresh.'
+          );
+        }
+        if (status === 404 || /not found|404/.test(sample)) {
+          return (
+            'Scan API not found (HTTP 404). Vercel: <strong>Root Directory</strong> and <strong>Output Directory</strong> both empty, Build <code>npm run build</code>, Redeploy. Browser test: <a href="/api/ping" target="_blank" rel="noopener">/api/ping</a> must show JSON.'
+          );
+        }
+        if (/network authentication required|ngrok|tunnel reminder|bypass-tunnel/i.test(sample)) {
+          return 'Tunnel/ngrok returned HTML, not JSON. Clear <strong>Scan API base</strong> (Clear tunnel button) or paste a fresh tunnel URL with checkbox ON.';
+        }
+        if (/<!doctype html|<html[\s>]/i.test(sample)) {
+          const tunnelOn = !!effectiveApiBase();
+          return (
+            'Server returned HTML instead of JSON at <code>' +
+            escapeHtml(ep) +
+            '</code>. ' +
+            (isLiveAuditHost()
+              ? tunnelOn
+                ? 'Tunnel dead or wrong — clear Scan API base or restart <code>npm run go-live:audit:tunnel</code>.'
+                : 'Redeploy full repo (needs <code>api/scan.js</code>) or turn off Deployment Protection.'
+              : 'Run <code>npm run go-live:audit</code> on this PC, or set Scan API base to your tunnel.') +
+            ' See <code>go-live-audit/VERCEL.md</code>.'
+          );
+        }
+        return (
+          'Server returned non-JSON (HTTP ' +
+          (status != null ? status : '?') +
+          ') at <code>' +
+          escapeHtml(ep) +
+          '</code>. Clear Scan API base or redeploy.'
+        );
       }
 
       function needsNgrokBypassHeaders(urlOrBase) {
@@ -2741,9 +2788,20 @@
       }
 
       async function sanitizeBrokenTunnelBase() {
-        if (isVercelHost() && !state.tunnelLiveEnabled) {
-          if (state.apiBaseUrl) {
-            /* keep URL in field for copy but do not use for API */
+        if (isLiveAuditHost() && !state.tunnelLiveEnabled) {
+          const saved = activeScanApiBase();
+          if (saved) {
+            try {
+              const ping = await pingApiBase(window.location.origin.replace(/\/$/, '') + '/api/ping');
+              if (ping.ok) {
+                showBackendBanner(
+                  'warn',
+                  '<strong>Purana tunnel URL ignore ho raha hai</strong> — live scan ab isi site ka <code>/api/scan</code> use karta hai. Local jaisa chahiye to checkbox <strong>Use tunnel for scan</strong> ON karo.'
+                );
+              }
+            } catch (e) {
+              /* ignore */
+            }
           }
           return false;
         }
@@ -2807,18 +2865,35 @@
             typeof AbortSignal !== 'undefined' && AbortSignal.timeout
               ? AbortSignal.timeout(isVercelHost() ? 25000 : 12000)
               : undefined;
+          const ep = emailStatusEndpoint();
           const r = await fetch(
-            emailStatusEndpoint(),
+            ep,
             Object.assign({}, buildApiFetchInit('GET'), { signal: sig })
           );
-          const data = await r.json().catch(function () {
-            return {};
+          const ct = (r.headers.get('content-type') || '').toLowerCase();
+          const raw = await r.text().catch(function () {
+            return '';
           });
+          let data = {};
+          if (ct.includes('application/json')) {
+            try {
+              data = raw ? JSON.parse(raw) : {};
+            } catch (e) {
+              data = {};
+            }
+          }
           const em = data.email;
-          if (!r.ok || !em) {
+          if (!ct.includes('application/json') || !r.ok || !em) {
             el.className = 'email-config-status email-bad';
-            el.innerHTML =
-              '<strong>Email setup unknown.</strong> Restart <code>npm run go-live:audit</code>, then run <code>npm run go-live:email-setup</code> in the project folder.';
+            if (!ct.includes('application/json') && isLiveAuditHost()) {
+              el.innerHTML =
+                '<strong>Email API unreachable (non-JSON).</strong> ' +
+                classifyNonJsonResponse(raw, r.status, ep) +
+                '<div class="email-fallback-hint" style="margin-top:0.5rem"><strong>SMTP on Vercel:</strong> <code>GO_LIVE_AUDIT_SMTP_USER</code>, <code>GO_LIVE_AUDIT_SMTP_PASS</code>, <code>GO_LIVE_AUDIT_EMAIL_FROM</code> → Redeploy. Or paste Gmail + App Password below.</div>';
+            } else {
+              el.innerHTML =
+                '<strong>Email setup unknown.</strong> Restart <code>npm run go-live:audit</code>, then run <code>npm run go-live:email-setup</code> in the project folder.';
+            }
             return;
           }
           el.className = 'email-config-status ' + (em.ready ? 'email-good' : 'email-bad');
@@ -4111,7 +4186,10 @@
                 '<div class="scan-msg scan-msg-warn"><strong>Tunnel block (ngrok).</strong> Tunnel band kar diya — dubara <strong>Run quick scan</strong> dabao (ab Vercel scan chalega). Local jaisa chahiye to naya tunnel URL + checkbox ON.</div>';
               return;
             }
-            data = { ok: false, error: 'Server returned non-JSON. Check Scan API base or redeploy.' };
+            data = {
+              ok: false,
+              error: classifyNonJsonResponse(rawScan, res.status, scanApiEndpoint),
+            };
           }
           if (!res.ok || data.ok === false) {
             out.hidden = false;
@@ -4633,7 +4711,7 @@
         const btn = document.getElementById('btnWatchAll');
         if (!(await ensureEmailReadyBeforeWatch())) return;
         btn.disabled = true;
-        const batchSize = isVercelHost() ? 1 : 5;
+        const batchSize = isLiveAuditHost() ? 1 : 5;
         const watchBody = buildWatchRequestBody();
         if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
           try {
