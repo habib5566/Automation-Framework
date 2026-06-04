@@ -271,7 +271,13 @@ async function runWatchPass(requestJson) {
   for (const brand of brands) {
     try {
       console.log('[go-live-watch]', brand.name, '→', brand.url);
-      const { result } = await scanOneBrand(brand, requestJson);
+      let scanOutcome = await scanOneBrand(brand, requestJson);
+      let result = scanOutcome.result;
+      if (result && result.ok === false && isServerlessWatch()) {
+        await new Promise((r) => setTimeout(r, 3000));
+        scanOutcome = await scanOneBrand(brand, requestJson);
+        result = scanOutcome.result;
+      }
       if (result && result.ok !== false) {
         try {
           const { saveBrandReport } = require('./go-live-audit-brand-reports.cjs');

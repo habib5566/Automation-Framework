@@ -2085,19 +2085,16 @@
         return watchBody;
       }
 
-      async function ensureEmailReadyBeforeWatch() {
+      function hasWatchEmailCredentials() {
         const pass = gmailAppPasswordEl
           ? gmailAppPasswordEl.value.trim().replace(/\s+/g, '')
           : '';
         const sender = gmailSenderEl ? gmailSenderEl.value.trim() : '';
-        if (pass.length >= 16 && !pass.includes('@')) {
-          if (!sender.includes('@')) {
-            alert('Pehle Sender Gmail likho (jis account ka App Password hai).');
-            if (gmailSenderEl) gmailSenderEl.focus();
-            return false;
-          }
-          return true;
-        }
+        return pass.length >= 16 && !pass.includes('@') && sender.includes('@');
+      }
+
+      async function ensureEmailReadyBeforeWatch() {
+        if (hasWatchEmailCredentials()) return true;
         try {
           const sig =
             typeof AbortSignal !== 'undefined' && AbortSignal.timeout
@@ -2112,25 +2109,26 @@
           });
           if (data.email && data.email.ready) return true;
         } catch (e) {
-          /* fall through — form password above is enough */
+          /* scans can still run */
         }
-        alert(
-          'Email bhejne ke liye:\n\n' +
-            '1) Neeche Sender Gmail + 16-char App Password paste karo\n' +
-            '   phir Watch dubara chalao\n\n' +
-            'YA Vercel me SMTP_USER + SMTP_PASS set karke Redeploy'
-        );
-        const emailBox = document.getElementById('emailConfigStatus');
-        if (emailBox) emailBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        if (gmailAppPasswordEl) gmailAppPasswordEl.focus();
         return false;
       }
 
       function formatApiError(err, fallback) {
         if (err == null || err === '') return fallback || 'Unknown error';
-        if (typeof err === 'string') return err;
+        if (typeof err === 'string') {
+          if (/error occurred with your deployment/i.test(err)) {
+            return (
+              'Vercel scan timed out or crashed on this brand (server busy). ' +
+              'Watch will skip and continue other brands — try Quick scan for this URL alone, or Redeploy and wait 30s between runs.'
+            );
+          }
+          return err;
+        }
         if (typeof err === 'object') {
-          if (err.message && typeof err.message === 'string') return err.message;
+          if (err.message && typeof err.message === 'string') {
+            return formatApiError(err.message, fallback);
+          }
           if (err.error) return formatApiError(err.error, fallback);
           if (err.code && err.message) return String(err.code) + ': ' + String(err.message);
           try {
@@ -4760,14 +4758,18 @@
         let emailBanner = '';
         const digestOk = s.digestEmail && s.digestEmail.sent;
         if (!opts.inProgress && !(s.emailsSent > 0 || digestOk)) {
+          const emReason =
+            s.digestEmail && s.digestEmail.error
+              ? String(s.digestEmail.error)
+              : s.digestEmail && s.digestEmail.reason
+                ? String(s.digestEmail.reason)
+                : isVercelHost()
+                  ? 'Paste <strong>Sender Gmail</strong> + App Password below, or set Vercel SMTP env → Redeploy.'
+                  : 'Run <code>npm run go-live:email-setup</code> or paste App Password below, then Watch again.';
           emailBanner =
             '<div class="scan-msg scan-msg-warn" style="margin:0.5rem 0">' +
             '<strong>Combined watch email not sent.</strong> ' +
-            (s.digestEmail && s.digestEmail.error
-              ? escapeHtml(String(s.digestEmail.error).slice(0, 200))
-              : isVercelHost()
-                ? 'Paste <strong>Sender Gmail</strong> + App Password below, or set Vercel SMTP env → Redeploy.'
-                : 'Run <code>npm run go-live:email-setup</code> or paste App Password below, then Watch again.') +
+            escapeHtml(emReason.slice(0, 320)) +
             '</div>';
         } else if (!opts.inProgress && (s.emailsSent > 0 || digestOk)) {
           const n = (s.digestEmail && s.digestEmail.brandCount) || (s.brands && s.brands.length) || s.scanned || 0;
@@ -5026,7 +5028,37 @@
         }
       }
 
-      /** Live/Vercel: same POST /api/scan as “Run quick scan” so scores + PDF match single scan. */
+      function pushWatchBrandFailure(merged, brand, errMsg) {
+        merged.brands.push({
+          name: brand.name,
+          url: brand.url,
+          ok: false,
+          securityAlert: false,
+          email: { status: 'failed', error: String(errMsg || '').slice(0, 240) },
+          snapshot: {
+            brandName: brand.name,
+            url: brand.url,
+            headline: String(errMsg || 'Scan failed').slice(0, 120),
+            siteUp: false,
+          },
+          digest: {
+            brandName: brand.name,
+            url: brand.url,
+            ok: false,
+            error: String(errMsg || '').slice(0, 200),
+          },
+        });
+        merged.scanned += 1;
+      }
+
+      function watchPauseBetweenBrands() {
+        if (!isLiveAuditHost()) return Promise.resolve();
+        return new Promise(function (resolve) {
+          setTimeout(resolve, 2500);
+        });
+      }
+
+      /** Optional: browser calls /api/scan per brand (can hit Vercel deployment limits). Prefer watch/run on live. */
       async function runWatchAllViaQuickScan(btn, merged, watchBody) {
         const brands = (await refreshWatchBrandsCache()).filter(function (b) {
           return b && b.enabled !== false && b.url;
@@ -5064,26 +5096,38 @@
             try {
               data = raw ? JSON.parse(raw) : {};
             } catch (parseErr) {
-              alert(
-                'Watch scan failed for ' +
-                  brand.name +
-                  ': ' +
-                  classifyNonJsonResponse(raw, res.status, scanEndpoint())
+              pushWatchBrandFailure(
+                merged,
+                brand,
+                classifyNonJsonResponse(raw, res.status, scanEndpoint())
               );
-              return;
+              renderWatchSummaryPanel(merged, {
+                inProgress: i + 1 < brands.length,
+                done: merged.scanned,
+                total: brands.length,
+              });
+              await watchPauseBetweenBrands();
+              continue;
             }
             if (!res.ok || data.ok === false) {
-              alert(
-                'Watch scan failed for ' +
-                  brand.name +
-                  ': ' +
-                  formatApiError(data.error || data, 'HTTP ' + res.status)
-              );
-              return;
+              pushWatchBrandFailure(merged, brand, formatApiError(data.error || data, 'HTTP ' + res.status));
+              renderWatchSummaryPanel(merged, {
+                inProgress: i + 1 < brands.length,
+                done: merged.scanned,
+                total: brands.length,
+              });
+              await watchPauseBetweenBrands();
+              continue;
             }
           } catch (scanErr) {
-            alert('Watch scan failed for ' + brand.name + ': ' + String(scanErr.message || scanErr));
-            return;
+            pushWatchBrandFailure(merged, brand, formatApiError(scanErr, String(scanErr.message || scanErr)));
+            renderWatchSummaryPanel(merged, {
+              inProgress: i + 1 < brands.length,
+              done: merged.scanned,
+              total: brands.length,
+            });
+            await watchPauseBetweenBrands();
+            continue;
           }
           const sec = data.security || {};
           merged.brands.push({
@@ -5111,7 +5155,6 @@
 
       document.getElementById('btnWatchAll').addEventListener('click', async function () {
         const btn = document.getElementById('btnWatchAll');
-        if (!(await ensureEmailReadyBeforeWatch())) return;
         btn.disabled = true;
         const batchSize = isLiveAuditHost() ? 1 : 5;
         const watchBody = buildWatchRequestBody();
@@ -5134,23 +5177,18 @@
           alertEmail: DEFAULT_ALERT_EMAIL,
         };
         try {
-          if (isLiveAuditHost()) {
-            await runWatchAllViaQuickScan(btn, merged, watchBody);
-            saveWatchSummary(merged);
-            renderWatchSummaryPanel(merged, { inProgress: false });
-            maybeNotifyWatchDone(merged);
-            loadBrandWatchList();
-            return;
-          }
           while (true) {
             const done = total != null ? Math.min(offset, total) : offset;
+            const tot = total != null ? total : merged.totalBrands || '?';
             btn.textContent =
-              total != null
-                ? 'Watching ' + done + '/' + total + '…'
-                : 'Watching all brands…';
+              isLiveAuditHost() && total != null
+                ? 'Watching ' + done + '/' + tot + ' (Vercel, 1 brand/step)…'
+                : total != null
+                  ? 'Watching ' + done + '/' + tot + '…'
+                  : 'Watching all brands…';
             const sig =
               typeof AbortSignal !== 'undefined' && AbortSignal.timeout
-                ? AbortSignal.timeout(120000)
+                ? AbortSignal.timeout(isLiveAuditHost() ? 180000 : 120000)
                 : undefined;
             const r = await fetch(
               watchRunEndpoint(),
@@ -5163,9 +5201,19 @@
                 { signal: sig }
               )
             );
-            const data = await r.json().catch(function () {
-              return {};
+            const rawWatch = await r.text().catch(function () {
+              return '';
             });
+            let data = {};
+            try {
+              data = rawWatch ? JSON.parse(rawWatch) : {};
+            } catch (parseErr) {
+              alert(
+                'Watch failed: ' +
+                  classifyNonJsonResponse(rawWatch, r.status, watchRunEndpoint())
+              );
+              return;
+            }
             if (!r.ok || data.ok === false) {
               alert(
                 'Watch failed: ' +
@@ -5187,8 +5235,18 @@
             });
             if (!s.hasMore || s.nextOffset == null) break;
             offset = s.nextOffset;
+            await watchPauseBetweenBrands();
           }
-          await sendWatchDigestEmail(merged, watchBody, btn);
+          if (!(await ensureEmailReadyBeforeWatch())) {
+            merged.digestEmail = {
+              skipped: true,
+              reason:
+                'Scans finished but email not configured. Paste Sender Gmail + App Password below, then click Watch again (only email step). Or set Vercel SMTP env + Redeploy.',
+            };
+            merged.emailsSkipped = 1;
+          } else {
+            await sendWatchDigestEmail(merged, watchBody, btn);
+          }
           saveWatchSummary(merged);
           renderWatchSummaryPanel(merged, { inProgress: false });
           maybeNotifyWatchDone(merged);
