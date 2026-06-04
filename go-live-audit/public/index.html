@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Website Go-Live Master Checklist — Audit</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1450,6 +1450,191 @@
       color: var(--text-secondary);
       font-weight: 500;
     }
+
+    /* ——— Responsive: phone · tablet · laptop (shareable Vercel link) ——— */
+    html {
+      overflow-x: clip;
+      -webkit-text-size-adjust: 100%;
+    }
+    body {
+      overflow-x: clip;
+      padding-left: env(safe-area-inset-left, 0);
+      padding-right: env(safe-area-inset-right, 0);
+    }
+    .site-footer {
+      padding-bottom: calc(clamp(1.5rem, 3vw, 2.25rem) + env(safe-area-inset-bottom, 0px));
+    }
+    .sub,
+    .panel-desc,
+    .scan-msg,
+    .backend-banner,
+    .email-config-status,
+    .avail-banner .avail-detail {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .responsive-table-wrap {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 0.65rem 0 0;
+      border-radius: var(--radius-sm);
+    }
+    .brand-matrix-panel,
+    .watch-summary-panel {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    @media (max-width: 900px) {
+      .check-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1.15rem 1.1rem;
+      }
+      .check-aside {
+        width: 100%;
+        max-width: 100%;
+      }
+      .check-text {
+        min-width: 0;
+      }
+      .brands-hub-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      }
+    }
+    @media (max-width: 640px) {
+      body {
+        font-size: 1rem;
+      }
+      .site-header,
+      .app-main,
+      .dashboard-stack,
+      .scanner-meta-details,
+      .app-nav,
+      .view-brands-hub,
+      .brand-detail-head {
+        padding-left: max(1rem, env(safe-area-inset-left, 0px));
+        padding-right: max(1rem, env(safe-area-inset-right, 0px));
+      }
+      .panel {
+        padding: 1.35rem 1.05rem;
+        border-radius: var(--radius-lg);
+      }
+      #checklist {
+        padding: 1.2rem 0.95rem;
+      }
+      .app-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.4rem;
+        margin-bottom: 0.75rem;
+      }
+      .app-nav .nav-sep {
+        display: none;
+      }
+      .app-nav a {
+        display: inline-block;
+        padding: 0.35rem 0;
+        min-height: 2.5rem;
+        line-height: 2.5rem;
+      }
+      .scan-actions .btn-group {
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: stretch;
+      }
+      .scan-actions .btn-group button,
+      .brand-watch-panel .secondary,
+      #btnWatchAll,
+      #btnBrandRescan,
+      #btnClearScanApiBase {
+        width: 100%;
+        min-height: 2.85rem;
+      }
+      button {
+        min-height: 2.75rem;
+      }
+      .scan-actions {
+        gap: 0.85rem;
+      }
+      .email-options {
+        max-width: none;
+        padding: 1rem 0.95rem;
+      }
+      .section-head {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .section-meta {
+        align-self: flex-start;
+      }
+      .brand-matrix-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.85rem;
+      }
+      .brands-hub-grid {
+        grid-template-columns: 1fr;
+      }
+      .insight-card,
+      .site-stack-panel,
+      .brand-matrix-panel,
+      .console-errors-panel,
+      .vulnerabilities-panel,
+      .security-threats-panel {
+        padding: 1.05rem 0.95rem;
+      }
+      .watch-summary-table {
+        min-width: 30rem;
+        font-size: 0.78rem;
+      }
+      .watch-summary-table th,
+      .watch-summary-table td {
+        padding: 0.45rem 0.4rem;
+      }
+      .watch-summary-actions {
+        flex-direction: column;
+      }
+      .watch-summary-actions a.secondary {
+        display: block;
+        width: 100%;
+        text-align: center;
+        box-sizing: border-box;
+      }
+      .check-row:hover {
+        transform: none;
+      }
+      input[type="url"],
+      input[type="text"],
+      input[type="email"],
+      input[type="password"],
+      select.status-select {
+        font-size: 16px;
+      }
+      .brand-detail-head h2 {
+        font-size: 1.28rem;
+      }
+      .view-brands-hub h2 {
+        font-size: 1.3rem;
+      }
+    }
+    @media (max-width: 380px) {
+      .id-title-line {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .stack-chips {
+        gap: 0.35rem;
+      }
+      .stack-chip {
+        font-size: 0.72rem;
+        max-width: 100%;
+      }
+      .brand-matrix-pct {
+        font-size: 2.1rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1472,8 +1657,8 @@
   <section id="viewBrandsHub" class="view-brands-hub" hidden aria-labelledby="brands-hub-heading">
     <h2 id="brands-hub-heading">All brands</h2>
     <p class="brands-hub-intro">
-      <strong>One row per website</strong> (same URL is not listed twice). Tap a card → that brand opens on its own page; use
-      <strong>Scan this brand again</strong> there. Reports are saved in this browser until you scan again.
+      <strong>One row per website</strong> (same URL is not listed twice). Tap a card on phone or click on desktop → that brand opens on its own page; use
+      <strong>Scan this brand again</strong> there. Works on mobile, tablet, and laptop. Reports are saved in this browser until you scan again.
     </p>
     <div id="brandsHubGrid" class="brands-hub-grid" role="list"></div>
   </section>
@@ -3365,7 +3550,7 @@
           html += '</div>';
         }
         html += '</div>';
-        html += '<table class="brand-matrix-table"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>';
+        html += '<div class="responsive-table-wrap"><table class="brand-matrix-table"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>';
         (brandMatrix.matrix || []).forEach(function (row) {
           html +=
             '<tr><td>' +
@@ -3374,7 +3559,7 @@
             escapeHtml(row.value) +
             '</td></tr>';
         });
-        html += '</tbody></table>';
+        html += '</tbody></table></div>';
         panel.innerHTML = html;
       }
 
@@ -4600,7 +4785,7 @@
         let table = '';
         if (Array.isArray(s.brands) && s.brands.length) {
           table =
-            '<table class="watch-summary-table"><thead><tr><th>Brand</th><th>Site</th><th>Score</th><th>Console</th><th>Pass/Fail</th></tr></thead><tbody>';
+            '<div class="responsive-table-wrap"><table class="watch-summary-table"><thead><tr><th>Brand</th><th>Site</th><th>Score</th><th>Console</th><th>Pass/Fail</th></tr></thead><tbody>';
           for (const b of s.brands) {
             const snap = b.snapshot || {};
             const cap = snap.consoleCapture ? String(snap.consoleCapture) : '—';
@@ -4645,7 +4830,7 @@
               escapeHtml(pf) +
               '</td></tr>';
           }
-          table += '</tbody></table>';
+          table += '</tbody></table></div>';
         }
         const actions = opts.inProgress
           ? ''

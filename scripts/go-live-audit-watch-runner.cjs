@@ -1,4 +1,4 @@
-'use strict';
+whatsa'use strict';
 
 /**
  * Automatic multi-brand security watch — run all brands in brands-watch.json.
