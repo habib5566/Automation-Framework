@@ -4919,10 +4919,40 @@
         };
       }
 
+      /** Small JSON for digest-email (avoids Vercel 500 / body too large). */
+      function compactScanPayloadForDigestClient(data) {
+        if (!data || typeof data !== 'object') return null;
+        const pageItems = (data.pageIssues && data.pageIssues.items) || [];
+        return {
+          ok: data.ok !== false,
+          brandName: data.brandName || null,
+          requestedUrl: data.requestedUrl || null,
+          finalUrl: data.finalUrl || null,
+          statusCode: data.statusCode != null ? data.statusCode : null,
+          availability: data.availability || null,
+          overallSummary: data.overallSummary || null,
+          brandMatrix: data.brandMatrix || null,
+          vulnerabilities: data.vulnerabilities || null,
+          security: data.security || null,
+          autoChecks: Array.isArray(data.autoChecks) ? data.autoChecks.slice(0, 80) : [],
+          pageIssues: {
+            items: pageItems.slice(0, 40),
+            summary: (data.pageIssues && data.pageIssues.summary) || { errors: 0, warns: 0, total: 0 },
+          },
+          consoleIssues: data.consoleIssues || null,
+          siteStack: data.siteStack
+            ? Object.assign({}, data.siteStack, { items: (data.siteStack.items || []).slice(0, 12) })
+            : null,
+          scanMeta: data.scanMeta || null,
+        };
+      }
+
       async function sendWatchDigestEmail(merged, watchBody, btn) {
         const digestEntries = (merged.brands || [])
           .map(function (b) {
-            if (b.scanPayload) return { scanPayload: b.scanPayload };
+            if (b.scanPayload) {
+              return { scanPayload: compactScanPayloadForDigestClient(b.scanPayload) };
+            }
             return b.digest;
           })
           .filter(Boolean);
@@ -4931,7 +4961,7 @@
         try {
           const digestSig =
             typeof AbortSignal !== 'undefined' && AbortSignal.timeout
-              ? AbortSignal.timeout(120000)
+              ? AbortSignal.timeout(180000)
               : undefined;
           const dr = await fetch(
             watchDigestEndpoint(),
@@ -4944,9 +4974,23 @@
               { signal: digestSig }
             )
           );
-          const digestData = await dr.json().catch(function () {
-            return {};
+          const rawDigest = await dr.text().catch(function () {
+            return '';
           });
+          let digestData = {};
+          try {
+            digestData = rawDigest ? JSON.parse(rawDigest) : {};
+          } catch (parseErr) {
+            merged.emailsFailed = 1;
+            merged.digestEmail = {
+              error: classifyNonJsonResponse(
+                rawDigest,
+                dr.status,
+                watchDigestEndpoint()
+              ),
+            };
+            return;
+          }
           if (dr.ok && digestData.digestEmail) {
             merged.digestEmail = digestData.digestEmail;
             if (digestData.digestEmail.sent) {
@@ -4960,12 +5004,20 @@
           } else if (!dr.ok) {
             merged.emailsFailed = 1;
             merged.digestEmail = {
-              error: formatApiError(digestData.error, 'Digest HTTP ' + dr.status),
+              error: formatApiError(
+                digestData.error || digestData.digestEmail && digestData.digestEmail.error,
+                'Digest HTTP ' + dr.status + ' — try Redeploy or fewer brands'
+              ),
             };
           }
         } catch (digestErr) {
           merged.emailsFailed = 1;
-          merged.digestEmail = { error: String((digestErr && digestErr.message) || digestErr) };
+          const dm = String((digestErr && digestErr.message) || digestErr);
+          merged.digestEmail = {
+            error: /abort|timeout/i.test(dm)
+              ? 'Digest email timed out (many brands/PDFs). Redeploy latest code or run watch with fewer brands.'
+              : dm,
+          };
         }
       }
 
@@ -5039,7 +5091,7 @@
               reason: 'Combined email after all brands',
             },
             snapshot: snapshotFromScanResult(data),
-            scanPayload: data,
+            scanPayload: compactScanPayloadForDigestClient(data),
           });
           merged.scanned += 1;
           if (merged.brands[merged.brands.length - 1].securityAlert) merged.alerts += 1;

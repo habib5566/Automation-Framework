@@ -39,8 +39,8 @@
       "includeFiles": "node_modules/@sparticuz/chromium/**"
     },
     "api/watch/digest-email.js": {
-      "maxDuration": 30,
-      "memory": 512
+      "maxDuration": 60,
+      "memory": 1024
     }
   }
 }

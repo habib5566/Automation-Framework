@@ -10,14 +10,15 @@ const {
 const { runWatchPass } = require('./go-live-audit-watch-runner.cjs');
 const { maybeSendWatchDigestEmail } = require('./go-live-audit-email-notify.js');
 
-function readBody(req) {
+function readBody(req, opts) {
+  const maxBytes = (opts && opts.maxBytes) || 500_000;
   return new Promise((resolve, reject) => {
     let raw = '';
     req.on('data', (c) => {
       raw += c;
-      if (raw.length > 500_000) {
+      if (raw.length > maxBytes) {
         req.destroy();
-        reject(new Error('body too large'));
+        reject(new Error('body too large (max ' + Math.round(maxBytes / 1024) + ' KB)'));
       }
     });
     req.on('end', () => resolve(raw));
@@ -104,10 +105,20 @@ async function handleWatchRun(req, res, sendJson) {
 async function handleWatchDigest(req, res, sendJson) {
   let requestJson = {};
   try {
-    const raw = await readBody(req);
+    const raw = await readBody(req, { maxBytes: 3_500_000 });
     if (raw) requestJson = JSON.parse(raw);
-  } catch {
-    requestJson = {};
+  } catch (e) {
+    const msg = String((e && e.message) || e);
+    if (/too large/i.test(msg)) {
+      sendJson(res, 413, {
+        ok: false,
+        error:
+          'Watch digest request too large. Redeploy latest code (compact payload). Or scan fewer brands per run.',
+      });
+      return;
+    }
+    sendJson(res, 400, { ok: false, error: 'Invalid JSON body: ' + msg.slice(0, 160) });
+    return;
   }
   const entries = requestJson.entries || requestJson.digestEntries;
   if (!Array.isArray(entries) || !entries.length) {
@@ -118,7 +129,7 @@ async function handleWatchDigest(req, res, sendJson) {
     const digestEmail = await maybeSendWatchDigestEmail(requestJson, entries);
     sendJson(res, 200, { ok: true, digestEmail, brandCount: entries.length });
   } catch (e) {
-    sendJson(res, 500, { ok: false, error: apiErrorString(e) });
+    sendJson(res, 500, { ok: false, error: apiErrorString(e), digestEmail: { error: apiErrorString(e) } });
   }
 }
 

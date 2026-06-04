@@ -749,9 +749,9 @@ function compactScanPayloadForDigest(result) {
     brandMatrix: r.brandMatrix || null,
     vulnerabilities: r.vulnerabilities || null,
     security: r.security || null,
-    autoChecks: Array.isArray(r.autoChecks) ? r.autoChecks : [],
+    autoChecks: Array.isArray(r.autoChecks) ? r.autoChecks.slice(0, 80) : [],
     pageIssues: {
-      items: pageItems.slice(0, 100),
+      items: pageItems.slice(0, 40),
       summary: (r.pageIssues && r.pageIssues.summary) || { errors: 0, warns: 0, total: 0 },
     },
     consoleIssues: r.consoleIssues || null,
@@ -971,9 +971,7 @@ function buildWatchDigestPlainText(entries) {
     if (e.securityHeadline) lines.push('  Security: ' + e.securityHeadline);
     if (e.securityAlert) lines.push('  ⚠ SECURITY ALERT — review this brand');
     if (e.scanPayload && typeof e.scanPayload === 'object') {
-      lines.push('');
-      lines.push('──────── Full report (same as single scan): ' + (e.brandName || '—') + ' ────────');
-      lines.push(buildPlainText(e.scanPayload));
+      lines.push('  (Full detail in attached PDF for this brand.)');
     }
   }
   lines.push('');
@@ -1045,13 +1043,22 @@ function buildWatchDigestHtml(entries) {
   let detailBlocks = '';
   for (const e of list) {
     if (!e || !e.scanPayload || typeof e.scanPayload !== 'object') continue;
+    const sp = e.scanPayload;
+    const os = sp.overallSummary || {};
     detailBlocks +=
-      '<div style="max-width:720px;margin:16px auto;padding:16px 20px;background:#fff;border:1px solid #e2e8f0;border-radius:8px">' +
-      '<h2 style="margin:0 0 12px;font-size:16px;color:#1e3a5f">' +
+      '<div style="max-width:720px;margin:12px auto 0;padding:14px 18px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;color:#334155">' +
+      '<p style="margin:0 0 6px;font-size:15px;font-weight:600;color:#1e3a5f">' +
       escapeHtmlForEmail(e.brandName || 'Brand') +
-      ' — detailed report</h2>' +
-      buildHtmlEmail(e.scanPayload, { pdfAttached: false }) +
-      '</div>';
+      '</p>' +
+      '<p style="margin:0 0 4px">' +
+      escapeHtmlForEmail(sp.requestedUrl || e.url || '—') +
+      '</p>' +
+      '<p style="margin:0">' +
+      escapeHtmlForEmail((os.headline || '—').slice(0, 200)) +
+      (e.performancePercent != null
+        ? ' · Score <strong>' + escapeHtmlForEmail(String(e.performancePercent)) + '%</strong>'
+        : '') +
+      ' · See attached PDF for full checklist.</p></div>';
   }
   return (
     '<!DOCTYPE html><html><head><meta charset="utf-8"/></head><body style="font-family:Segoe UI,Calibri,Arial,sans-serif;background:#f4f6f8;margin:0;padding:20px">' +
@@ -1102,6 +1109,15 @@ async function maybeSendWatchDigestEmail(requestJson, entries) {
   let pdfAttachments = [];
   try {
     pdfAttachments = await buildWatchPerBrandPdfAttachments(list);
+    let totalBytes = 0;
+    const capped = [];
+    for (const att of pdfAttachments) {
+      const n = att.content && att.content.length ? att.content.length : 0;
+      if (totalBytes + n > 22 * 1024 * 1024) break;
+      totalBytes += n;
+      capped.push(att);
+    }
+    pdfAttachments = capped;
   } catch (pdfErr) {
     // eslint-disable-next-line no-console
     console.warn('[go-live-audit] watch digest PDFs skipped:', String((pdfErr && pdfErr.message) || pdfErr).slice(0, 100));
