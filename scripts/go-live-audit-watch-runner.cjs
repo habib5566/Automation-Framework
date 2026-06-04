@@ -274,7 +274,7 @@ async function runWatchPass(requestJson) {
       let scanOutcome = await scanOneBrand(brand, requestJson);
       let result = scanOutcome.result;
       if (result && result.ok === false && isServerlessWatch()) {
-        await new Promise((r) => setTimeout(r, 3000));
+        await new Promise((r) => setTimeout(r, 5000));
         scanOutcome = await scanOneBrand(brand, requestJson);
         result = scanOutcome.result;
       }
