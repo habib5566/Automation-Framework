@@ -1,7 +1,7 @@
 /**
  * GET /api/email-status — is Gmail SMTP configured on this server?
  */
-const { sendJson } = require('./_scan-core.js');
+const { sendJson } = require('./go-live-audit-send-json.cjs');
 const { getEmailConfigStatus } = require('./go-live-audit-email-config.cjs');
 
 module.exports = (req, res) => {

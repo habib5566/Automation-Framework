@@ -95,6 +95,7 @@ for (const name of [
   'go-live-audit-vulnerabilities.cjs',
   'go-live-audit-brand-watch.cjs',
   'go-live-audit-brands-api.cjs',
+  'go-live-audit-watch-run-api.cjs',
   'go-live-audit-watch-runner.cjs',
   'go-live-audit-brand-reports.cjs',
   'go-live-audit-brand-reports-api.cjs',

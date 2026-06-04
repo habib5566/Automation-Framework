@@ -1,7 +1,7 @@
 /**
  * GET/POST /api/brands — brand watch list (read-only on Vercel).
  */
-const { sendJson } = require('./_scan-core.js');
+const { sendJson } = require('./go-live-audit-send-json.cjs');
 const {
   handleBrandsGet,
   handleBrandsPost,

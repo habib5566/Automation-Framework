@@ -1,7 +1,7 @@
 /**
  * GET /api/runtime — Node/npm, repo package version, key deps, latest Node LTS (from nodejs.org).
  */
-const { sendJson } = require('./_scan-core.js');
+const { sendJson } = require('./go-live-audit-send-json.cjs');
 const { getRuntimeInfoSync, fetchNodeLatestLts } = require('./go-live-audit-runtime-info.cjs');
 
 module.exports = async (req, res) => {

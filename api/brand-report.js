@@ -1,7 +1,7 @@
 /**
  * GET/POST /api/brand-report — full scan report per brand (file local, Vercel Blob live).
  */
-const { sendJson } = require('./_scan-core.js');
+const { sendJson } = require('./go-live-audit-send-json.cjs');
 const {
   handleBrandReportGet,
   handleBrandReportPost,

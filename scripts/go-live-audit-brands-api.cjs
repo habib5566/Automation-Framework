@@ -7,8 +7,6 @@ const {
   listEnabledBrands,
   isReadOnlyDatastore,
 } = require('./go-live-audit-brand-watch.cjs');
-const { runWatchPass } = require('./go-live-audit-watch-runner.cjs');
-
 function readBody(req, opts) {
   const maxBytes = (opts && opts.maxBytes) || 500_000;
   return new Promise((resolve, reject) => {
@@ -86,19 +84,8 @@ function apiErrorString(err) {
 }
 
 async function handleWatchRun(req, res, sendJson) {
-  let requestJson = {};
-  try {
-    const raw = await readBody(req);
-    if (raw) requestJson = JSON.parse(raw);
-  } catch {
-    requestJson = {};
-  }
-  try {
-    const summary = await runWatchPass(requestJson);
-    sendJson(res, 200, { ok: true, summary, enabled: listEnabledBrands().length });
-  } catch (e) {
-    sendJson(res, 500, { ok: false, error: apiErrorString(e) });
-  }
+  const { handleWatchRun: run } = require('./go-live-audit-watch-run-api.cjs');
+  return run(req, res, sendJson);
 }
 
 async function handleWatchDigest(req, res, sendJson) {

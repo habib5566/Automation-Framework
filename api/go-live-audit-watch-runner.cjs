@@ -1,4 +1,4 @@
-whatsa'use strict';
+'use strict';
 
 /**
  * Automatic multi-brand security watch — run all brands in brands-watch.json.
@@ -11,7 +11,6 @@ whatsa'use strict';
 require('./go-live-audit-smtp-env.cjs');
 
 const { listEnabledBrands } = require('./go-live-audit-brand-watch.cjs');
-const { runScanInternal } = require('./go-live-audit-core');
 const { getAlertEmail } = require('./go-live-audit-defaults.cjs');
 const { extractBrandScanSummary } = require('./go-live-audit-brand-matrix.cjs');
 const { buildWatchDigestEntry, maybeSendWatchDigestEmail } = require('./go-live-audit-email-notify.js');
@@ -167,6 +166,7 @@ async function scanOneBrand(brand, requestJson) {
   }
 
   try {
+    const { runScanInternal } = require('./go-live-audit-core');
     const result = await runScanInternal(json);
     return { brand, result };
   } catch (e) {

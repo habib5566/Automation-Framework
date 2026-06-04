@@ -7,8 +7,8 @@ if (process.env.VERCEL) {
 }
 require('../go-live-audit-chromium-env.cjs');
 
-const { sendJson } = require('../_scan-core.js');
-const { handleWatchRun } = require('../go-live-audit-brands-api.cjs');
+const { sendJson } = require('../go-live-audit-send-json.cjs');
+const { handleWatchRun } = require('../go-live-audit-watch-run-api.cjs');
 
 function corsPreflight(res) {
   res.writeHead(204, {
