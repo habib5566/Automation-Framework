@@ -81,6 +81,8 @@ fs.copyFileSync(emailCfgSrc, emailCfgDest);
 console.log('Vercel: copied scripts/go-live-audit-email-config.cjs → api/go-live-audit-email-config.cjs');
 
 for (const name of [
+  'go-live-audit-send-json.cjs',
+  'go-live-audit-watch-digest-api.cjs',
   'go-live-audit-defaults.cjs',
   'go-live-audit-chromium-env.cjs',
   'go-live-audit-static-console.cjs',

@@ -4991,22 +4991,27 @@
             };
             return;
           }
-          if (dr.ok && digestData.digestEmail) {
+          if (digestData.digestEmail) {
             merged.digestEmail = digestData.digestEmail;
             if (digestData.digestEmail.sent) {
               merged.emailsSent = 1;
               merged.emailsFailed = 0;
-            } else if (digestData.digestEmail.error) {
-              merged.emailsFailed = 1;
             } else if (digestData.digestEmail.skipped) {
               merged.emailsSkipped = 1;
+            } else {
+              merged.emailsFailed = 1;
             }
-          } else if (!dr.ok) {
+          } else if (dr.ok) {
+            merged.emailsFailed = 1;
+            merged.digestEmail = { error: 'Digest API returned no email status — Redeploy latest code.' };
+          } else {
             merged.emailsFailed = 1;
             merged.digestEmail = {
               error: formatApiError(
-                digestData.error || digestData.digestEmail && digestData.digestEmail.error,
-                'Digest HTTP ' + dr.status + ' — try Redeploy or fewer brands'
+                digestData.error || (digestData.digestEmail && digestData.digestEmail.error),
+                /server error has occurred/i.test(rawDigest)
+                  ? 'Vercel digest crash — Redeploy latest code (lightweight digest-email fix).'
+                  : 'Digest HTTP ' + dr.status
               ),
             };
           }

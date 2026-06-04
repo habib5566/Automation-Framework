@@ -1,13 +1,10 @@
 /**
- * POST /api/watch/digest-email — one combined email after all brands scanned (Vercel batches).
+ * POST /api/watch/digest-email — combined watch email (lightweight; no scan/chromium core).
  */
-if (process.env.VERCEL) {
-  process.env.AWS_LAMBDA_JS_RUNTIME = process.env.AWS_LAMBDA_JS_RUNTIME || 'nodejs22.x';
-}
 require('../go-live-audit-smtp-env.cjs');
 
-const { sendJson } = require('../_scan-core.js');
-const { handleWatchDigest } = require('../go-live-audit-brands-api.cjs');
+const { sendJson } = require('../go-live-audit-send-json.cjs');
+const { handleWatchDigest } = require('../go-live-audit-watch-digest-api.cjs');
 
 function corsPreflight(res) {
   res.writeHead(204, {
@@ -30,6 +27,11 @@ module.exports = async (req, res) => {
   try {
     await handleWatchDigest(req, res, sendJson);
   } catch (e) {
-    sendJson(res, 500, { ok: false, error: String((e && e.message) || e) });
+    const msg = String((e && e.message) || e);
+    sendJson(res, 500, {
+      ok: false,
+      error: msg,
+      digestEmail: { error: msg },
+    });
   }
 };

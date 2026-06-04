@@ -911,6 +911,7 @@ async function buildWatchPerBrandPdfAttachments(entries) {
         String((pdfErr && pdfErr.message) || pdfErr).slice(0, 80)
       );
     }
+    if (out.length >= 12) break;
   }
   return out;
 }
