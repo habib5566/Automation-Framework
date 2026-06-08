@@ -883,7 +883,7 @@ async function buildWatchPerBrandPdfAttachments(entries) {
   const { loadBrandReport } = require('./go-live-audit-brand-reports.cjs');
   const out = [];
   for (const e of list) {
-    if (!e || e.ok === false) continue;
+    if (!e) continue;
     let stored = null;
     try {
       stored = await loadBrandReport(e.reportKey || e.brandName);
@@ -911,7 +911,6 @@ async function buildWatchPerBrandPdfAttachments(entries) {
         String((pdfErr && pdfErr.message) || pdfErr).slice(0, 80)
       );
     }
-    if (out.length >= 12) break;
   }
   return out;
 }
@@ -1108,17 +1107,26 @@ async function maybeSendWatchDigestEmail(requestJson, entries) {
   const fromField = buildFromField(fromEmail, getEmailFromDisplayName());
 
   let pdfAttachments = [];
+  let pdfOmittedBySize = 0;
   try {
-    pdfAttachments = await buildWatchPerBrandPdfAttachments(list);
+    const allPdfs = await buildWatchPerBrandPdfAttachments(list);
     let totalBytes = 0;
     const capped = [];
-    for (const att of pdfAttachments) {
+    for (const att of allPdfs) {
       const n = att.content && att.content.length ? att.content.length : 0;
       if (totalBytes + n > 22 * 1024 * 1024) break;
       totalBytes += n;
       capped.push(att);
     }
+    pdfOmittedBySize = allPdfs.length - capped.length;
     pdfAttachments = capped;
+    if (pdfOmittedBySize > 0) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[go-live-audit] watch digest PDFs capped for Gmail size:',
+        capped.length + '/' + allPdfs.length
+      );
+    }
   } catch (pdfErr) {
     // eslint-disable-next-line no-console
     console.warn('[go-live-audit] watch digest PDFs skipped:', String((pdfErr && pdfErr.message) || pdfErr).slice(0, 100));
@@ -1172,7 +1180,13 @@ async function maybeSendWatchDigestEmail(requestJson, entries) {
         list.length +
         ' brand(s) with ' +
         pdfCount +
-        ' PDF attachment(s). Check inbox and spam for ' +
+        ' PDF attachment(s)' +
+        (pdfCount < list.length
+          ? ' (' +
+            (list.length - pdfCount) +
+            ' PDF(s) not attached — Gmail ~22MB limit or PDF build failed)'
+          : '') +
+        '. Check inbox and spam for ' +
         resolved.to +
         '.' +
         (sendMeta.usedPort587 ? ' (port 587)' : ''),

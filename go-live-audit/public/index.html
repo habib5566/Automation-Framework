@@ -2118,7 +2118,10 @@
         if (err == null || err === '') return fallback || 'Unknown error';
         if (typeof err === 'string') {
           if (/error occurred with your deployment/i.test(err)) {
-            return 'Vercel scan timed out on this brand (server busy) — skipped, other brands continue.';
+            return (
+              'Vercel scan timed out or crashed on this brand (server busy). ' +
+              'Watch will skip and continue other brands — try Quick scan for this URL alone, or Redeploy and wait 30s between runs.'
+            );
           }
           return err;
         }
@@ -5025,6 +5028,31 @@
         }
       }
 
+      function watchEnabledBrandsList() {
+        return (watchBrandsCache.length ? watchBrandsCache : readLocalBrands()).filter(function (b) {
+          return b && b.enabled !== false && b.url;
+        });
+      }
+
+      function watchBatchBrands(offset, batchSize) {
+        return watchEnabledBrandsList().slice(offset, offset + (batchSize || 1));
+      }
+
+      function recordWatchBatchApiFailure(merged, offset, batchSize, errMsg) {
+        const batch = watchBatchBrands(offset, batchSize);
+        if (!batch.length) {
+          pushWatchBrandFailure(
+            merged,
+            { name: 'Brand #' + (offset + 1), url: '' },
+            errMsg
+          );
+          return;
+        }
+        batch.forEach(function (brand) {
+          pushWatchBrandFailure(merged, brand, errMsg);
+        });
+      }
+
       function pushWatchBrandFailure(merged, brand, errMsg) {
         merged.brands.push({
           name: brand.name,
@@ -5048,41 +5076,11 @@
         merged.scanned += 1;
       }
 
-      function watchPauseBetweenBrands(extraMs) {
-        const base = isLiveAuditHost() ? 4000 : 1500;
-        const ms = base + (extraMs || 0);
+      function watchPauseBetweenBrands() {
+        if (!isLiveAuditHost()) return Promise.resolve();
         return new Promise(function (resolve) {
-          setTimeout(resolve, ms);
+          setTimeout(resolve, 6000);
         });
-      }
-
-      function enabledWatchBrandsList() {
-        const src = watchBrandsCache.length ? watchBrandsCache : readLocalBrands();
-        return src.filter(function (b) {
-          return b && b.enabled !== false && b.url;
-        });
-      }
-
-      function watchBrandsForBatch(offset, limit) {
-        return enabledWatchBrandsList().slice(offset, offset + limit);
-      }
-
-      function isRecoverableWatchBatchError(errMsg) {
-        return /deployment|server busy|timed out|server error|non-json|502|503|504|429|crash|busy/i.test(
-          String(errMsg || '')
-        );
-      }
-
-      function recordWatchBatchFailure(merged, offset, batchSize, errMsg) {
-        const batchBrands = watchBrandsForBatch(offset, batchSize);
-        if (batchBrands.length) {
-          for (let bi = 0; bi < batchBrands.length; bi++) {
-            pushWatchBrandFailure(merged, batchBrands[bi], errMsg);
-          }
-        } else {
-          merged.scanned = (merged.scanned || 0) + batchSize;
-        }
-        return offset + batchSize;
       }
 
       /** Optional: browser calls /api/scan per brand (can hit Vercel deployment limits). Prefer watch/run on live. */
@@ -5194,7 +5192,6 @@
         }
         let offset = 0;
         let total = null;
-        let watchBatchAttempt = 0;
         let merged = {
           scanned: 0,
           alerts: 0,
@@ -5206,111 +5203,114 @@
         };
         try {
           await refreshWatchBrandsCache();
-          const enabledBrands = enabledWatchBrandsList();
-          if (!enabledBrands.length) {
+          const enabledWatchBrands = watchEnabledBrandsList();
+          if (!enabledWatchBrands.length) {
             alert('No brands in watch list. Add brands first.');
             return;
           }
-          total = enabledBrands.length;
+          total = enabledWatchBrands.length;
           merged.totalBrands = total;
-          while (offset < total) {
+
+          while (true) {
             const done = Math.min(offset, total);
-            const tot = total;
+            const tot = total != null ? total : merged.totalBrands || '?';
             btn.textContent =
               isLiveAuditHost() && total != null
                 ? 'Watching ' + done + '/' + tot + ' (Vercel, 1 brand/step)…'
                 : total != null
                   ? 'Watching ' + done + '/' + tot + '…'
                   : 'Watching all brands…';
-            const sig =
-              typeof AbortSignal !== 'undefined' && AbortSignal.timeout
-                ? AbortSignal.timeout(isLiveAuditHost() ? 180000 : 120000)
-                : undefined;
-            let r;
-            let rawWatch = '';
-            let data = {};
-            try {
-              r = await fetch(
-                watchRunEndpoint(),
-                Object.assign(
-                  {},
-                  buildApiFetchInit(
-                    'POST',
-                    Object.assign({}, watchBody, { offset: offset, limit: batchSize })
-                  ),
-                  { signal: sig }
-                )
-              );
-              rawWatch = await r.text().catch(function () {
-                return '';
-              });
-              data = rawWatch ? JSON.parse(rawWatch) : {};
-            } catch (fetchErr) {
-              let errMsg;
-              if (fetchErr && fetchErr.name === 'SyntaxError' && rawWatch) {
-                errMsg = classifyNonJsonResponse(
-                  rawWatch,
-                  r && r.status ? r.status : 0,
-                  watchRunEndpoint()
+
+            let batchOk = false;
+            let lastBatchErr = 'Watch batch failed';
+            let summaryBatch = null;
+            const maxAttempts = isLiveAuditHost() ? 2 : 1;
+
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+              if (attempt > 0) {
+                btn.textContent =
+                  'Server busy — retrying brand ' + Math.min(offset + 1, total) + '/' + total + '…';
+                await new Promise(function (resolve) {
+                  setTimeout(resolve, 8000);
+                });
+              }
+
+              try {
+                const sig =
+                  typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+                    ? AbortSignal.timeout(isLiveAuditHost() ? 180000 : 120000)
+                    : undefined;
+                const r = await fetch(
+                  watchRunEndpoint(),
+                  Object.assign(
+                    {},
+                    buildApiFetchInit(
+                      'POST',
+                      Object.assign({}, watchBody, { offset: offset, limit: batchSize })
+                    ),
+                    { signal: sig }
+                  )
                 );
-              } else {
-                errMsg = formatApiError(fetchErr, String(fetchErr.message || fetchErr));
+                const rawWatch = await r.text().catch(function () {
+                  return '';
+                });
+                let data = {};
+                let parseOk = true;
+                try {
+                  data = rawWatch ? JSON.parse(rawWatch) : {};
+                } catch (parseErr) {
+                  parseOk = false;
+                  lastBatchErr = classifyNonJsonResponse(rawWatch, r.status, watchRunEndpoint());
+                }
+                if (!parseOk || !r.ok || data.ok === false) {
+                  if (!parseOk) {
+                    /* lastBatchErr set */
+                  } else {
+                    lastBatchErr = formatApiError(
+                      data.error || data.message || data,
+                      'HTTP ' + r.status + ' — redeploy latest code (api/watch/run.js).'
+                    );
+                  }
+                  continue;
+                }
+                summaryBatch = data.summary || {};
+                batchOk = true;
+                break;
+              } catch (fetchErr) {
+                const fm = String((fetchErr && fetchErr.message) || fetchErr);
+                lastBatchErr = /abort|timeout/i.test(fm)
+                  ? 'Vercel scan timed out on this brand (~60s limit). Skipping to next brand.'
+                  : /failed to fetch/i.test(fm)
+                    ? 'Server did not respond — skipped this brand; continuing others.'
+                    : fm;
               }
-              if (watchBatchAttempt < 1 && isRecoverableWatchBatchError(errMsg)) {
-                watchBatchAttempt += 1;
-                btn.textContent = 'Server busy — retrying same brand…';
-                await watchPauseBetweenBrands(6000);
-                continue;
-              }
-              watchBatchAttempt = 0;
-              offset = recordWatchBatchFailure(merged, offset, batchSize, errMsg);
+            }
+
+            if (!batchOk) {
+              recordWatchBatchApiFailure(merged, offset, batchSize, lastBatchErr);
+              merged.totalBrands = total;
               renderWatchSummaryPanel(merged, {
-                inProgress: offset < total,
+                inProgress: offset + batchSize < total,
                 done: merged.scanned,
                 total: total,
               });
-              await watchPauseBetweenBrands(isRecoverableWatchBatchError(errMsg) ? 5000 : 0);
+              offset += batchSize;
+              if (offset >= total) break;
+              await watchPauseBetweenBrands();
               continue;
             }
-            if (!r.ok || data.ok === false) {
-              const errMsg = formatApiError(
-                data.error || data.message || data,
-                'HTTP ' + r.status + ' — redeploy latest code (api/watch/run.js).'
-              );
-              if (watchBatchAttempt < 1 && isRecoverableWatchBatchError(errMsg)) {
-                watchBatchAttempt += 1;
-                btn.textContent = 'Server busy — retrying same brand…';
-                await watchPauseBetweenBrands(6000);
-                continue;
-              }
-              watchBatchAttempt = 0;
-              offset = recordWatchBatchFailure(merged, offset, batchSize, errMsg);
-              renderWatchSummaryPanel(merged, {
-                inProgress: offset < total,
-                done: merged.scanned,
-                total: total,
-              });
-              await watchPauseBetweenBrands(isRecoverableWatchBatchError(errMsg) ? 5000 : 0);
-              continue;
-            }
-            watchBatchAttempt = 0;
-            const s = data.summary || {};
+
+            const s = summaryBatch || {};
             if (s.totalBrands != null) total = s.totalBrands;
             mergeWatchSummaries(merged, s);
             merged.totalBrands = total != null ? total : merged.totalBrands;
             renderWatchSummaryPanel(merged, {
-              inProgress: offset + batchSize < total,
+              inProgress: !!(s.hasMore && s.nextOffset != null),
               done: merged.scanned,
               total: merged.totalBrands || merged.scanned,
             });
-            if (s.nextOffset != null) {
-              offset = s.nextOffset;
-            } else if (s.hasMore === false) {
-              offset = total;
-            } else {
-              offset = offset + batchSize;
-            }
-            if (offset >= total) break;
+            if (!s.hasMore || s.nextOffset == null) break;
+            offset = s.nextOffset;
             await watchPauseBetweenBrands();
           }
           if (!(await ensureEmailReadyBeforeWatch())) {
@@ -5325,6 +5325,16 @@
           }
           saveWatchSummary(merged);
           renderWatchSummaryPanel(merged, { inProgress: false });
+          const watchOkCount = (merged.brands || []).filter(function (b) {
+            return b && b.ok !== false;
+          }).length;
+          const watchFailCount = (merged.brands || []).length - watchOkCount;
+          if (!watchOkCount && watchFailCount) {
+            alert(
+              'Watch finished but every brand failed on the server.\n\n' +
+                'Wait 1 minute, Redeploy on Vercel, then try again — or use Quick scan per brand.'
+            );
+          }
           maybeNotifyWatchDone(merged);
           loadBrandWatchList();
         } catch (e) {
