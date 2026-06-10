@@ -1643,10 +1643,12 @@
     <span class="eyebrow">Release QA</span>
     <h1>Go-Live Master Checklist</h1>
     <p class="sub">
-      Use <strong>Run quick scan</strong> (same host as this app serves the API—locally that is often <code>http://localhost:3940</code>). Each row can show <strong>Pass</strong> or <strong>Fail</strong> when the signal is clear;
-      <strong>Manual review</strong> when the scan will not auto-set Pass or Fail—you verify, then choose Pass or Fail.
-      <strong>N/A</strong> when the scan cannot auto-verify that row here, or when the checklist item truly does not apply to this release.
-      Notes with <strong>[auto]</strong> come from the scan. The panel shows <strong>reachability</strong> (up, DNS, timeout, TLS, HTTP 5xx). Deep QA (forms to inbox, Zendesk, full crawl) stays manual or Playwright.
+      Ship with confidence—run <strong>Quick scan</strong> against this app’s API (local default: <code>http://localhost:3940</code>).
+      Each checklist row resolves to <strong>Pass</strong> or <strong>Fail</strong> when signals are definitive;
+      <strong>Manual review</strong> when you confirm the outcome;
+      <strong>N/A</strong> when the item does not apply or cannot be verified here.
+      Scan findings appear as <strong>[auto]</strong> notes. The status panel reports <strong>reachability</strong>—uptime, DNS, timeouts, TLS, and HTTP errors.
+      Deeper QA (form delivery, Zendesk, full-site crawl) stays in your manual or Playwright workflow.
     </p>
   </header>
   <nav class="app-nav" id="appNav" aria-label="App sections">
