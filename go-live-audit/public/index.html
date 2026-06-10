@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Website Go-Live Master Checklist — Audit</title>
+  <title>Go-Live Master Checklist — Release Quality Audit</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet" />
@@ -1640,7 +1640,7 @@
 <body>
   <div class="bg-mesh" aria-hidden="true"></div>
   <header class="site-header">
-    <span class="eyebrow">Release QA</span>
+    <span class="eyebrow">Release Quality Assurance</span>
     <h1>Go-Live Master Checklist</h1>
     <p class="sub">
       Ship with confidence—run <strong>Quick scan</strong> against this app’s API (local default: <code>http://localhost:3940</code>).
@@ -1659,8 +1659,8 @@
   <section id="viewBrandsHub" class="view-brands-hub" hidden aria-labelledby="brands-hub-heading">
     <h2 id="brands-hub-heading">All brands</h2>
     <p class="brands-hub-intro">
-      <strong>One row per website</strong> (same URL is not listed twice). Tap a card on phone or click on desktop → that brand opens on its own page; use
-      <strong>Scan this brand again</strong> there. Works on mobile, tablet, and laptop. Reports are saved in this browser until you scan again.
+      <strong>One entry per website</strong>—duplicate URLs are consolidated automatically. Select a brand card to open its dedicated report page, then use
+      <strong>Rescan this brand</strong> to refresh results. Fully responsive across mobile, tablet, and desktop. Reports persist in this browser until the next scan.
     </p>
     <div id="brandsHubGrid" class="brands-hub-grid" role="list"></div>
   </section>
@@ -1669,51 +1669,51 @@
     <h2 id="brandDetailTitle">Brand</h2>
     <p id="brandDetailUrl" class="brand-detail-url"></p>
     <p id="brandDetailScanned" class="brand-detail-scanned"></p>
-    <button type="button" class="secondary" id="btnBrandRescan">Scan this brand again</button>
+    <button type="button" class="secondary" id="btnBrandRescan">Rescan this brand</button>
   </div>
   <section class="dashboard-stack" aria-label="Scan insights">
-    <p class="dashboard-stack-title">Live insights (after scan)</p>
+    <p class="dashboard-stack-title">Live insights — populated after each scan</p>
   <div id="vulnerabilitiesPanel" class="vulnerabilities-panel insight-card" aria-live="polite">
     <p class="site-stack-title">Vulnerabilities &amp; risks</p>
-    <p class="site-stack-headline">Run a scan first</p>
+    <p class="site-stack-headline">Run a scan to populate this panel</p>
     <p class="site-stack-sub stack-empty-hint">
-      Combined list: security threats, outdated Laravel/PHP/WordPress, HTTP/down issues. Included in email to <strong>habib.developer8899@gmail.com</strong>.
+      Aggregated findings: security threats, outdated frameworks (Laravel, PHP, WordPress), and availability issues. Delivered in the email report to <strong>habib.developer8899@gmail.com</strong>.
     </p>
   </div>
   <div id="securityThreatsPanel" class="security-threats-panel" aria-live="polite">
-    <p class="site-stack-title">Security monitor (virus · hack · injection)</p>
-    <p class="site-stack-headline">Run a scan first</p>
+    <p class="site-stack-title">Security monitor — malware, intrusion &amp; injection</p>
+    <p class="site-stack-headline">Run a scan to populate this panel</p>
     <p class="site-stack-sub stack-empty-hint">
-      Automatic checks for malware miners, web shells, defacement, leaked secrets, site down, and page changes vs last clean scan. Alerts email <strong>habib.developer8899@gmail.com</strong>.
+      Automated detection for cryptominers, web shells, defacement, exposed secrets, downtime, and content drift versus the last clean baseline. Alerts are sent to <strong>habib.developer8899@gmail.com</strong>.
     </p>
   </div>
   <div id="brandMatrixPanel" class="brand-matrix-panel" aria-live="polite">
     <p class="site-stack-title">Brand performance matrix</p>
-    <p class="site-stack-headline">Run a scan first</p>
-    <p class="site-stack-sub stack-empty-hint">Brand name, performance % rate, framework versions, and checklist scores appear here after scan.</p>
+    <p class="site-stack-headline">Run a scan to populate this panel</p>
+    <p class="site-stack-sub stack-empty-hint">Brand performance score, framework versions, and checklist pass rates appear here after each scan.</p>
   </div>
   <div id="consoleErrorsPanel" class="console-errors-panel console-clean" aria-live="polite">
     <p class="site-stack-title">Website console errors</p>
-    <p class="site-stack-headline">Run a scan first</p>
-    <p class="site-stack-sub stack-empty-hint">Browser <code>console.error</code> and page errors from the live site (local scan uses Playwright).</p>
+    <p class="site-stack-headline">Run a scan to populate this panel</p>
+    <p class="site-stack-sub stack-empty-hint">Live-site <code>console.error</code> output and runtime page errors. Local scans use full Playwright browser capture.</p>
   </div>
   <div id="siteStackPanel" class="site-stack-panel stack-neutral" aria-live="polite">
     <p class="site-stack-title">Site technology stack</p>
-    <p class="site-stack-headline">Run a scan first</p>
+    <p class="site-stack-headline">Run a scan to populate this panel</p>
     <p class="site-stack-sub stack-empty-hint">
-      After <strong>Run quick scan</strong>, we detect the <em>website’s</em> stack (Laravel, WordPress, Next.js, PHP, nginx, etc.) from HTTP headers and HTML — not this audit tool’s Node version.
+      After <strong>Quick scan</strong>, the target website’s technology stack (Laravel, WordPress, Next.js, PHP, nginx, and more) is identified from HTTP headers and HTML—not this audit application’s runtime.
     </p>
   </div>
   <div id="pageIssuesPanel" class="site-stack-panel stack-neutral" aria-live="polite">
     <p class="site-stack-title">Site issues (down · HTTP)</p>
-    <p class="site-stack-headline">Run a scan first</p>
+    <p class="site-stack-headline">Run a scan to populate this panel</p>
     <p class="site-stack-sub stack-empty-hint">
-      Per-brand alerts: downtime, HTTP 5xx, and browser console errors appear here and in the email to <strong>habib.developer8899@gmail.com</strong>.
+      Per-brand alerts for downtime, HTTP 5xx responses, and console errors—surfaced here and in the email report to <strong>habib.developer8899@gmail.com</strong>.
     </p>
   </div>
   </section>
   <details class="scanner-meta-details">
-    <summary>Audit tool runtime (this scanner app — optional)</summary>
+    <summary>Audit application runtime — optional technical details</summary>
     <p id="scannerRuntime" class="scanner-runtime">Loading…</p>
   </details>
   <main class="app-main">
@@ -1721,15 +1721,15 @@
       <div class="panel-head">
         <h2 class="panel-title" id="scan-heading">Quick scan</h2>
         <p class="panel-desc">
-          Fetches the start page, <code>robots.txt</code>, then up to <strong>two</strong> linked same-origin HTML pages when the scan finds them (extra pass, time-limited).
-          <strong>Share link (Vercel):</strong> leave <strong>Scan API base</strong> empty — scan runs on this site; nobody needs your PC or tunnel.
-          Tunnel is only optional if you want 100% same console as localhost while this page is on Vercel.
-          <span class="label-hint">Office TLS errors on every URL?</span> Stop the server, then run <code>npm run go-live:audit:insecure-tls</code> (trusted network only) — see <code>go-live-audit/TUNNEL.md</code>.
+          Retrieves the homepage, <code>robots.txt</code>, and up to <strong>two</strong> same-origin linked pages (time-limited secondary pass).
+          <strong>Shared deployment (Vercel):</strong> leave <strong>Scan API base</strong> empty—the scan runs on this host; no local PC or tunnel required.
+          A tunnel is optional only when you need identical console capture to localhost from a live deployment.
+          <span class="label-hint">Corporate TLS errors on every URL?</span> Restart the server with <code>npm run go-live:audit:insecure-tls</code> (trusted networks only)—see <code>go-live-audit/TUNNEL.md</code>.
         </p>
       </div>
       <div class="toolbar-grid">
         <div class="field-block">
-          <label for="brandNameInput">Brand name <span class="label-hint">(for alerts)</span></label>
+          <label for="brandNameInput">Brand name <span class="label-hint">(used in alerts &amp; reports)</span></label>
           <input
             id="brandNameInput"
             type="text"
@@ -1745,77 +1745,77 @@
           <input id="siteUrl" type="url" placeholder="https://example.com" autocomplete="url" />
         </div>
         <div id="vercelNoTunnelBanner" class="scan-msg scan-msg-ok" hidden style="margin-bottom:1rem;font-size:0.95rem;line-height:1.55">
-          <strong>Share this link — no tunnel.</strong> Scan runs on Vercel; brand reports save on server (Vercel Blob).
-          Keep <strong>Scan API base</strong> empty. One-time setup: <code>go-live-audit/FULL-PERFECTION-URDU.md</code> (Blob + Gmail App Password).
+          <strong>Production-ready — no tunnel required.</strong> Scans run on Vercel; brand reports are stored server-side (Vercel Blob).
+          Keep <strong>Scan API base</strong> empty. One-time setup: <code>go-live-audit/FULL-PERFECTION-URDU.md</code> (Blob storage + Gmail App Password).
         </div>
         <details id="tunnelApiBaseDetails" class="tunnel-api-details">
-          <summary>Scan API base <span class="label-hint">(tunnel — only if you want local PC scan from this page)</span></summary>
+          <summary>Scan API base <span class="label-hint">(advanced — route scans through a local tunnel)</span></summary>
           <div class="field-block" style="margin-top:0.65rem">
             <input
               id="auditApiBase"
               type="url"
-              placeholder="Leave empty on Vercel — or paste tunnel https://… only for advanced use"
+              placeholder="Leave empty on Vercel — or paste tunnel URL for advanced use only"
               autocomplete="off"
               spellcheck="false"
             />
             <p id="vercelFreeTunnelCard" class="site-stack-sub" style="display:none;margin-top:0.5rem">
-              Tunnel = your PC must stay on. For sharing with clients, leave this <strong>empty</strong> and use Production URL only.
+              Tunnel mode requires your local machine to remain online. For client-facing links, leave this field <strong>empty</strong> and use the production URL only.
               See <code>go-live-audit/VERCEL-NO-TUNNEL-URDU.md</code>.
             </p>
             <label class="chk-wrap" style="margin-top:0.65rem">
               <input type="checkbox" id="useTunnelOnLive" />
-              <span>Use tunnel for scan <span class="label-hint">(PC tunnel on hona chahiye)</span></span>
+              <span>Use tunnel for scan <span class="label-hint">(local tunnel must be running)</span></span>
             </label>
             <button type="button" class="secondary" id="btnClearScanApiBase" style="margin-top:0.5rem">
-              Clear tunnel — use Vercel scan only
+              Clear tunnel — use production scan only
             </button>
           </div>
         </details>
         <div class="scan-actions">
           <label class="chk-wrap">
             <input type="checkbox" id="autoApply" checked />
-            <span>Auto-set Pass / Fail on checklist after scan</span>
+            <span>Automatically apply Pass / Fail to checklist after scan</span>
           </label>
           <label class="chk-wrap">
             <input type="checkbox" id="sendEmailAfterScan" checked />
-            <span>Email scan summary <span class="label-hint">(alerts → habib.developer8899@gmail.com)</span></span>
+            <span>Email scan summary <span class="label-hint">(delivered to habib.developer8899@gmail.com)</span></span>
           </label>
           <label class="chk-wrap">
             <input type="checkbox" id="addToBrandWatch" checked />
-            <span>Save brand for automatic security watch</span>
+            <span>Enroll brand in automated security watch</span>
           </label>
           <div class="brand-watch-panel" id="brandWatchPanel">
-            <strong>Automatic watch</strong> — all saved brands scanned on schedule (<code>npm run go-live:watch:daemon</code>).
+            <strong>Automated watch</strong> — all enrolled brands are scanned on schedule (<code>npm run go-live:watch:daemon</code>).
             <ul class="brand-watch-list" id="brandWatchList"></ul>
-            <button type="button" class="secondary" id="btnWatchAll">Run watch now (all brands)</button>
+            <button type="button" class="secondary" id="btnWatchAll">Run watch now — all brands</button>
             <p class="label-hint" style="margin-top:0.35rem">
-              Scans all brands using the <strong>same scan as Run quick scan</strong>, then <strong>one combined email</strong> with full detail per brand + <strong>one PDF per brand</strong> (not separate emails).
+              Scans every enrolled brand using the <strong>same engine as Quick scan</strong>, then delivers <strong>one consolidated email</strong> with full per-brand detail and <strong>one PDF report per brand</strong>.
             </p>
             <div id="watchSummaryPanel" class="watch-summary-panel" hidden role="status" aria-live="polite"></div>
           </div>
           <div class="email-options" aria-label="Email report options">
             <div id="emailConfigStatus" class="email-config-status email-bad" role="status" aria-live="polite">
-              Checking whether Gmail SMTP is configured on this server…
+              Verifying Gmail SMTP configuration on this server…
             </div>
             <details class="email-help-details" id="emailQuickSteps" style="margin-top:0.5rem">
-              <summary><strong>Email 100% fix (step-by-step)</strong></summary>
+              <summary><strong>Email setup — step-by-step guide</strong></summary>
               <ol style="margin:0.5rem 0 0 1.1rem;line-height:1.55;font-size:0.88rem">
                 <li>Google Account → Security → <strong>2-Step Verification ON</strong></li>
                 <li>
                   <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">App passwords</a>
-                  → Mail → copy <strong>16 characters</strong> (normal Gmail password nahi)
+                  → Mail → copy the <strong>16-character App Password</strong> (not your regular Gmail password)
                 </li>
                 <li>
                   <strong>Option A (best):</strong> Vercel → Settings → Environment Variables → Production:
                   <code>GO_LIVE_AUDIT_SMTP_USER</code>, <code>GO_LIVE_AUDIT_SMTP_PASS</code>,
                   <code>GO_LIVE_AUDIT_EMAIL_FROM</code> → <strong>Redeploy</strong>
                 </li>
-                <li><strong>Option B:</strong> Neeche Sender Gmail + App Password paste → Watch / Scan</li>
-                <li>Inbox check: <code>habib.developer8899@gmail.com</code> + Spam</li>
+                <li><strong>Option B:</strong> Enter Sender Gmail + App Password below, then run Watch or Scan</li>
+                <li>Check inbox and spam folder: <code>habib.developer8899@gmail.com</code></li>
               </ol>
             </details>
             <div class="field-block">
-              <label for="reportEmailInput">Alert email <span class="label-hint">(fixed)</span></label>
+              <label for="reportEmailInput">Alert recipient <span class="label-hint">(configured)</span></label>
               <input
                 id="reportEmailInput"
                 type="email"
@@ -1834,7 +1834,7 @@
                 inputmode="email"
                 autocomplete="username"
                 spellcheck="false"
-                placeholder="you@gmail.com — not the alert inbox below"
+                placeholder="sender@gmail.com — the account that owns the App Password"
               />
             </div>
             <div class="field-block">
@@ -1847,7 +1847,7 @@
                 placeholder="16-character Google App Password"
               />
               <span class="label-hint" style="display:block;margin-top:0.35rem">
-                From Google Account → Security → App passwords (after 2-Step Verification). Must match <strong>Sender Gmail</strong> above. On Vercel you can use Environment Variables instead — <code>VERCEL-EMAIL-SETUP.md</code>.
+                Generate via Google Account → Security → App passwords (requires 2-Step Verification). Must belong to the <strong>Sender Gmail</strong> above. On Vercel, configure via Environment Variables — see <code>VERCEL-EMAIL-SETUP.md</code>.
               </span>
             </div>
             <div class="field-block">
@@ -1861,10 +1861,10 @@
               />
             </div>
             <p class="email-help">
-              <strong>Simple:</strong> Turn on <strong>Email scan summary</strong>, enter <strong>Brand name</strong>, paste <strong>Gmail App Password</strong> (for sending), run scan — full report with site/console issues goes to <strong>habib.developer8899@gmail.com</strong>.
+              <strong>Quick start:</strong> Enable <strong>Email scan summary</strong>, enter a <strong>Brand name</strong>, provide your <strong>Gmail App Password</strong>, and run a scan—the full report is delivered to <strong>habib.developer8899@gmail.com</strong>.
             </p>
             <details class="email-help-details">
-              <summary>More — Mailpit, <code>.env</code> lines, notify token</summary>
+              <summary>Advanced — Mailpit, <code>.env</code> configuration, notify token</summary>
               <p>
                 <strong>Local test (Mailpit):</strong> default SMTP is this PC only. Start mail: <code>npm run go-live:mailpit:install</code> once, then <code>npm run go-live:mailpit</code> in another terminal; open <code>http://localhost:8025</code>. Or one command: <code>npm run go-live:audit:with-mailpit</code>.
               </p>
@@ -1877,8 +1877,8 @@
             </details>
           </div>
           <div class="btn-group">
-            <button type="button" id="btnScan">Run quick scan</button>
-            <button type="button" class="secondary" id="btnApply" title="Re-apply results from the last successful scan">Apply last scan</button>
+            <button type="button" id="btnScan">Run Quick Scan</button>
+            <button type="button" class="secondary" id="btnApply" title="Re-apply results from the last successful scan">Apply Last Scan</button>
             <button type="button" class="secondary" id="btnExport">Export CSV</button>
             <button type="button" class="secondary" id="btnClear">Clear saved</button>
           </div>
@@ -1893,8 +1893,8 @@
         <div class="section-head-text">
           <h2 class="section-title" id="checklist-heading">Checklist</h2>
           <p class="status-legend" id="statusLegend">
-            <strong>Manual review</strong> — scan did not set Pass or Fail (usually manual QA). After you verify, pick <strong>Pass</strong> or <strong>Fail</strong> and add proof in notes.
-            <strong>N/A</strong> — scan marked “not auto-testable” for that row, or the item does not apply to this release (read the [auto] note, then choose Pass/Fail when you have evidence).
+            <strong>Manual review</strong> — the scan did not assign Pass or Fail; verify the item, then select <strong>Pass</strong> or <strong>Fail</strong> and document evidence in notes.
+            <strong>N/A</strong> — the item is not auto-verifiable here, or does not apply to this release (review the [auto] note, then assign Pass/Fail when substantiated).
           </p>
         </div>
         <span class="section-meta" id="checklistCount" aria-live="polite">— items</span>
@@ -1903,7 +1903,7 @@
     </section>
   </main>
   <footer class="site-footer">
-    This page: <strong id="selfLink"></strong>. Tunneled scan API: <code>npm run go-live:audit:tunnel</code> (see <code>go-live-audit/TUNNEL.md</code>). Full stack on Vercel: <code>go-live-audit/VERCEL.md</code>.
+    Deployment URL: <strong id="selfLink"></strong>. Tunnel setup: <code>npm run go-live:audit:tunnel</code> (<code>go-live-audit/TUNNEL.md</code>). Vercel deployment guide: <code>go-live-audit/VERCEL.md</code>.
   </footer>
   <script>
     (function () {
@@ -2034,14 +2034,14 @@
         if (banner) {
           banner.hidden = false;
           banner.innerHTML =
-            '<strong>Live scan:</strong> Default = isi site ka <code>/api/scan</code> (tunnel OFF).<br/>' +
-            '<strong>Local jaisa?</strong> PC par tunnel → URL paste → checkbox <strong>Use tunnel for scan</strong> ON.';
+            '<strong>Live scan:</strong> Default uses this site’s <code>/api/scan</code> endpoint (tunnel disabled).<br/>' +
+            '<strong>Local parity:</strong> Start a tunnel on your PC, paste the URL, and enable <strong>Use tunnel for scan</strong>.';
         }
         const details = document.getElementById('tunnelApiBaseDetails');
         if (details) details.open = !!state.tunnelLiveEnabled;
         if (apiBaseEl) {
           apiBaseEl.disabled = false;
-          apiBaseEl.placeholder = 'Tunnel https://… (sirf jab checkbox ON ho)';
+          apiBaseEl.placeholder = 'Tunnel URL — required only when tunnel checkbox is enabled';
         }
         const tunnelChk = document.getElementById('useTunnelOnLive');
         if (tunnelChk) tunnelChk.checked = !!state.tunnelLiveEnabled;
@@ -2121,8 +2121,8 @@
         if (typeof err === 'string') {
           if (/error occurred with your deployment/i.test(err)) {
             return (
-              'Vercel scan timed out or crashed on this brand (server busy). ' +
-              'Watch will skip and continue other brands — try Quick scan for this URL alone, or Redeploy and wait 30s between runs.'
+              'The server timed out or encountered an error on this brand. ' +
+              'Watch will skip this brand and continue with the remainder—try a standalone Quick scan, or redeploy and allow 30 seconds between runs.'
             );
           }
           return err;
@@ -2680,7 +2680,7 @@
           if (urlEl) urlEl.textContent = '';
           if (scannedEl) {
             scannedEl.textContent =
-              'No saved scan in this browser yet. Use Scan this brand again (same Brand name as on the card), or run Quick scan from the home page.';
+              'No scan saved in this browser yet. Select Rescan this brand (using the same brand name as the card), or run Quick scan from the home page.';
           }
           renderScanDashboard(null);
           render();
@@ -2700,7 +2700,7 @@
             ? 'Last scan: ' + new Date(rec.scannedAt).toLocaleString()
             : rec.payload
               ? 'Scan loaded.'
-              : 'No full report in this browser yet — click Scan this brand again (watch list scans on the server do not auto-sync here).';
+              : 'No full report in this browser yet—select Rescan this brand (server-side watch scans do not auto-sync to this browser).';
         }
         render();
         renderScanDashboard(rec.payload || null);
@@ -2711,7 +2711,7 @@
       async function renderBrandsHub() {
         const grid = document.getElementById('brandsHubGrid');
         if (!grid) return;
-        grid.innerHTML = '<p class="brands-hub-intro">Loading brands…</p>';
+        grid.innerHTML = '<p class="brands-hub-intro">Loading brand portfolio…</p>';
         let watchBrands = [];
         try {
           const r = await fetch(brandsEndpoint(), buildApiFetchInit('GET'));
@@ -2727,7 +2727,7 @@
         const cards = buildBrandHubCards(scans, watchBrands);
         if (!cards.length) {
           grid.innerHTML =
-            '<p class="brands-hub-intro">No brands yet. On <a href="#">Quick scan</a>, enter <strong>Brand name</strong> + URL, run scan, then open this page again.</p>';
+            '<p class="brands-hub-intro">No brands enrolled yet. Run a <a href="#">Quick scan</a> with a <strong>Brand name</strong> and URL, then return to this page.</p>';
           return;
         }
         grid.innerHTML = cards
@@ -2740,7 +2740,7 @@
               pct == null ? '' : pct >= 80 ? ' pct-good' : pct >= 50 ? ' pct-warn' : ' pct-bad';
             const scannedTxt = rec.scannedAt
               ? 'Last scan: ' + new Date(rec.scannedAt).toLocaleString()
-              : 'Not scanned in this browser yet';
+              : 'No scan recorded in this browser';
             const aliasLine =
               rec.aliases && rec.aliases.length
                 ? '<p class="brand-card-aliases">Also saved as: ' +
@@ -2981,7 +2981,7 @@
               if (ping.ok) {
                 showBackendBanner(
                   'warn',
-                  '<strong>Purana tunnel URL ignore ho raha hai</strong> — live scan ab isi site ka <code>/api/scan</code> use karta hai. Local jaisa chahiye to checkbox <strong>Use tunnel for scan</strong> ON karo.'
+                  '<strong>Legacy tunnel URL ignored</strong> — live scans now use this site’s <code>/api/scan</code> endpoint. For local parity, enable <strong>Use tunnel for scan</strong>.'
                 );
               }
             } catch (e) {
@@ -3007,7 +3007,7 @@
             resetScanApiBase();
             showBackendBanner(
               'warn',
-              '<strong>Purana/galat tunnel URL hata diya.</strong> Ab Vercel <code>/api/scan</code> use hoga. Local jaisa chahiye to naya tunnel: <code>npm run go-live:audit:tunnel</code> → naya URL paste.'
+              '<strong>Invalid or expired tunnel URL removed.</strong> Production <code>/api/scan</code> is now active. For local parity, start a new tunnel: <code>npm run go-live:audit:tunnel</code>, then paste the updated URL.'
             );
             return true;
           }
@@ -3015,7 +3015,7 @@
             resetScanApiBase();
             showBackendBanner(
               'warn',
-              '<strong>Scan API base galat tha — clear kar diya.</strong> Ab sirf is Vercel site ka scan chalega. Tunnel dubara chahiye to PC par tunnel on karke <strong>naya</strong> https URL paste karo.'
+              '<strong>Invalid Scan API base cleared.</strong> Scans will run on this production host only. To re-enable tunnel mode, start the tunnel on your PC and paste a fresh HTTPS URL.'
             );
             return true;
           }
@@ -3023,7 +3023,7 @@
           resetScanApiBase();
           showBackendBanner(
             'warn',
-            '<strong>Tunnel reach nahi hua — clear kar diya.</strong> PC par tunnel chal raha hai? Warna Scan API base khali rakho.'
+            '<strong>Tunnel unreachable — configuration cleared.</strong> Ensure the tunnel is running on your PC, or leave Scan API base empty to use production scanning.'
           );
           return true;
         }
@@ -3188,7 +3188,7 @@
           watchBrandsCache = brands;
           if (!brands.length) {
             ul.innerHTML =
-              '<li>No brands saved yet — scan with <strong>Save brand for automatic security watch</strong> on (on Vercel, saved in this browser only).</li>';
+              '<li>No brands enrolled yet—run a scan with <strong>Enroll brand in automated security watch</strong> enabled (on Vercel, brands are saved in this browser only).</li>';
             return;
           }
           let html = brands
@@ -3217,7 +3217,7 @@
             .join('');
           if (data.readOnly) {
             html +=
-              '<li class="site-stack-sub">Vercel: new brands save in <strong>this browser</strong> only. Full watch file needs local server or Render.</li>';
+              '<li class="site-stack-sub">Vercel: newly added brands are stored in <strong>this browser</strong> only. A persistent watch file requires a local server or Render deployment.</li>';
           }
           ul.innerHTML = html;
         } catch (e) {
@@ -3241,7 +3241,7 @@
               })
               .join('');
           } else {
-            ul.innerHTML = '<li>Could not load watch list — check /api/brands (redeploy after git push).</li>';
+            ul.innerHTML = '<li>Unable to load the watch list—verify <code>/api/brands</code> is available (redeploy after pushing the latest code).</li>';
           }
         }
       }
@@ -3400,7 +3400,7 @@
             return (
               '<div class="scan-msg scan-msg-warn" style="margin-bottom:0.75rem"><strong>URL changed</strong> — dashboard is for <code>' +
               escapeHtml(scanned) +
-              '</code>. Click <strong>Run quick scan</strong> for the URL in the box.</div>'
+              '</code>. Select <strong>Run Quick Scan</strong> for the URL entered above.</div>'
             );
           }
         } catch (e) {
@@ -3435,7 +3435,7 @@
           panel.innerHTML =
             '<p class="site-stack-title">Site technology stack</p>' +
             '<p class="site-stack-headline">Run a scan first</p>' +
-            '<p class="site-stack-sub stack-empty-hint">Enter a URL and run <strong>Run quick scan</strong> to detect Laravel, WordPress, PHP, Next.js, and more.</p>';
+            '<p class="site-stack-sub stack-empty-hint">Enter a URL and run <strong>Quick scan</strong> to detect Laravel, WordPress, PHP, Next.js, and more.</p>';
           return;
         }
         const tone = ['good', 'warn', 'bad', 'neutral'].includes(siteStack.panelTone)
@@ -3864,10 +3864,10 @@
 
       const STATUS_HINTS = {
         pending:
-          'Scan did not set Pass or Fail — verify yourself, then choose Pass or Fail (read [auto] note).',
-        pass: 'Automated checks passed for this row (see [auto] notes).',
-        fail: 'Automated checks reported an issue — see notes.',
-        na: 'The scan cannot pass/fail this row automatically — use Pass/Fail when you have real evidence, or choose Not scored only if the row truly does not apply.',
+          'Awaiting manual verification—review the [auto] note, then assign Pass or Fail.',
+        pass: 'Automated checks passed for this item (see [auto] notes).',
+        fail: 'Automated checks identified an issue—review the notes for details.',
+        na: 'This item cannot be auto-scored—assign Pass or Fail when evidence is available, or mark Not scored if the item does not apply.',
       };
 
       function applyAutoChecks(autoChecks) {
@@ -4072,7 +4072,7 @@
           if (/network authentication required/i.test(rawText)) {
             showBackendBanner(
               'warn',
-              '<strong>ngrok ne request block ki.</strong> PC par dubara tunnel chalao: <code>npm run go-live:audit:tunnel</code> (Windows par localtunnel default). Naya https URL paste karo — purana URL mat use karo.<br/>Ya <strong>Scan API base khali</strong> karo taake sirf Vercel <code>/api/scan</code> use ho.'
+              '<strong>ngrok blocked the request.</strong> Restart the tunnel on your PC: <code>npm run go-live:audit:tunnel</code> (localtunnel is the Windows default). Paste the new HTTPS URL—do not reuse expired URLs.<br/>Alternatively, clear <strong>Scan API base</strong> to use production <code>/api/scan</code> only.'
             );
             return;
           }
@@ -4117,7 +4117,7 @@
           if (/network authentication required/i.test(em)) {
             showBackendBanner(
               'warn',
-              '<strong>ngrok block.</strong> Tunnel URL galat/purana hai. Naya tunnel start karo ya Scan API base <strong>khali</strong> rakho (Vercel scan).'
+              '<strong>ngrok blocked the connection.</strong> The tunnel URL is invalid or expired. Start a new tunnel, or leave Scan API base empty to use production scanning.'
             );
             return;
           }
@@ -4164,7 +4164,7 @@
           applyAutoChecks(lastScanPayload.autoChecks);
           renderScanDashboard(lastScanPayload);
         } else {
-          alert('Run a successful quick scan first, then use Apply last scan.');
+          alert('Complete a successful Quick scan first, then use Apply Last Scan.');
         }
       });
 
@@ -4299,18 +4299,18 @@
         btn.disabled = true;
         out.hidden = false;
         const loadingSteps = [
-          'Connecting and downloading the start page…',
+          'Establishing connection and retrieving the homepage…',
           'Fetching robots.txt…',
-          'Sampling up to two same-origin pages linked from that HTML…',
-          'Merging HTML signals for checklist rows…',
-          'Checking console / runtime issues (local Playwright when available)…',
+          'Sampling up to two same-origin linked pages…',
+          'Analyzing HTML signals for checklist evaluation…',
+          'Capturing console and runtime issues (Playwright when available)…',
         ];
         let stepIdx = 0;
         out.innerHTML =
           '<div class="scan-loading">' +
           '<div class="scan-loading-top">' +
           '<div class="scan-orbit" aria-hidden="true"><span></span><span></span><span></span></div>' +
-          '<div><div class="scan-loading-title">Scanning…</div>' +
+          '<div><div class="scan-loading-title">Scan in progress…</div>' +
           '<div class="scan-loading-sub" id="scanLoadingSub">' +
           escapeHtml(loadingSteps[0]) +
           '</div></div></div>' +
@@ -4368,7 +4368,7 @@
               saveState(state);
               out.hidden = false;
               out.innerHTML =
-                '<div class="scan-msg scan-msg-warn"><strong>Tunnel block (ngrok).</strong> Tunnel band kar diya — dubara <strong>Run quick scan</strong> dabao (ab Vercel scan chalega). Local jaisa chahiye to naya tunnel URL + checkbox ON.</div>';
+                '<div class="scan-msg scan-msg-warn"><strong>Tunnel blocked (ngrok).</strong> Tunnel has been disabled—select <strong>Run Quick Scan</strong> again to use the production scan. For local parity, start a fresh tunnel and enable the tunnel checkbox.</div>';
               return;
             }
             data = {
@@ -4565,7 +4565,7 @@
             const rescanBtn = document.getElementById('btnBrandRescan');
             if (rescanBtn) {
               rescanBtn.disabled = false;
-              rescanBtn.textContent = 'Scan this brand again';
+              rescanBtn.textContent = 'Rescan this brand';
             }
             navigateToBrand(brandStorageKey(brandLabel || backId, url), brandLabel || backId);
           } else if (brandLabel) {
@@ -4607,7 +4607,7 @@
             const rescanBtn = document.getElementById('btnBrandRescan');
             if (rescanBtn) {
               rescanBtn.disabled = false;
-              rescanBtn.textContent = 'Scan this brand again';
+              rescanBtn.textContent = 'Rescan this brand';
             }
           }
         }
@@ -4623,7 +4623,7 @@
           const scanUrl = rec && String(rec.url || '').trim();
           if (!scanUrl) {
             alert(
-              'Is brand ka URL nahi mila. Pehle Quick scan par Brand name + URL daal kar ek scan chalao, ya watch list mein URL check karo.'
+              'No URL found for this brand. Run a Quick scan with Brand name and URL first, or verify the URL in the watch list.'
             );
             return;
           }
@@ -4652,7 +4652,7 @@
           } else {
             pendingBrandRescanRouteId = null;
             rescanBtn.disabled = false;
-            rescanBtn.textContent = 'Scan this brand again';
+            rescanBtn.textContent = 'Rescan this brand';
             alert('Scan button not found — refresh the page.');
           }
         });
@@ -4735,8 +4735,8 @@
         const done = opts.done != null ? opts.done : s.scanned || 0;
         const total = opts.total != null ? opts.total : s.totalBrands || done;
         const title = opts.inProgress
-          ? 'Watch in progress…'
-          : 'Watch finished — ' + new Date().toLocaleString();
+          ? 'Brand watch in progress…'
+          : 'Brand watch complete — ' + new Date().toLocaleString();
         let stats =
           '<p class="watch-stats"><strong>' +
           (opts.inProgress ? 'Progress' : 'Done') +
@@ -4755,7 +4755,7 @@
             escapeHtml(to) +
             '</code></p>';
         } else {
-          stats += ' — <em>keep this tab open until finished</em></p>';
+          stats += ' — <em>please keep this tab open until the run completes</em></p>';
         }
         let emailBanner = '';
         const digestOk = s.digestEmail && s.digestEmail.sent;
@@ -4770,21 +4770,21 @@
                   : 'Run <code>npm run go-live:email-setup</code> or paste App Password below, then Watch again.';
           emailBanner =
             '<div class="scan-msg scan-msg-warn" style="margin:0.5rem 0">' +
-            '<strong>Combined watch email not sent.</strong> ' +
+            '<strong>Consolidated watch email was not delivered.</strong> ' +
             escapeHtml(emReason.slice(0, 320)) +
             '</div>';
         } else if (!opts.inProgress && (s.emailsSent > 0 || digestOk)) {
           const n = (s.digestEmail && s.digestEmail.brandCount) || (s.brands && s.brands.length) || s.scanned || 0;
           emailBanner =
-            '<div class="scan-msg scan-msg-ok" style="margin:0.5rem 0"><strong>One combined email sent</strong> — all ' +
+            '<div class="scan-msg scan-msg-ok" style="margin:0.5rem 0"><strong>Consolidated email delivered</strong> — ' +
             escapeHtml(String(n)) +
-            ' brand(s) in a single report to <code>' +
+            ' brand(s) in a single report sent to <code>' +
             escapeHtml(to) +
             '</code>' +
             (s.digestEmail && s.digestEmail.pdfCount
-              ? ' with <strong>' + escapeHtml(String(s.digestEmail.pdfCount)) + ' PDF(s)</strong> (one per brand).'
-              : ' (with PDF attachment(s)).') +
-            ' Check inbox + spam.</div>';
+              ? ' with <strong>' + escapeHtml(String(s.digestEmail.pdfCount)) + ' PDF report(s)</strong> (one per brand).'
+              : ' with PDF attachment(s).') +
+            ' Please check your inbox and spam folder.</div>';
         }
         let table = '';
         if (Array.isArray(s.brands) && s.brands.length) {
@@ -4879,7 +4879,7 @@
 
       function maybeNotifyWatchDone(summary) {
         if (!summary || summary.scanned < 1) return;
-        const title = 'Go-Live Watch finished';
+        const title = 'Go-Live brand watch complete';
         const body =
           summary.scanned +
           ' brand(s), ' +
@@ -5091,7 +5091,7 @@
           return b && b.enabled !== false && b.url;
         });
         if (!brands.length) {
-          alert('No brands in watch list. Add brands first.');
+          alert('No brands are enrolled in the watch list. Add brands before running a watch.');
           return;
         }
         merged.totalBrands = brands.length;
@@ -5207,7 +5207,7 @@
           await refreshWatchBrandsCache();
           const enabledWatchBrands = watchEnabledBrandsList();
           if (!enabledWatchBrands.length) {
-            alert('No brands in watch list. Add brands first.');
+            alert('No brands are enrolled in the watch list. Add brands before running a watch.');
             return;
           }
           total = enabledWatchBrands.length;
@@ -5319,7 +5319,7 @@
             merged.digestEmail = {
               skipped: true,
               reason:
-                'Scans finished but email not configured. Paste Sender Gmail + App Password below, then click Watch again (only email step). Or set Vercel SMTP env + Redeploy.',
+                'Scans completed successfully, but email is not configured. Enter Sender Gmail and App Password below, then run Watch again to deliver the report. Alternatively, configure Vercel SMTP environment variables and redeploy.',
             };
             merged.emailsSkipped = 1;
           } else {
@@ -5333,8 +5333,8 @@
           const watchFailCount = (merged.brands || []).length - watchOkCount;
           if (!watchOkCount && watchFailCount) {
             alert(
-              'Watch finished but every brand failed on the server.\n\n' +
-                'Wait 1 minute, Redeploy on Vercel, then try again — or use Quick scan per brand.'
+              'Watch completed, but every brand failed on the server.\n\n' +
+                'Wait one minute, redeploy on Vercel, then retry—or run Quick scan on individual brands.'
             );
           }
           maybeNotifyWatchDone(merged);
@@ -5343,21 +5343,21 @@
           const msg = String(e.message || e);
           if (/abort|timeout/i.test(msg)) {
             alert(
-              'Watch timed out on the server (Vercel max ~60s per brand). Wait and try again, or scan brands one-by-one from All brands.'
+              'Watch timed out on the server (Vercel limit: ~60 seconds per brand). Wait and retry, or scan brands individually from All brands.'
             );
           } else if (/failed to fetch/i.test(msg)) {
             alert(
-              'Watch failed: server did not respond in time.\n\n' +
+              'Watch failed: the server did not respond in time.\n\n' +
                 (isVercelHost()
-                  ? 'On Vercel, all brands are scanned one-by-one — keep this tab open until finished. If it still fails, redeploy latest code or use Quick scan per brand.'
-                  : 'Check that npm run go-live:audit is running on this PC.')
+                  ? 'On Vercel, brands are scanned sequentially—keep this tab open until completion. If the issue persists, redeploy the latest code or run Quick scan per brand.'
+                  : 'Ensure npm run go-live:audit is running on this machine.')
             );
           } else {
             alert('Watch failed: ' + msg);
           }
         } finally {
           btn.disabled = false;
-          btn.textContent = 'Run watch now (all brands)';
+          btn.textContent = 'Run watch now — all brands';
         }
       });
 
