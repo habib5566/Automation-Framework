@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-06-03T12:12:14.505Z",
+  "updatedAt": "2026-06-10T11:33:55.247Z",
   "brands": [
     {
       "name": "Example Brand",
@@ -336,7 +336,7 @@
       "url": "https://vettedlogos.com/",
       "enabled": true,
       "addedAt": "2026-06-02T11:47:23.447Z",
-      "lastScanAt": "2026-06-03T12:12:14.047Z",
+      "lastScanAt": "2026-06-10T11:33:53.659Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://vettedlogos.com/"
     },
