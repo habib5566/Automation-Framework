@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-06-10T11:33:55.247Z",
+  "updatedAt": "2026-06-11T10:32:36.107Z",
   "brands": [
     {
       "name": "Example Brand",
@@ -354,6 +354,36 @@
       "url": "https://vettedlogos.com/",
       "enabled": true,
       "addedAt": "2026-06-03T11:30:04.784Z"
+    },
+    {
+      "name": "LogoGrand",
+      "url": "https://logogrand.com/",
+      "enabled": true,
+      "addedAt": "2026-06-11T10:19:28.920Z",
+      "lastScanAt": "2026-06-11T10:32:35.682Z",
+      "lastAlertLevel": "critical",
+      "lastUrl": "https://logogrand.com/",
+      "lastAlertAt": "2026-06-11T10:32:35.682Z",
+      "alertHistory": [
+        {
+          "at": "2026-06-11T10:32:35.682Z",
+          "level": "critical",
+          "critical": 1,
+          "warns": 0
+        },
+        {
+          "at": "2026-06-11T10:19:28.920Z",
+          "level": "critical",
+          "critical": 1,
+          "warns": 0
+        }
+      ]
+    },
+    {
+      "name": "l-grand",
+      "url": "https://logogrand.com/",
+      "enabled": true,
+      "addedAt": "2026-06-11T10:32:36.107Z"
     }
   ]
 }

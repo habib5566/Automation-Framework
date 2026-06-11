@@ -108,6 +108,7 @@ function enrichScanReportPayload(payload, ctx) {
     pageIssues,
     consoleIssues: payload.consoleIssues,
     baseline,
+    brandName: brandName || payload.brandName || null,
   });
 
   payload.brandMatrix = buildBrandMatrix({
