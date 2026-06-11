@@ -67,6 +67,7 @@ const { captureBrowserConsole } = require('./go-live-audit-playwright-console.cj
 const { buildBrandMatrix, pickConsoleIssues, pickNonConsoleIssues } = require('./go-live-audit-brand-matrix.cjs');
 const { buildVulnerabilities } = require('./go-live-audit-vulnerabilities.cjs');
 const { detectSecurityThreats } = require('./go-live-audit-security-threats.cjs');
+const { buildDomainSslReport } = require('./go-live-audit-domain-ssl.cjs');
 const { findBrand, loadBrandsWatch, recordScanForBrand } = require('./go-live-audit-brand-watch.cjs');
 
 /**
@@ -141,6 +142,9 @@ function enrichScanReportPayload(payload, ctx) {
     readOnlyData: process.env.VERCEL === '1',
     serverlessChrome: isServerlessChromiumRuntime(),
   };
+  payload.domainSsl = ctx.domainSsl || null;
+  if (payload.domainSsl && payload.domainSsl.shouldAlert) payload.securityAlert = true;
+
   payload.vulnerabilities = buildVulnerabilities({
     security: payload.security,
     siteStack: payload.siteStack,
@@ -148,6 +152,7 @@ function enrichScanReportPayload(payload, ctx) {
     siteIssues: payload.siteIssues,
     consoleIssues: payload.consoleIssues,
     scanMeta: payload.scanMeta,
+    domainSsl: payload.domainSsl,
   });
 }
 
@@ -2053,6 +2058,28 @@ async function handleScan(req, res) {
       html: mergedHtml,
     });
 
+    let domainSsl = null;
+    try {
+      domainSsl = await buildDomainSslReport(finalUrl || requestedUrl);
+      if (domainSsl && domainSsl.alerts && domainSsl.alerts.length) {
+        for (const a of domainSsl.alerts) {
+          scanWarnings.push({
+            message: '[' + (a.type || 'expiry') + '] ' + (a.headline || 'Renewal attention needed'),
+          });
+        }
+      }
+    } catch (domainSslErr) {
+      domainSsl = {
+        ok: false,
+        error: String((domainSslErr && domainSslErr.message) || domainSslErr).slice(0, 200),
+        headline: 'SSL / domain expiry check failed',
+        panelTone: 'neutral',
+        shouldAlert: false,
+        items: [],
+        alerts: [],
+      };
+    }
+
     const successPayload = {
       ok: true,
       requestedUrl,
@@ -2061,6 +2088,7 @@ async function handleScan(req, res) {
       pageIssues,
       availability,
       siteStack,
+      domainSsl,
       contentAutoChecksSkipped: skipCh.skip,
       contentAutoChecksSkipReason: skipCh.skip ? skipCh.reason : null,
       finalUrl,
@@ -2095,6 +2123,7 @@ async function handleScan(req, res) {
       statusCode,
       htmlBody: bodySlice,
       headers,
+      domainSsl,
     });
     await flushScanEmailIfNeeded(json, successPayload);
     ensureEmailReportOnPayload(json, successPayload);

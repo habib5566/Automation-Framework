@@ -1899,6 +1899,13 @@
       Automated detection for cryptominers, web shells, defacement, fake crypto airdrops / wallet drainers, exposed secrets, downtime, and content drift versus the last clean baseline. Alerts are sent to <strong>habib.developer8899@gmail.com</strong>.
     </p>
   </div>
+  <div id="domainSslPanel" class="site-stack-panel stack-neutral reveal-on-scroll" aria-live="polite">
+    <p class="site-stack-title">SSL &amp; domain expiry</p>
+    <p class="site-stack-headline">Run a scan to populate this panel</p>
+    <p class="site-stack-sub stack-empty-hint">
+      TLS certificate and domain registration expiry are checked on each scan. Warnings appear when SSL is within 30 days or domain within 90 days of expiry. Critical alerts email <strong>habib.developer8899@gmail.com</strong>.
+    </p>
+  </div>
   <div id="brandMatrixPanel" class="brand-matrix-panel reveal-on-scroll" aria-live="polite">
     <p class="site-stack-title">Brand performance matrix</p>
     <p class="site-stack-headline">Run a scan to populate this panel</p>
@@ -3627,6 +3634,7 @@
         if (!data) {
           renderVulnerabilitiesPanel(null);
           renderSecurityThreatsPanel(null);
+          renderDomainSslPanel(null);
           renderBrandMatrixPanel(null);
           renderConsoleErrorsPanel(null);
           renderPageIssuesPanel(null);
@@ -3635,10 +3643,83 @@
         }
         renderVulnerabilitiesPanel(data.vulnerabilities, data.brandName);
         renderSecurityThreatsPanel(data.security, data.brandName);
+        renderDomainSslPanel(data.domainSsl);
         renderBrandMatrixPanel(data.brandMatrix, data.siteStack);
         renderConsoleErrorsPanel(data.consoleIssues, data.brandName, data.scanMeta, data.deployHints);
         renderPageIssuesPanel(data.pageIssues, data.brandName, data.siteIssues);
         if (data.siteStack) renderSiteStackPanel(data.siteStack);
+      }
+
+      function renderDomainSslPanel(domainSsl) {
+        const panel = document.getElementById('domainSslPanel');
+        if (!panel) return;
+        if (!domainSsl) {
+          panel.className = 'site-stack-panel stack-neutral';
+          panel.innerHTML =
+            '<p class="site-stack-title">SSL &amp; domain expiry</p>' +
+            '<p class="site-stack-headline">Run a scan first</p>' +
+            '<p class="site-stack-sub stack-empty-hint">Certificate and WHOIS/RDAP domain expiry checks run automatically after each successful scan.</p>';
+          return;
+        }
+        const tone = ['good', 'warn', 'bad', 'neutral'].includes(domainSsl.panelTone)
+          ? domainSsl.panelTone
+          : 'neutral';
+        panel.className = 'site-stack-panel stack-' + tone;
+        let html =
+          '<p class="site-stack-title">SSL &amp; domain expiry' +
+          (domainSsl.hostname ? ' · ' + escapeHtml(domainSsl.hostname) : '') +
+          '</p>' +
+          '<p class="site-stack-headline">' +
+          escapeHtml(domainSsl.headline || 'Expiry check') +
+          '</p>';
+        const items = Array.isArray(domainSsl.items) ? domainSsl.items : [];
+        if (items.length) {
+          html += '<div class="stack-chips">';
+          items.forEach(function (it) {
+            const al =
+              it.severity === 'critical' || it.severity === 'high'
+                ? 'bad'
+                : it.severity === 'medium'
+                  ? 'warn'
+                  : it.ok === false
+                    ? 'info'
+                    : 'good';
+            const label = it.type === 'domain' ? 'Domain' : 'SSL';
+            const detail =
+              it.type === 'ssl' && it.validTo
+                ? 'Valid until ' + it.validTo.slice(0, 10) + (it.daysLeft != null ? ' · ' + it.daysLeft + ' days left' : '')
+                : it.type === 'domain' && it.expiresAt
+                  ? 'Expires ' + it.expiresAt.slice(0, 10) + (it.daysLeft != null ? ' · ' + it.daysLeft + ' days left' : '')
+                  : it.error || '';
+            html +=
+              '<span class="stack-chip alert-' +
+              al +
+              '" title="' +
+              escapeHtml(detail) +
+              '">' +
+              '<span>' +
+              escapeHtml(label) +
+              (it.daysLeft != null && it.ok !== false ? ' <strong>' + escapeHtml(String(it.daysLeft)) + 'd</strong>' : '') +
+              '</span>' +
+              '<span class="stack-chip-cat">' +
+              escapeHtml(it.headline || (it.ok === false ? 'Check failed' : 'OK')) +
+              '</span>' +
+              '</span>';
+          });
+          html += '</div>';
+        }
+        const alerts = Array.isArray(domainSsl.alerts) ? domainSsl.alerts : [];
+        if (alerts.length) {
+          html += '<div class="stack-alerts" role="alert">';
+          alerts.forEach(function (a) {
+            html +=
+              '<div class="stack-alert-line level-bad">⚠ ' + escapeHtml(a.headline || 'Renewal needed') + '</div>';
+          });
+          html += '</div>';
+        } else if (!items.length) {
+          html += '<p class="stack-empty-hint">No expiry data returned for this host.</p>';
+        }
+        panel.innerHTML = html;
       }
 
       function renderSiteStackPanel(siteStack) {

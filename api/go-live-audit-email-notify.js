@@ -99,6 +99,32 @@ function buildPlainText(scanResponse) {
     }
     lines.push('');
   }
+  if (o.domainSsl && Array.isArray(o.domainSsl.items) && o.domainSsl.items.length) {
+    const ds = o.domainSsl;
+    lines.push('');
+    lines.push('═══ SSL & DOMAIN EXPIRY ═══');
+    lines.push('Summary: ' + (ds.headline || '—'));
+    for (const it of ds.items) {
+      const extra =
+        it.type === 'ssl' && it.validTo
+          ? ' (until ' + it.validTo.slice(0, 10) + ')'
+          : it.type === 'domain' && it.expiresAt
+            ? ' (until ' + it.expiresAt.slice(0, 10) + ')'
+            : it.error
+              ? ' — ' + it.error
+              : '';
+      lines.push(
+        '  [' +
+          (it.severity || (it.ok === false ? 'info' : 'ok')).toUpperCase() +
+          '] ' +
+          (it.type || 'check') +
+          ' — ' +
+          (it.headline || '—') +
+          extra
+      );
+    }
+    lines.push('');
+  }
   if (o.security) {
     const sec = o.security;
     lines.push('');
@@ -321,6 +347,7 @@ function scanNeedsDangerEmail(scanResponse) {
   if (o.securityAlert === true) return true;
   if (o.security && o.security.shouldAlert) return true;
   if (o.security && o.security.alertLevel === 'critical') return true;
+  if (o.domainSsl && o.domainSsl.shouldAlert) return true;
   const vs = o.vulnerabilities && o.vulnerabilities.summary;
   if (vs && (Number(vs.critical) > 0 || Number(vs.high) >= 2)) return true;
   const pi = o.pageIssues && o.pageIssues.summary;
@@ -748,6 +775,7 @@ function compactScanPayloadForDigest(result) {
     overallSummary: r.overallSummary || null,
     brandMatrix: r.brandMatrix || null,
     vulnerabilities: r.vulnerabilities || null,
+    domainSsl: r.domainSsl || null,
     security: r.security || null,
     autoChecks: Array.isArray(r.autoChecks) ? r.autoChecks.slice(0, 80) : [],
     pageIssues: {

@@ -5,7 +5,7 @@ const { isNoisyConsoleMessage } = require('./go-live-audit-page-issues.cjs');
 /**
  * Unified vulnerability / risk list for UI + email (material findings only).
  */
-function buildVulnerabilities({ security, siteStack, pageIssues, siteIssues, consoleIssues, scanMeta }) {
+function buildVulnerabilities({ security, siteStack, pageIssues, siteIssues, consoleIssues, scanMeta, domainSsl }) {
   const items = [];
   const seen = new Set();
   const browserFailed =
@@ -46,6 +46,25 @@ function buildVulnerabilities({ security, siteStack, pageIssues, siteIssues, con
       detail:
         'Was: ' + (sec.baselineDrift.previousTitle || '—') + ' → Now: ' + (sec.baselineDrift.currentTitle || '—'),
       source: 'brand-watch',
+    });
+  }
+
+  for (const it of (domainSsl && domainSsl.items) || []) {
+    if (!it || !it.alert) continue;
+    const sev =
+      it.severity === 'critical' ? 'critical' : it.severity === 'high' ? 'high' : it.severity === 'medium' ? 'medium' : 'low';
+    add({
+      id: 'expiry_' + (it.type || 'unknown'),
+      severity: sev,
+      category: it.type === 'domain' ? 'domain-expiry' : 'ssl-expiry',
+      title: it.headline || (it.type === 'domain' ? 'Domain expiry' : 'SSL expiry'),
+      detail:
+        it.type === 'ssl' && it.validTo
+          ? 'Valid until ' + it.validTo.slice(0, 10) + (it.issuer ? ' · Issuer: ' + it.issuer : '')
+          : it.type === 'domain' && it.expiresAt
+            ? 'Expires ' + it.expiresAt.slice(0, 10) + (it.registrar ? ' · Registrar: ' + it.registrar : '')
+            : it.error || 'Renewal attention needed',
+      source: 'domain-ssl-monitor',
     });
   }
 
