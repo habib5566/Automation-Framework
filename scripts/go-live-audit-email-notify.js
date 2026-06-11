@@ -99,12 +99,13 @@ function buildPlainText(scanResponse) {
     }
     lines.push('');
   }
-  if (o.domainSsl && Array.isArray(o.domainSsl.items) && o.domainSsl.items.length) {
+  if (o.domainSsl) {
     const ds = o.domainSsl;
     lines.push('');
     lines.push('═══ SSL & DOMAIN EXPIRY ═══');
     lines.push('Summary: ' + (ds.headline || '—'));
-    for (const it of ds.items) {
+    if (ds.hostname) lines.push('Host: ' + ds.hostname);
+    for (const it of (ds.items || [])) {
       const extra =
         it.type === 'ssl' && it.validTo
           ? ' (until ' + it.validTo.slice(0, 10) + ')'
@@ -280,6 +281,39 @@ function escapeHtmlForEmail(s) {
     .replace(/"/g, '&quot;');
 }
 
+function buildDomainSslHtmlBlock(domainSsl) {
+  const ds = domainSsl;
+  if (!ds) return '';
+  const alertStyle = ds.shouldAlert
+    ? 'background:#fef2f2;border:1px solid #fecaca;color:#991b1b'
+    : 'background:#f0fdf4;border:1px solid #bbf7d0;color:#166534';
+  let itemsHtml = '';
+  for (const it of ds.items || []) {
+    const label = it.type === 'domain' ? 'Domain' : 'SSL';
+    const extra =
+      it.type === 'ssl' && it.validTo
+        ? ' (until ' + it.validTo.slice(0, 10) + ')'
+        : it.type === 'domain' && it.expiresAt
+          ? ' (until ' + it.expiresAt.slice(0, 10) + ')'
+          : it.error
+            ? ' — ' + it.error
+            : '';
+    itemsHtml +=
+      '<li style="margin:4px 0">' +
+      escapeHtmlForEmail(label + ' — ' + (it.headline || '—') + extra) +
+      '</li>';
+  }
+  return (
+    '<div style="margin:12px 0;padding:10px 12px;' +
+    alertStyle +
+    ';border-radius:6px;font-size:13px;line-height:1.45">' +
+    '<strong>SSL &amp; domain expiry</strong><br/>' +
+    escapeHtmlForEmail(ds.headline || '—') +
+    (itemsHtml ? '<ul style="margin:8px 0 0 18px;padding:0">' + itemsHtml + '</ul>' : '') +
+    '</div>'
+  );
+}
+
 function buildHtmlEmail(scanResponse, opts) {
   opts = opts || {};
   const brand = scanResponse && scanResponse.brandName ? escapeHtmlForEmail(scanResponse.brandName) : '';
@@ -289,8 +323,9 @@ function buildHtmlEmail(scanResponse, opts) {
     ? escapeHtmlForEmail((os.headline || '') + (os.subline ? ' — ' + os.subline : ''))
     : 'Scan completed.';
   const pdfNote = opts.pdfAttached
-    ? '<p style="margin:0 0 12px;padding:10px 12px;background:#ecfdf5;border:1px solid #86efac;border-radius:6px;color:#166534;font-size:14px"><strong>PDF report attached</strong> — please open the PDF for the complete go-live audit (summary, performance, risks, security, and checklist).</p>'
+    ? '<p style="margin:0 0 12px;padding:10px 12px;background:#ecfdf5;border:1px solid #86efac;border-radius:6px;color:#166534;font-size:14px"><strong>PDF report attached</strong> — please open the PDF for the complete go-live audit (summary, performance, SSL/domain expiry, risks, security, and checklist).</p>'
     : '';
+  const domainSslBlock = buildDomainSslHtmlBlock(scanResponse && scanResponse.domainSsl);
   return (
     '<!DOCTYPE html><html><head><meta charset="utf-8"/></head>' +
     '<body style="font-family:Segoe UI,Calibri,Arial,sans-serif;background:#f4f6f8;margin:0;padding:20px">' +
@@ -304,6 +339,7 @@ function buildHtmlEmail(scanResponse, opts) {
     '<p style="margin:0 0 8px;font-size:15px;line-height:1.5"><strong>' +
     summaryLine +
     '</strong></p>' +
+    domainSslBlock +
     (brand ? '<p style="margin:0;color:#64748b">Brand: ' + brand + '</p>' : '') +
     '</td></tr>' +
     '<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#64748b">' +
@@ -332,6 +368,8 @@ function buildSubject(scanResponse) {
     short = 'Security review needed — ' + short;
   } else if (o.security && o.security.shouldAlert) {
     short = 'Security notice — ' + short;
+  } else if (o.domainSsl && o.domainSsl.shouldAlert) {
+    short = 'SSL/domain renewal — ' + short;
   } else if (o.pageIssues && o.pageIssues.summary && o.pageIssues.summary.errors > 0) {
     short = (o.pageIssues.summary.errors || 0) + ' issue(s) found — ' + short;
   }
@@ -831,6 +869,7 @@ function buildWatchDigestEntry(brand, result) {
   const av = r.availability || {};
   const bm = r.brandMatrix || {};
   const sec = r.security || {};
+  const dss = r.domainSsl || {};
   const sm = r.scanMeta || {};
   return {
     brandName: r.brandName || b.name || '—',
@@ -855,6 +894,8 @@ function buildWatchDigestEntry(brand, result) {
     securityWarns: sec.warnCount || 0,
     securityHeadline: sec.headline || null,
     securityAlert: !!(sec.shouldAlert || sec.alertLevel === 'critical'),
+    domainSslHeadline: dss.headline || null,
+    domainSslAlert: !!dss.shouldAlert,
     criticalCount: sec.criticalCount || 0,
     consoleCapture: sm.consoleCapture || null,
     error: r.error ? String(r.error).slice(0, 200) : null,
@@ -896,6 +937,7 @@ function scanPayloadForDigestPdf(entry, storedReport) {
       warnCount: e.securityWarns || 0,
       criticalCount: e.criticalCount || 0,
     },
+    domainSsl: e.scanPayload && e.scanPayload.domainSsl ? e.scanPayload.domainSsl : null,
     scanMeta: { consoleCapture: e.consoleCapture || null },
   };
 }
@@ -997,7 +1039,9 @@ function buildWatchDigestPlainText(entries) {
         (e.pending || 0)
     );
     if (e.securityHeadline) lines.push('  Security: ' + e.securityHeadline);
+    if (e.domainSslHeadline) lines.push('  SSL/Domain: ' + e.domainSslHeadline);
     if (e.securityAlert) lines.push('  ⚠ SECURITY ALERT — review this brand');
+    if (e.domainSslAlert) lines.push('  ⚠ SSL/DOMAIN RENEWAL ALERT — review this brand');
     if (e.scanPayload && typeof e.scanPayload === 'object') {
       lines.push('  (Full detail in attached PDF for this brand.)');
     }
@@ -1046,7 +1090,13 @@ function buildWatchDigestHtml(entries) {
       '</td>' +
       '<td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-size:13px">' +
       escapeHtmlForEmail((e.overallHeadline || '—').slice(0, 120)) +
-      (e.securityAlert ? '<br/><span style="color:#b91c1c">⚠ Alert</span>' : '') +
+      (e.securityAlert ? '<br/><span style="color:#b91c1c">⚠ Security alert</span>' : '') +
+      (e.domainSslHeadline
+        ? '<br/><span style="font-size:11px;color:#64748b">SSL/Domain: ' +
+          escapeHtmlForEmail(e.domainSslHeadline.slice(0, 80)) +
+          '</span>'
+        : '') +
+      (e.domainSslAlert ? '<br/><span style="color:#b91c1c">⚠ SSL/domain renewal</span>' : '') +
       '</td></tr>';
   }
   const summaryTable =
@@ -1081,12 +1131,22 @@ function buildWatchDigestHtml(entries) {
       '<p style="margin:0 0 4px">' +
       escapeHtmlForEmail(sp.requestedUrl || e.url || '—') +
       '</p>' +
-      '<p style="margin:0">' +
+      '<p style="margin:0 0 6px">' +
       escapeHtmlForEmail((os.headline || '—').slice(0, 200)) +
       (e.performancePercent != null
         ? ' · Score <strong>' + escapeHtmlForEmail(String(e.performancePercent)) + '%</strong>'
         : '') +
-      ' · See attached PDF for full checklist.</p></div>';
+      ' · See attached PDF for full checklist.</p>' +
+      (sp.domainSsl && sp.domainSsl.headline
+        ? '<p style="margin:0;font-size:13px;color:#475569"><strong>SSL/Domain:</strong> ' +
+          escapeHtmlForEmail(sp.domainSsl.headline) +
+          '</p>'
+        : e.domainSslHeadline
+          ? '<p style="margin:0;font-size:13px;color:#475569"><strong>SSL/Domain:</strong> ' +
+            escapeHtmlForEmail(e.domainSslHeadline) +
+            '</p>'
+          : '') +
+      '</div>';
   }
   return (
     '<!DOCTYPE html><html><head><meta charset="utf-8"/></head><body style="font-family:Segoe UI,Calibri,Arial,sans-serif;background:#f4f6f8;margin:0;padding:20px">' +

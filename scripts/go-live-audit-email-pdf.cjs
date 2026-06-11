@@ -40,6 +40,60 @@ function drawKeyValue(doc, label, value) {
   doc.font('Helvetica').fillColor('#1e293b').text(safeText(value, 400));
 }
 
+function domainSslBulletLines(domainSsl) {
+  const ds = domainSsl || {};
+  const items = Array.isArray(ds.items) ? ds.items : [];
+  return items.map((it) => {
+    const label = it.type === 'domain' ? 'Domain' : 'SSL';
+    const extra =
+      it.type === 'ssl' && it.validTo
+        ? ' until ' + it.validTo.slice(0, 10) + (it.daysLeft != null ? ' (' + it.daysLeft + ' days left)' : '')
+        : it.type === 'domain' && it.expiresAt
+          ? ' until ' + it.expiresAt.slice(0, 10) + (it.daysLeft != null ? ' (' + it.daysLeft + ' days left)' : '')
+          : it.error
+            ? ' — ' + it.error
+            : '';
+    return (
+      '[' +
+      String(it.severity || (it.ok === false ? 'info' : 'ok')).toUpperCase() +
+      '] ' +
+      label +
+      ' — ' +
+      (it.headline || '—') +
+      extra
+    );
+  });
+}
+
+function drawDomainSslSection(doc, domainSsl) {
+  if (!domainSsl) return;
+  drawSectionTitle(doc, 'SSL & domain expiry');
+  doc.fillColor(severityColor(domainSsl.shouldAlert ? 'warn' : 'ok'))
+    .font('Helvetica-Bold')
+    .fontSize(11)
+    .text(safeText(domainSsl.headline || 'Expiry check', 220), { width: 495 });
+  doc.fillColor('#334155').font('Helvetica').fontSize(10);
+  if (domainSsl.hostname) {
+    doc.moveDown(0.15);
+    drawKeyValue(doc, 'Host', domainSsl.hostname);
+  }
+  const bullets = domainSslBulletLines(domainSsl);
+  if (bullets.length) {
+    doc.moveDown(0.15);
+    drawBulletList(doc, bullets, 6);
+  } else {
+    doc.moveDown(0.15);
+    doc.text('No expiry data returned for this host.', { width: 495 });
+  }
+  if (domainSsl.ssl && domainSsl.ssl.ok && domainSsl.ssl.issuer) {
+    doc.moveDown(0.1);
+    drawKeyValue(doc, 'SSL issuer', domainSsl.ssl.issuer);
+  }
+  if (domainSsl.domain && domainSsl.domain.ok && domainSsl.domain.registrar) {
+    drawKeyValue(doc, 'Domain registrar', domainSsl.domain.registrar);
+  }
+}
+
 function drawBulletList(doc, items, max) {
   const list = (items || []).slice(0, max || 25);
   for (const it of list) {
@@ -132,6 +186,8 @@ async function buildScanReportPdf(scanResponse) {
         drawKeyValue(doc, 'Site health', (m.siteHealthPercent != null ? m.siteHealthPercent : '—') + '%');
         if (m.passRatePercent != null) drawKeyValue(doc, 'Checklist pass rate', m.passRatePercent + '%');
       }
+
+      drawDomainSslSection(doc, o.domainSsl);
 
       if (o.vulnerabilities && Array.isArray(o.vulnerabilities.items) && o.vulnerabilities.items.length) {
         drawSectionTitle(doc, 'Vulnerabilities and risks');
@@ -299,6 +355,13 @@ async function buildWatchDigestPdf(entries) {
           'Pass ' + (e.pass || 0) + ' · Fail ' + (e.fail || 0) + ' · Manual ' + (e.pending || 0)
         );
         if (e.securityHeadline) drawKeyValue(doc, 'Security', e.securityHeadline);
+        if (e.domainSslHeadline) drawKeyValue(doc, 'SSL & domain', e.domainSslHeadline);
+        if (e.domainSslAlert) {
+          doc.font('Helvetica-Bold').fillColor('#b91c1c').text('SSL or domain renewal alert — review urgently', {
+            width: 495,
+          });
+          doc.fillColor('#334155').font('Helvetica');
+        }
         doc.moveDown(0.4);
       }
 
