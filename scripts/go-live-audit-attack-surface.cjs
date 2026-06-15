@@ -50,6 +50,10 @@ const REMEDIATION = {
   sql_error_exposed: 'Fix the underlying bug and show generic error pages — never expose DB errors.',
   path_exposed: 'Block public access to sensitive paths via web server config or remove files.',
   dns_no_spf: 'Add SPF (and DMARC) DNS records to reduce email spoofing risk.',
+  referrer_policy_missing: 'Add header Referrer-Policy: strict-origin-when-cross-origin (nginx, Apache, or CDN).',
+  permissions_policy_missing: 'Add Permissions-Policy to restrict camera, microphone, geolocation, etc.',
+  server_banner: 'Hide version in Server header (e.g. nginx server_tokens off; generic Server name).',
+  powered_by_banner: 'Remove X-Powered-By header in nginx/Apache or your framework config.',
   open_redirect: 'Validate redirect targets server-side; use allowlists for external URLs.',
   csrf_missing: 'Add CSRF tokens to state-changing forms and validate on the server.',
   autocomplete_password: 'Use autocomplete="new-password" or appropriate values; enforce HTTPS.',
@@ -171,8 +175,10 @@ function analyzeSecurityHeaders(headers, finalUrl) {
       id: 'referrer_policy_missing',
       category: 'information_gathering',
       severity: 'info',
+      confidence: 'confirmed',
       title: 'Referrer-Policy header not set',
-      detail: 'URLs in Referer headers may leak to third parties.',
+      detail: 'Informational — Referer URLs may leak to third-party sites when users follow external links.',
+      remediation: REMEDIATION.referrer_policy_missing,
     });
   }
   if (!permissions) {
@@ -180,8 +186,10 @@ function analyzeSecurityHeaders(headers, finalUrl) {
       id: 'permissions_policy_missing',
       category: 'information_gathering',
       severity: 'info',
+      confidence: 'confirmed',
       title: 'Permissions-Policy header not set',
-      detail: 'Browser features (camera, mic, geolocation) are not restricted by policy.',
+      detail: 'Informational — browser features (camera, mic, geolocation) are not restricted by policy.',
+      remediation: REMEDIATION.permissions_policy_missing,
     });
   }
 
@@ -192,8 +200,10 @@ function analyzeSecurityHeaders(headers, finalUrl) {
       id: 'server_banner',
       category: 'information_gathering',
       severity: 'info',
+      confidence: 'confirmed',
       title: 'Server banner disclosed: ' + server.slice(0, 80),
-      detail: 'Version banners help attackers pick known exploits — hide or genericize where possible.',
+      detail: 'Informational — version in Server header can help attackers target known CVEs.',
+      remediation: REMEDIATION.server_banner,
     });
   }
   if (powered) {
@@ -201,8 +211,10 @@ function analyzeSecurityHeaders(headers, finalUrl) {
       id: 'powered_by_banner',
       category: 'information_gathering',
       severity: 'low',
+      confidence: 'confirmed',
       title: 'X-Powered-By disclosed: ' + powered.slice(0, 80),
-      detail: 'Framework/version leaks aid targeted attacks.',
+      detail: 'Framework/version visible in response headers.',
+      remediation: REMEDIATION.powered_by_banner,
     });
   }
 

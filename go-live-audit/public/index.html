@@ -3688,27 +3688,38 @@
             html += '<p class="site-stack-sub" style="margin-top:0.65rem;font-weight:600">' + escapeHtml(cat.label || cat.id || 'Category') + '</p>';
             html += '<div class="stack-alerts">';
             (cat.findings || []).forEach(function (f) {
+              const sev = String(f.severity || 'info').toLowerCase();
               const lv =
-                f.severity === 'critical' || f.severity === 'high'
+                sev === 'critical' || sev === 'high'
                   ? 'bad'
-                  : f.severity === 'medium'
+                  : sev === 'medium'
                     ? 'warn'
                     : 'warn';
+              const showBadge = sev === 'critical' || sev === 'high' || sev === 'medium';
+              let badge = '';
+              if (showBadge && f.confidence === 'confirmed') {
+                badge = '<span style="font-size:11px;color:#15803d">Verified</span> ';
+              } else if (showBadge && f.confidence === 'heuristic') {
+                badge = '<span style="font-size:11px;color:#b45309">Advisory</span> ';
+              }
+              const showFix =
+                f.remediation &&
+                !/^Review with your security team/i.test(f.remediation) &&
+                (sev !== 'info' || /Add header|nginx|Apache|CDN|Remove|Hide/i.test(f.remediation));
               html +=
                 '<div class="stack-alert-line level-' +
                 lv +
                 '">' +
-                (f.severity === 'critical' || f.severity === 'high' ? '⚠ ' : '◆ ') +
+                (sev === 'critical' || sev === 'high' ? '⚠ ' : '◆ ') +
                 '<strong>[' +
-                escapeHtml(String(f.severity || '').toUpperCase()) +
+                escapeHtml(sev.toUpperCase()) +
                 ']</strong> ' +
-                (f.confidence === 'confirmed'
-                  ? '<span style="font-size:11px;color:#15803d">✓ verified</span> '
-                  : f.confidence === 'heuristic'
-                    ? '<span style="font-size:11px;color:#b45309">~ review</span> '
-                    : '') +
+                badge +
                 escapeHtml(f.title || '') +
-                (f.remediation ? '<br/><span style="font-size:12px;opacity:0.9">Fix: ' + escapeHtml(f.remediation) + '</span>' : '') +
+                (f.detail ? '<br/><span style="font-size:12px;opacity:0.85">' + escapeHtml(f.detail) + '</span>' : '') +
+                (showFix
+                  ? '<br/><span style="font-size:12px;opacity:0.9">Fix: ' + escapeHtml(f.remediation) + '</span>'
+                  : '') +
                 '</div>';
             });
             html += '</div>';
