@@ -65,6 +65,46 @@ function domainSslBulletLines(domainSsl) {
   });
 }
 
+function drawAttackSurfaceSection(doc, attackSurface) {
+  if (!attackSurface) return;
+  drawSectionTitle(doc, 'Attack surface & security checks');
+  doc.fillColor(severityColor(attackSurface.shouldAlert ? 'warn' : 'ok'))
+    .font('Helvetica-Bold')
+    .fontSize(11)
+    .text(safeText(attackSurface.headline || 'Attack-surface scan', 240), { width: 495 });
+  doc.fillColor('#334155').font('Helvetica').fontSize(10);
+  if (attackSurface.score != null) {
+    doc.moveDown(0.15);
+    drawKeyValue(doc, 'Posture score', String(attackSurface.score) + ' / 100');
+  }
+  for (const cat of attackSurface.categories || []) {
+    if (doc.y > 700) {
+      doc.addPage();
+      doc.fillColor('#334155').fontSize(10).font('Helvetica');
+    }
+    doc.moveDown(0.25);
+    doc.font('Helvetica-Bold').text(safeText(cat.label || cat.id || 'Category', 80), { width: 495 });
+    doc.font('Helvetica');
+    drawBulletList(
+      doc,
+      (cat.findings || []).map(
+        (f) =>
+          '[' +
+          String(f.severity || '?').toUpperCase() +
+          '] ' +
+          (f.title || '') +
+          (f.remediation ? ' — Fix: ' + f.remediation : '')
+      ),
+      8
+    );
+  }
+  if (attackSurface.scopeNote) {
+    doc.moveDown(0.2);
+    doc.fontSize(8).fillColor('#64748b').text(safeText(attackSurface.scopeNote, 400), { width: 495 });
+    doc.fillColor('#334155').fontSize(10);
+  }
+}
+
 function drawDomainSslSection(doc, domainSsl) {
   if (!domainSsl) return;
   drawSectionTitle(doc, 'SSL & domain expiry');
@@ -188,6 +228,7 @@ async function buildScanReportPdf(scanResponse) {
       }
 
       drawDomainSslSection(doc, o.domainSsl);
+      drawAttackSurfaceSection(doc, o.attackSurface);
 
       if (o.vulnerabilities && Array.isArray(o.vulnerabilities.items) && o.vulnerabilities.items.length) {
         drawSectionTitle(doc, 'Vulnerabilities and risks');
@@ -356,6 +397,13 @@ async function buildWatchDigestPdf(entries) {
         );
         if (e.securityHeadline) drawKeyValue(doc, 'Security', e.securityHeadline);
         if (e.domainSslHeadline) drawKeyValue(doc, 'SSL & domain', e.domainSslHeadline);
+        if (e.attackSurfaceHeadline) {
+          drawKeyValue(
+            doc,
+            'Attack surface',
+            e.attackSurfaceHeadline + (e.attackSurfaceScore != null ? ' (score ' + e.attackSurfaceScore + '/100)' : '')
+          );
+        }
         if (e.domainSslAlert) {
           doc.font('Helvetica-Bold').fillColor('#b91c1c').text('SSL or domain renewal alert — review urgently', {
             width: 495,

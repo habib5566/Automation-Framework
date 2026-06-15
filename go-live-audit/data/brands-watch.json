@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "updatedAt": "2026-06-11T11:49:33.386Z",
+  "updatedAt": "2026-06-15T11:29:52.558Z",
   "brands": [
     {
       "name": "Example Brand",
       "url": "https://example.com",
       "enabled": true,
       "addedAt": "2026-05-19T00:00:00.000Z",
-      "lastScanAt": "2026-06-11T11:29:33.274Z",
+      "lastScanAt": "2026-06-15T11:29:52.558Z",
       "lastAlertLevel": "ok",
       "lastUrl": "https://example.com/",
       "baselineFingerprint": {
@@ -17,7 +17,7 @@
         "iframeCount": 0,
         "formCount": 0
       },
-      "baselineAt": "2026-06-11T11:29:33.274Z"
+      "baselineAt": "2026-06-15T11:29:52.558Z"
     },
     {
       "name": "weboptimax",
@@ -184,7 +184,7 @@
       "url": "https://www.designcentura.com/",
       "enabled": true,
       "addedAt": "2026-05-21T12:54:06.667Z",
-      "lastScanAt": "2026-06-02T11:58:10.784Z",
+      "lastScanAt": "2026-06-15T10:57:53.650Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://www.designcentura.com/"
     },
@@ -229,9 +229,17 @@
       "url": "https://websiteoptimax.com/",
       "enabled": true,
       "addedAt": "2026-05-22T09:01:36.987Z",
-      "lastScanAt": "2026-06-01T12:27:07.642Z",
-      "lastAlertLevel": "warn",
-      "lastUrl": "https://websiteoptimax.com/"
+      "lastScanAt": "2026-06-15T11:18:39.016Z",
+      "lastAlertLevel": "ok",
+      "lastUrl": "https://websiteoptimax.com/",
+      "baselineFingerprint": {
+        "hash": "d7d331761416477a",
+        "title": "Website Optimax | B2B Web Design &amp; Digital Marketing",
+        "scriptSrcs": 25,
+        "iframeCount": 0,
+        "formCount": 0
+      },
+      "baselineAt": "2026-06-15T11:18:39.016Z"
     },
     {
       "name": "vlogos",
@@ -360,11 +368,17 @@
       "url": "https://logogrand.com/",
       "enabled": true,
       "addedAt": "2026-06-11T10:19:28.920Z",
-      "lastScanAt": "2026-06-11T10:32:35.682Z",
+      "lastScanAt": "2026-06-15T11:20:56.284Z",
       "lastAlertLevel": "critical",
       "lastUrl": "https://logogrand.com/",
-      "lastAlertAt": "2026-06-11T10:32:35.682Z",
+      "lastAlertAt": "2026-06-15T11:20:56.284Z",
       "alertHistory": [
+        {
+          "at": "2026-06-15T11:20:56.284Z",
+          "level": "critical",
+          "critical": 1,
+          "warns": 0
+        },
         {
           "at": "2026-06-11T10:32:35.682Z",
           "level": "critical",
@@ -393,6 +407,44 @@
       "lastScanAt": "2026-06-11T11:49:32.977Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://webin30.com/"
+    },
+    {
+      "name": "logura.com",
+      "url": "https://www.logura.com/",
+      "enabled": true,
+      "addedAt": "2026-06-11T12:55:00.472Z",
+      "lastScanAt": "2026-06-15T10:42:15.514Z",
+      "lastAlertLevel": "warn",
+      "lastUrl": "https://www.logura.com/"
+    },
+    {
+      "name": "design-centura",
+      "url": "https://www.designcentura.com/",
+      "enabled": true,
+      "addedAt": "2026-06-15T10:57:53.751Z"
+    },
+    {
+      "name": "website optimax",
+      "url": "https://websiteoptimax.com/",
+      "enabled": true,
+      "addedAt": "2026-06-15T11:18:39.148Z",
+      "lastScanAt": "2026-06-15T11:19:19.633Z",
+      "lastAlertLevel": "ok",
+      "lastUrl": "https://websiteoptimax.com/",
+      "baselineFingerprint": {
+        "hash": "d7d331761416477a",
+        "title": "Website Optimax | B2B Web Design &amp; Digital Marketing",
+        "scriptSrcs": 25,
+        "iframeCount": 0,
+        "formCount": 0
+      },
+      "baselineAt": "2026-06-15T11:19:19.633Z"
+    },
+    {
+      "name": "grand",
+      "url": "https://logogrand.com/",
+      "enabled": true,
+      "addedAt": "2026-06-15T11:20:56.299Z"
     }
   ]
 }

@@ -93,6 +93,7 @@ for (const name of [
   'go-live-audit-laravel-version.cjs',
   'go-live-audit-security-threats.cjs',
   'go-live-audit-domain-ssl.cjs',
+  'go-live-audit-attack-surface.cjs',
   'go-live-audit-vulnerabilities.cjs',
   'go-live-audit-brand-watch.cjs',
   'go-live-audit-brands-api.cjs',

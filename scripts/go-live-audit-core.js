@@ -68,6 +68,7 @@ const { buildBrandMatrix, pickConsoleIssues, pickNonConsoleIssues } = require('.
 const { buildVulnerabilities } = require('./go-live-audit-vulnerabilities.cjs');
 const { detectSecurityThreats } = require('./go-live-audit-security-threats.cjs');
 const { buildDomainSslReport } = require('./go-live-audit-domain-ssl.cjs');
+const { buildAttackSurfaceReport } = require('./go-live-audit-attack-surface.cjs');
 const { findBrand, loadBrandsWatch, recordScanForBrand } = require('./go-live-audit-brand-watch.cjs');
 
 /**
@@ -144,6 +145,8 @@ function enrichScanReportPayload(payload, ctx) {
   };
   payload.domainSsl = ctx.domainSsl || null;
   if (payload.domainSsl && payload.domainSsl.shouldAlert) payload.securityAlert = true;
+  payload.attackSurface = ctx.attackSurface || null;
+  if (payload.attackSurface && payload.attackSurface.shouldAlert) payload.securityAlert = true;
 
   payload.vulnerabilities = buildVulnerabilities({
     security: payload.security,
@@ -153,6 +156,7 @@ function enrichScanReportPayload(payload, ctx) {
     consoleIssues: payload.consoleIssues,
     scanMeta: payload.scanMeta,
     domainSsl: payload.domainSsl,
+    attackSurface: payload.attackSurface,
   });
 }
 
@@ -2080,6 +2084,32 @@ async function handleScan(req, res) {
       };
     }
 
+    let attackSurface = null;
+    try {
+      attackSurface = await buildAttackSurfaceReport({
+        finalUrl,
+        headers,
+        html: bodySlice,
+      });
+      if (attackSurface && attackSurface.findings && attackSurface.findings.length) {
+        for (const f of attackSurface.findings.filter((x) => x.severity === 'critical' || x.severity === 'high')) {
+          scanWarnings.push({
+            message: '[' + (f.category || 'security') + '] ' + (f.title || 'Attack-surface finding'),
+          });
+        }
+      }
+    } catch (attackSurfaceErr) {
+      attackSurface = {
+        ok: false,
+        error: String((attackSurfaceErr && attackSurfaceErr.message) || attackSurfaceErr).slice(0, 200),
+        headline: 'Attack-surface scan failed',
+        panelTone: 'neutral',
+        shouldAlert: false,
+        findings: [],
+        categories: [],
+      };
+    }
+
     const successPayload = {
       ok: true,
       requestedUrl,
@@ -2089,6 +2119,7 @@ async function handleScan(req, res) {
       availability,
       siteStack,
       domainSsl,
+      attackSurface,
       contentAutoChecksSkipped: skipCh.skip,
       contentAutoChecksSkipReason: skipCh.skip ? skipCh.reason : null,
       finalUrl,
@@ -2124,6 +2155,7 @@ async function handleScan(req, res) {
       htmlBody: bodySlice,
       headers,
       domainSsl,
+      attackSurface,
     });
     await flushScanEmailIfNeeded(json, successPayload);
     ensureEmailReportOnPayload(json, successPayload);

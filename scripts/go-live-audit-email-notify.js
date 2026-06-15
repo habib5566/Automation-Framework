@@ -126,6 +126,28 @@ function buildPlainText(scanResponse) {
     }
     lines.push('');
   }
+  if (o.attackSurface) {
+    const as = o.attackSurface;
+    lines.push('');
+    lines.push('═══ ATTACK SURFACE & PENTEST-STYLE CHECKS ═══');
+    lines.push('Summary: ' + (as.headline || '—'));
+    if (as.score != null) lines.push('Security posture score: ' + as.score + '/100');
+    for (const cat of as.categories || []) {
+      lines.push('');
+      lines.push('— ' + (cat.label || cat.id || 'Category') + ' —');
+      for (const f of (cat.findings || []).slice(0, 12)) {
+        lines.push(
+          '  [' +
+            (f.severity || '?').toUpperCase() +
+            '] ' +
+            (f.title || '') +
+            (f.remediation ? ' · Fix: ' + f.remediation : '')
+        );
+      }
+    }
+    if (as.scopeNote) lines.push('Note: ' + as.scopeNote);
+    lines.push('');
+  }
   if (o.security) {
     const sec = o.security;
     lines.push('');
@@ -281,6 +303,45 @@ function escapeHtmlForEmail(s) {
     .replace(/"/g, '&quot;');
 }
 
+function buildAttackSurfaceHtmlBlock(attackSurface) {
+  const as = attackSurface;
+  if (!as) return '';
+  const alertStyle = as.shouldAlert
+    ? 'background:#fef2f2;border:1px solid #fecaca;color:#991b1b'
+    : 'background:#f8fafc;border:1px solid #e2e8f0;color:#334155';
+  let catsHtml = '';
+  for (const cat of (as.categories || []).slice(0, 6)) {
+    let items = '';
+    for (const f of (cat.findings || []).slice(0, 4)) {
+      items +=
+        '<li style="margin:3px 0">[' +
+        escapeHtmlForEmail(String(f.severity || '').toUpperCase()) +
+        '] ' +
+        escapeHtmlForEmail(f.title || '') +
+        '</li>';
+    }
+    if (items) {
+      catsHtml +=
+        '<p style="margin:8px 0 2px;font-weight:600">' +
+        escapeHtmlForEmail(cat.label || '') +
+        '</p><ul style="margin:0 0 6px 18px;padding:0;font-size:12px">' +
+        items +
+        '</ul>';
+    }
+  }
+  return (
+    '<div style="margin:12px 0;padding:10px 12px;' +
+    alertStyle +
+    ';border-radius:6px;font-size:13px;line-height:1.45">' +
+    '<strong>Attack surface checks</strong>' +
+    (as.score != null ? ' · Score ' + escapeHtmlForEmail(String(as.score)) + '/100' : '') +
+    '<br/>' +
+    escapeHtmlForEmail(as.headline || '—') +
+    catsHtml +
+    '</div>'
+  );
+}
+
 function buildDomainSslHtmlBlock(domainSsl) {
   const ds = domainSsl;
   if (!ds) return '';
@@ -326,6 +387,7 @@ function buildHtmlEmail(scanResponse, opts) {
     ? '<p style="margin:0 0 12px;padding:10px 12px;background:#ecfdf5;border:1px solid #86efac;border-radius:6px;color:#166534;font-size:14px"><strong>PDF report attached</strong> — please open the PDF for the complete go-live audit (summary, performance, SSL/domain expiry, risks, security, and checklist).</p>'
     : '';
   const domainSslBlock = buildDomainSslHtmlBlock(scanResponse && scanResponse.domainSsl);
+  const attackSurfaceBlock = buildAttackSurfaceHtmlBlock(scanResponse && scanResponse.attackSurface);
   return (
     '<!DOCTYPE html><html><head><meta charset="utf-8"/></head>' +
     '<body style="font-family:Segoe UI,Calibri,Arial,sans-serif;background:#f4f6f8;margin:0;padding:20px">' +
@@ -340,6 +402,7 @@ function buildHtmlEmail(scanResponse, opts) {
     summaryLine +
     '</strong></p>' +
     domainSslBlock +
+    attackSurfaceBlock +
     (brand ? '<p style="margin:0;color:#64748b">Brand: ' + brand + '</p>' : '') +
     '</td></tr>' +
     '<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#64748b">' +
@@ -386,6 +449,7 @@ function scanNeedsDangerEmail(scanResponse) {
   if (o.security && o.security.shouldAlert) return true;
   if (o.security && o.security.alertLevel === 'critical') return true;
   if (o.domainSsl && o.domainSsl.shouldAlert) return true;
+  if (o.attackSurface && o.attackSurface.shouldAlert) return true;
   const vs = o.vulnerabilities && o.vulnerabilities.summary;
   if (vs && (Number(vs.critical) > 0 || Number(vs.high) >= 2)) return true;
   const pi = o.pageIssues && o.pageIssues.summary;
@@ -814,6 +878,7 @@ function compactScanPayloadForDigest(result) {
     brandMatrix: r.brandMatrix || null,
     vulnerabilities: r.vulnerabilities || null,
     domainSsl: r.domainSsl || null,
+    attackSurface: r.attackSurface || null,
     security: r.security || null,
     autoChecks: Array.isArray(r.autoChecks) ? r.autoChecks.slice(0, 80) : [],
     pageIssues: {
@@ -870,6 +935,7 @@ function buildWatchDigestEntry(brand, result) {
   const bm = r.brandMatrix || {};
   const sec = r.security || {};
   const dss = r.domainSsl || {};
+  const asurf = r.attackSurface || {};
   const sm = r.scanMeta || {};
   return {
     brandName: r.brandName || b.name || '—',
@@ -896,6 +962,9 @@ function buildWatchDigestEntry(brand, result) {
     securityAlert: !!(sec.shouldAlert || sec.alertLevel === 'critical'),
     domainSslHeadline: dss.headline || null,
     domainSslAlert: !!dss.shouldAlert,
+    attackSurfaceHeadline: asurf.headline || null,
+    attackSurfaceScore: asurf.score != null ? asurf.score : null,
+    attackSurfaceAlert: !!asurf.shouldAlert,
     criticalCount: sec.criticalCount || 0,
     consoleCapture: sm.consoleCapture || null,
     error: r.error ? String(r.error).slice(0, 200) : null,
@@ -1040,8 +1109,16 @@ function buildWatchDigestPlainText(entries) {
     );
     if (e.securityHeadline) lines.push('  Security: ' + e.securityHeadline);
     if (e.domainSslHeadline) lines.push('  SSL/Domain: ' + e.domainSslHeadline);
+    if (e.attackSurfaceHeadline) {
+      lines.push(
+        '  Attack surface: ' +
+          e.attackSurfaceHeadline +
+          (e.attackSurfaceScore != null ? ' (score ' + e.attackSurfaceScore + '/100)' : '')
+      );
+    }
     if (e.securityAlert) lines.push('  ⚠ SECURITY ALERT — review this brand');
     if (e.domainSslAlert) lines.push('  ⚠ SSL/DOMAIN RENEWAL ALERT — review this brand');
+    if (e.attackSurfaceAlert) lines.push('  ⚠ ATTACK SURFACE ALERT — review this brand');
     if (e.scanPayload && typeof e.scanPayload === 'object') {
       lines.push('  (Full detail in attached PDF for this brand.)');
     }

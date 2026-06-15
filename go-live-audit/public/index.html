@@ -1906,6 +1906,13 @@
       TLS certificate and domain registration expiry are checked on each scan. Warnings appear when SSL is within 30 days or domain within 90 days of expiry. Critical alerts email <strong>habib.developer8899@gmail.com</strong>.
     </p>
   </div>
+  <div id="attackSurfacePanel" class="site-stack-panel stack-neutral reveal-on-scroll" aria-live="polite">
+    <p class="site-stack-title">Attack surface &amp; pentest-style checks</p>
+    <p class="site-stack-headline">Run a scan to populate this panel</p>
+    <p class="site-stack-sub stack-empty-hint">
+      Passive security checks: information gathering, vulnerability scanning, web attacks, <strong>SQL injection detection</strong> (safe probes), <strong>password attack surface</strong> (login/policy — no brute-force), <strong>antivirus evasion indicators</strong> in page scripts, and sensitive path exposure.
+    </p>
+  </div>
   <div id="brandMatrixPanel" class="brand-matrix-panel reveal-on-scroll" aria-live="polite">
     <p class="site-stack-title">Brand performance matrix</p>
     <p class="site-stack-headline">Run a scan to populate this panel</p>
@@ -3635,6 +3642,7 @@
           renderVulnerabilitiesPanel(null);
           renderSecurityThreatsPanel(null);
           renderDomainSslPanel(null);
+          renderAttackSurfacePanel(null);
           renderBrandMatrixPanel(null);
           renderConsoleErrorsPanel(null);
           renderPageIssuesPanel(null);
@@ -3644,10 +3652,74 @@
         renderVulnerabilitiesPanel(data.vulnerabilities, data.brandName);
         renderSecurityThreatsPanel(data.security, data.brandName);
         renderDomainSslPanel(data.domainSsl);
+        renderAttackSurfacePanel(data.attackSurface);
         renderBrandMatrixPanel(data.brandMatrix, data.siteStack);
         renderConsoleErrorsPanel(data.consoleIssues, data.brandName, data.scanMeta, data.deployHints);
         renderPageIssuesPanel(data.pageIssues, data.brandName, data.siteIssues);
         if (data.siteStack) renderSiteStackPanel(data.siteStack);
+      }
+
+      function renderAttackSurfacePanel(attackSurface) {
+        const panel = document.getElementById('attackSurfacePanel');
+        if (!panel) return;
+        if (!attackSurface) {
+          panel.className = 'site-stack-panel stack-neutral';
+          panel.innerHTML =
+            '<p class="site-stack-title">Attack surface &amp; pentest-style checks</p>' +
+            '<p class="site-stack-headline">Run a scan first</p>' +
+            '<p class="site-stack-sub stack-empty-hint">Headers, DNS, SQLi indicators, client-side risks, and exposed paths are checked passively after each scan.</p>';
+          return;
+        }
+        const tone = ['good', 'warn', 'bad', 'neutral'].includes(attackSurface.panelTone)
+          ? attackSurface.panelTone
+          : 'neutral';
+        panel.className = 'site-stack-panel stack-' + tone;
+        let html =
+          '<p class="site-stack-title">Attack surface &amp; pentest-style checks' +
+          (attackSurface.hostname ? ' · ' + escapeHtml(attackSurface.hostname) : '') +
+          (attackSurface.score != null ? ' · Score <strong>' + escapeHtml(String(attackSurface.score)) + '/100</strong>' : '') +
+          '</p>' +
+          '<p class="site-stack-headline">' +
+          escapeHtml(attackSurface.headline || 'Scan complete') +
+          '</p>';
+        const cats = Array.isArray(attackSurface.categories) ? attackSurface.categories : [];
+        if (cats.length) {
+          cats.forEach(function (cat) {
+            html += '<p class="site-stack-sub" style="margin-top:0.65rem;font-weight:600">' + escapeHtml(cat.label || cat.id || 'Category') + '</p>';
+            html += '<div class="stack-alerts">';
+            (cat.findings || []).forEach(function (f) {
+              const lv =
+                f.severity === 'critical' || f.severity === 'high'
+                  ? 'bad'
+                  : f.severity === 'medium'
+                    ? 'warn'
+                    : 'warn';
+              html +=
+                '<div class="stack-alert-line level-' +
+                lv +
+                '">' +
+                (f.severity === 'critical' || f.severity === 'high' ? '⚠ ' : '◆ ') +
+                '<strong>[' +
+                escapeHtml(String(f.severity || '').toUpperCase()) +
+                ']</strong> ' +
+                (f.confidence === 'confirmed'
+                  ? '<span style="font-size:11px;color:#15803d">✓ verified</span> '
+                  : f.confidence === 'heuristic'
+                    ? '<span style="font-size:11px;color:#b45309">~ review</span> '
+                    : '') +
+                escapeHtml(f.title || '') +
+                (f.remediation ? '<br/><span style="font-size:12px;opacity:0.9">Fix: ' + escapeHtml(f.remediation) + '</span>' : '') +
+                '</div>';
+            });
+            html += '</div>';
+          });
+        } else {
+          html += '<p class="stack-empty-hint">No attack-surface findings in this pass.</p>';
+        }
+        if (attackSurface.scopeNote) {
+          html += '<p class="site-stack-sub stack-empty-hint" style="margin-top:0.5rem">' + escapeHtml(attackSurface.scopeNote) + '</p>';
+        }
+        panel.innerHTML = html;
       }
 
       function renderDomainSslPanel(domainSsl) {
@@ -3956,6 +4028,8 @@
         }
         if (data.vulnerabilities && data.vulnerabilities.items && data.vulnerabilities.items.length) {
           targets.push('vulnerabilitiesPanel');
+        } else if (data.attackSurface && data.attackSurface.findings && data.attackSurface.findings.length) {
+          targets.push('attackSurfacePanel');
         } else if (data.security && data.security.threats && data.security.threats.length) {
           targets.push('securityThreatsPanel');
         }

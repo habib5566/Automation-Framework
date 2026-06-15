@@ -5,7 +5,7 @@ const { isNoisyConsoleMessage } = require('./go-live-audit-page-issues.cjs');
 /**
  * Unified vulnerability / risk list for UI + email (material findings only).
  */
-function buildVulnerabilities({ security, siteStack, pageIssues, siteIssues, consoleIssues, scanMeta, domainSsl }) {
+function buildVulnerabilities({ security, siteStack, pageIssues, siteIssues, consoleIssues, scanMeta, domainSsl, attackSurface }) {
   const items = [];
   const seen = new Set();
   const browserFailed =
@@ -46,6 +46,32 @@ function buildVulnerabilities({ security, siteStack, pageIssues, siteIssues, con
       detail:
         'Was: ' + (sec.baselineDrift.previousTitle || '—') + ' → Now: ' + (sec.baselineDrift.currentTitle || '—'),
       source: 'brand-watch',
+    });
+  }
+
+  for (const f of (attackSurface && attackSurface.findings) || []) {
+    if (!f || f.severity === 'info') continue;
+    if (f.confidence === 'heuristic' && (f.severity === 'low' || f.severity === 'medium')) {
+      /* include medium heuristics in report but detail notes review */
+    }
+    const sev =
+      f.severity === 'critical'
+        ? 'critical'
+        : f.severity === 'high'
+          ? 'high'
+          : f.severity === 'medium'
+            ? 'medium'
+            : 'low';
+    add({
+      id: 'attack_' + (f.id || f.category || 'finding'),
+      severity: sev,
+      category: f.category || 'attack-surface',
+      title: f.title || 'Attack-surface finding',
+      detail:
+        (f.confidence === 'heuristic' ? '[Review manually] ' : '[Confirmed] ') +
+        (f.detail || '') +
+        (f.remediation ? ' · Fix: ' + f.remediation : ''),
+      source: 'attack-surface-scan',
     });
   }
 
