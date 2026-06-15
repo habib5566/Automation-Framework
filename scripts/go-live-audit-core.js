@@ -34,14 +34,35 @@ function isTlsFetchError(err) {
   );
 }
 
+function normalizeErrorValue(err) {
+  if (err == null || err === '') return '';
+  if (typeof err === 'string') return err;
+  if (typeof err === 'object') {
+    if (typeof err.message === 'string' && err.message) return err.message;
+    if (err.error != null) return normalizeErrorValue(err.error);
+    if (err.code && err.message) return String(err.code) + ': ' + String(err.message);
+    try {
+      const s = JSON.stringify(err);
+      if (s && s !== '{}') return s.slice(0, 400);
+    } catch {
+      /* ignore */
+    }
+  }
+  return String(err);
+}
+
 function sendJson(res, status, obj) {
+  let payload = obj;
+  if (payload && typeof payload === 'object' && payload.error != null && typeof payload.error !== 'string') {
+    payload = Object.assign({}, payload, { error: normalizeErrorValue(payload.error) });
+  }
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   });
-  res.end(JSON.stringify(obj));
+  res.end(JSON.stringify(payload));
 }
 
 const { maybeSendScanEmail } = require('./go-live-audit-email-notify');
@@ -174,7 +195,10 @@ function scanWantsEmail(requestJson, scanPayload) {
 
 async function flushScanEmailIfNeeded(requestJson, scanPayload) {
   if (!scanWantsEmail(requestJson, scanPayload)) return;
-  const emailTimeoutMs = Number(process.env.GO_LIVE_AUDIT_EMAIL_TIMEOUT_MS || 14_000);
+  const onVercel = process.env.VERCEL === '1';
+  const emailTimeoutMs = Number(
+    process.env.GO_LIVE_AUDIT_EMAIL_TIMEOUT_MS || (onVercel ? 8_000 : 14_000)
+  );
   let emailReport;
   try {
     emailReport = await Promise.race([
@@ -1695,9 +1719,9 @@ async function handleScan(req, res) {
     return;
   }
   let requestedUrl = '';
+  let json = {};
   try {
     const raw = await readBody(req);
-    let json;
     try {
       json = JSON.parse(raw || '{}');
     } catch {
@@ -2178,7 +2202,9 @@ async function handleScan(req, res) {
     }
     sendJson(res, 200, successPayload);
   } catch (e) {
-    sendJson(res, 400, { ok: false, error: String(e.message || e), requestedUrl });
+    const failPayload = { ok: false, error: normalizeErrorValue(e), requestedUrl };
+    ensureEmailReportOnPayload(json, failPayload);
+    sendJson(res, 400, failPayload);
   }
 }
 

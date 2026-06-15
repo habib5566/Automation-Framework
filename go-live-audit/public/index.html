@@ -2424,10 +2424,10 @@
             location.hostname &&
             !/localhost|127\.0\.0\.1/.test(location.hostname);
           const vercelHint = onVercel
-            ? '<div class="email-fallback-hint"><strong>Vercel:</strong> Settings → Environment Variables → <code>GO_LIVE_AUDIT_SMTP_USER</code> = your Gmail (sender), <code>GO_LIVE_AUDIT_SMTP_PASS</code> = 16-char App Password, <code>GO_LIVE_AUDIT_EMAIL_FROM</code> = same Gmail → <strong>Redeploy</strong>. Or fill <strong>Sender Gmail</strong> + App Password on this page.</div>'
+            ? '<div class="email-fallback-hint"><strong>Vercel email setup:</strong> Project → Settings → Environment Variables → add <code>GO_LIVE_AUDIT_SMTP_USER</code> (your Gmail), <code>GO_LIVE_AUDIT_SMTP_PASS</code> (16-char Google App Password), <code>GO_LIVE_AUDIT_EMAIL_FROM</code> (same Gmail) → <strong>Redeploy</strong>. Or paste <strong>Sender Gmail</strong> + App Password in the form below and scan again.</div>'
             : '<div class="email-fallback-hint">Local: run <code>npm run go-live:email-setup</code>, restart <code>npm run go-live:audit</code>, or paste App Password below.</div>';
           return (
-            '<div class="scan-msg scan-msg-warn" style="margin-bottom:1rem"><strong>Email</strong> — no delivery status from server. ' +
+            '<div class="scan-msg scan-msg-warn" style="margin-bottom:1rem"><strong>Email</strong> — not sent (scan finished but SMTP is not configured on the server). ' +
             vercelHint +
             '</div>'
           );
@@ -2484,7 +2484,7 @@
         if (er.error)
           return (
             '<div class="scan-msg scan-msg-warn"><strong>Email</strong> — send failed:<br/>' +
-            humanizeEmailSendError(er.error) +
+            humanizeEmailSendError(formatApiError(er.error, 'Send failed')) +
             '</div>'
           );
         if (er.skipped && er.reason)
@@ -4169,7 +4169,7 @@
         if (!av || !av.headline) return '';
         const tone = availabilityTone(av.state);
         const tech = techNote
-          ? '<div class="avail-tech">Technical: ' + escapeHtml(techNote) + '</div>'
+          ? '<div class="avail-tech">Technical: ' + escapeHtml(formatApiError(techNote, '')) + '</div>'
           : '';
         return (
           '<div class="avail-banner ' +
@@ -4774,7 +4774,7 @@
               out.innerHTML =
                 mailBanner +
                 '<div class="scan-msg scan-msg-warn">Error: ' +
-                escapeHtml(data.error || res.statusText || String(res.status)) +
+                escapeHtml(formatApiError(data.error, res.statusText || String(res.status))) +
                 '</div>';
             }
             return;

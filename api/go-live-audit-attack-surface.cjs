@@ -7,6 +7,14 @@ const { URL } = require('url');
 
 const PROBE_TIMEOUT_MS = 8_000;
 
+function isServerlessRuntime() {
+  return !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+}
+
+function probeTimeoutMs() {
+  return isServerlessRuntime() ? 4_000 : PROBE_TIMEOUT_MS;
+}
+
 const CATEGORY_LABELS = {
   information_gathering: 'Information gathering',
   vulnerability_scanning: 'Vulnerability scanning',
@@ -561,7 +569,7 @@ function getRequest(urlStr) {
       path: u.pathname + u.search,
       method: 'GET',
       headers: { 'User-Agent': 'GoLiveAudit/1.0 (safe security check)', Accept: 'text/html,*/*' },
-      timeout: PROBE_TIMEOUT_MS,
+      timeout: probeTimeoutMs(),
     };
     if (u.protocol === 'https:' && process.env.GO_LIVE_AUDIT_TLS_INSECURE === '1') {
       opts.agent = getInsecureAgent();
@@ -598,6 +606,7 @@ function isProbeReflected(body, probeValue) {
 }
 
 async function probeSqlInjectionSafe(finalUrl) {
+  if (isServerlessRuntime()) return [];
   const findings = [];
   const seen = new Set();
   let base;
@@ -665,7 +674,7 @@ function headRequest(urlStr) {
       path: u.pathname + u.search,
       method: 'HEAD',
       headers: { 'User-Agent': 'GoLiveAudit/1.0 (passive security check)' },
-      timeout: PROBE_TIMEOUT_MS,
+      timeout: probeTimeoutMs(),
     };
     if (u.protocol === 'https:' && process.env.GO_LIVE_AUDIT_TLS_INSECURE === '1') {
       opts.agent = getInsecureAgent();
@@ -694,7 +703,12 @@ async function probeSensitivePaths(finalUrl) {
   }
   if (isBlockedHost(base.hostname)) return findings;
 
-  for (const item of SENSITIVE_PATHS) {
+  const paths = isServerlessRuntime()
+    ? SENSITIVE_PATHS.filter((p) => p.severity === 'critical').slice(0, 2)
+    : SENSITIVE_PATHS;
+  const loginPaths = isServerlessRuntime() ? [] : LOGIN_PATHS;
+
+  for (const item of paths) {
     const target = new URL(item.path, base).href;
     const head = await headRequest(target);
     if (!head.ok || head.statusCode !== 200) continue;
@@ -731,7 +745,7 @@ async function probeSensitivePaths(finalUrl) {
     }
   }
 
-  for (const item of LOGIN_PATHS) {
+  for (const item of loginPaths) {
     const target = new URL(item.path, base).href;
     const head = await headRequest(target);
     if (!head.ok || head.statusCode == null) continue;
