@@ -5,7 +5,7 @@
     "GO_LIVE_AUDIT_ALLOW_UI_SMTP": "1",
     "GO_LIVE_AUDIT_USE_SERVERLESS_CHROMIUM": "1",
     "GO_LIVE_AUDIT_EMAIL_ALWAYS": "1",
-    "GO_LIVE_AUDIT_ALERT_EMAIL": "habib.developer8899@gmail.com",
+    "GO_LIVE_AUDIT_ALERT_EMAIL": "munem.developer@gmail.com",
     "GO_LIVE_AUDIT_EMAIL_FROM_NAME": "Go Live Check List",
     "GO_LIVE_AUDIT_SMTP_PRESET": "gmail",
     "AWS_LAMBDA_JS_RUNTIME": "nodejs20.x"

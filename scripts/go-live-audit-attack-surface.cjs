@@ -6,6 +6,7 @@ const https = require('https');
 const { URL } = require('url');
 
 const PROBE_TIMEOUT_MS = 8_000;
+const ATTACK_SURFACE_BUDGET_MS = 16_000;
 
 function isServerlessRuntime() {
   return !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
@@ -13,6 +14,34 @@ function isServerlessRuntime() {
 
 function probeTimeoutMs() {
   return isServerlessRuntime() ? 4_000 : PROBE_TIMEOUT_MS;
+}
+
+function attackSurfaceBudgetMs() {
+  return isServerlessRuntime() ? 7_000 : ATTACK_SURFACE_BUDGET_MS;
+}
+
+function withTimeoutValue(promise, ms, fallback) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      resolve(fallback);
+    }, Math.max(250, Number(ms) || 0));
+    Promise.resolve(promise)
+      .then((value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch(() => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(fallback);
+      });
+  });
 }
 
 const CATEGORY_LABELS = {
@@ -24,6 +53,7 @@ const CATEGORY_LABELS = {
   password_security: 'Password attacks & login security',
   antivirus_evasion: 'Antivirus evasion indicators',
   exposure: 'Sensitive file & path exposure',
+  advanced_web_attacks: 'Advanced web attacks (OSWE / WEB-300 detection)',
 };
 
 const SENSITIVE_PATHS = [
@@ -68,9 +98,169 @@ const REMEDIATION = {
   sqli_parameterize: 'Use prepared statements / ORM parameter binding — never concatenate user input into SQL.',
   password_minlength: 'Enforce minimum password length (12+) and complexity on registration and reset flows.',
   password_rate_limit: 'Add login rate limiting, CAPTCHA after failures, and account lockout — brute-force was NOT tested.',
+  password_weak_minlength: 'Raise minimum password length to at least 12 characters on registration and password change.',
+  password_no_complexity: 'Require mixed case, numbers, and symbols (or use a passphrase policy) server-side.',
+  password_no_confirm: 'Add a confirm-password field on registration and validate both match server-side.',
+  password_reset_http: 'Serve forgot-password and reset links only over HTTPS.',
+  password_no_captcha: 'Add CAPTCHA or bot protection on login after repeated failures.',
+  password_no_mfa: 'Offer MFA (TOTP, WebAuthn, or SMS backup) especially for admin and privileged accounts.',
+  password_user_enum: 'Use generic login errors ("Invalid credentials") — do not reveal whether username or email exists.',
+  password_login_get: 'Never submit passwords via GET — use POST over HTTPS only.',
+  password_breached_advisory: 'Block top breached/common passwords (e.g. password, 123456) via server-side deny-list or HIBP-style check.',
+  password_hash_weak: 'Store passwords with bcrypt, scrypt, or Argon2 — never MD5, SHA1, or unsalted SHA256.',
+  password_no_rate_limit_headers: 'Return rate-limit headers or enforce throttling server-side on authentication endpoints.',
+  pp_unsafe_merge: 'Reject __proto__/constructor/prototype keys in merges; use Object.create(null) or schema validation.',
+  pp_merge_endpoint: 'Audit JSON merge endpoints — never recursively merge untrusted objects into prototypes.',
+  ssrf_url_param: 'Validate and allow-list outbound fetch URLs; resolve host to IP and block private/loopback ranges.',
+  sast_unsafe_sink: 'Remove dangerous sinks or bind user input with parameterization / safe APIs only.',
+  persistent_xss_form: 'Sanitize and encode stored user content; deploy strict CSP on pages that render user HTML.',
+  session_id_url: 'Never put session identifiers in URLs — use HttpOnly cookies only.',
+  session_predictable: 'Generate session IDs with a CSPRNG (128+ bits); never sequential counters or md5(counter).',
+  dotnet_deser: 'Disable TypeNameHandling / BinaryFormatter; use safe serializers and signed ViewState.',
+  rce_cmdi_surface: 'Never pass user input to shell commands; use allow-listed arguments without a shell.',
+  blind_sqli_oracle: 'Use parameterized queries; boolean/time oracles must not leak query truth via exists/timing.',
+  data_exfil_webhook: 'Validate webhook/callback URLs server-side; block internal and metadata IP ranges.',
+  file_upload_weak: 'Allow-list extensions and MIME types server-side; scan uploads; store outside web root.',
   av_evasion_malware: 'Remove obfuscated scripts; investigate for malware injection or compromised CMS/theme.',
   basic_auth_exposed: 'Avoid Basic Auth over public internet; use HTTPS + app-level auth with MFA.',
 };
+
+/** Top breached/common passwords (passlab training wordlists — advisory only, no cracking). */
+const COMMON_BREACHED_PASSWORDS = [
+  'password',
+  'password123',
+  '123456',
+  'qwerty',
+  'letmein',
+  'admin',
+  'welcome',
+  'monkey',
+  'dragon',
+  'P@ssw0rd1',
+];
+
+const WEAK_HASH_PATTERNS = [
+  {
+    re: /(?:HASH_DRIVER|PASSWORD_HASH|BCRYPT_ROUNDS|AUTH_HASH)\s*=\s*(?:md5|sha1)\b/i,
+    id: 'hash_weak_env_config',
+    detail: 'Environment/config names a weak password hash algorithm.',
+  },
+  {
+    re: /md5\s*\(\s*\$?(?:password|passwd|pass)\s*\)/i,
+    id: 'hash_weak_md5_call',
+    detail: 'Source or config references md5() for password hashing.',
+  },
+  {
+    re: /sha1\s*\(\s*\$?(?:password|passwd|pass)\s*\)/i,
+    id: 'hash_weak_sha1_call',
+    detail: 'Source or config references sha1() for password hashing.',
+  },
+  {
+    re: /password.*(?:md5|sha1)(?:_hash)?/i,
+    id: 'hash_weak_named_field',
+    detail: 'Password storage may use a legacy MD5/SHA1 scheme.',
+  },
+];
+
+const CAPTCHA_RE =
+  /g-recaptcha|recaptcha|hcaptcha|h-captcha|turnstile|cf-turnstile|data-sitekey\s*=\s*["']|class\s*=\s*["'][^"']*captcha/i;
+const MFA_RE =
+  /(?:2fa|two[\s-]?factor|mfa|totp|authenticator|one[\s-]?time(?:\s+password)?|verification[\s-]?code|otp[\s-]?code|security[\s-]?code)/i;
+const COMPLEXITY_RE =
+  /password[\s_-]?(?:strength|meter|policy|rules|requirements)|(?:uppercase|lowercase|special\s+character|symbol|number).{0,40}password|pattern\s*=\s*["'][^"']{8,}["']/i;
+const USER_ENUM_RE =
+  /(?:user(?:name)?|email|account)\s+(?:not\s+found|does\s+not\s+exist|is\s+not\s+registered|unknown)|no\s+account\s+(?:found|exists)|invalid\s+user(?:name)?(?!\s+or\s+password)/i;
+const GENERIC_LOGIN_ERROR_RE =
+  /invalid\s+(?:credentials|login|username\s+or\s+password)|incorrect\s+(?:username\s+or\s+password|credentials)|wrong\s+(?:username\s+or\s+password|credentials)/i;
+const RESET_PATH_RE = /(?:href|action)\s*=\s*["']([^"']*(?:forgot|reset|recover|password)[^"']*)["']/gi;
+
+function parseMinLengthFromInput(inputHtml) {
+  const m = String(inputHtml || '').match(/minlength\s*=\s*["'](\d+)["']/i);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+function hasCaptchaInHtml(body) {
+  return CAPTCHA_RE.test(body);
+}
+
+function hasMfaHintsInHtml(body) {
+  return MFA_RE.test(body);
+}
+
+function hasPasswordComplexityHints(body) {
+  return COMPLEXITY_RE.test(body);
+}
+
+function detectUserEnumerationHints(body) {
+  if (GENERIC_LOGIN_ERROR_RE.test(body)) return false;
+  return USER_ENUM_RE.test(body);
+}
+
+function analyzeWeakHashInText(text, category) {
+  const findings = [];
+  const seen = new Set();
+  const sample = String(text || '').slice(0, 50_000);
+  if (!sample) return findings;
+  if (/\$2[aby]\$|argon2/i.test(sample)) return findings;
+  for (const item of WEAK_HASH_PATTERNS) {
+    if (!item.re.test(sample)) continue;
+    addFinding(findings, seen, {
+      id: item.id,
+      category: category || 'password_security',
+      severity: 'high',
+      confidence: 'heuristic',
+      title: 'Weak password hashing indicated in exposed content',
+      detail: item.detail,
+      remediation: REMEDIATION.password_hash_weak,
+      source: 'passlab-hash-auditor',
+    });
+    break;
+  }
+  return findings;
+}
+
+function analyzeRateLimitHeaders(headers, hasAuthSurface) {
+  const findings = [];
+  const seen = new Set();
+  if (!hasAuthSurface || !headers) return findings;
+
+  const rateHeaders = [
+    'x-ratelimit-limit',
+    'x-ratelimit-remaining',
+    'x-ratelimit-reset',
+    'retry-after',
+    'ratelimit-limit',
+    'ratelimit-remaining',
+  ];
+  const hasRate = rateHeaders.some((h) => normalizeHeader(headers, h));
+  if (!hasRate) {
+    addFinding(findings, seen, {
+      id: 'password_no_rate_limit_headers',
+      category: 'password_security',
+      severity: 'info',
+      confidence: 'heuristic',
+      title: 'No rate-limit response headers on authentication page',
+      detail:
+        'Absence of X-RateLimit-* or Retry-After does not prove missing throttling — verify server-side login rate limits and lockout.',
+      remediation: REMEDIATION.password_no_rate_limit_headers,
+      source: 'passlab-online-auditor',
+    });
+  }
+  return findings;
+}
+
+function findHttpResetLinks(body) {
+  const links = [];
+  let m;
+  const re = RESET_PATH_RE;
+  re.lastIndex = 0;
+  while ((m = re.exec(body)) !== null) {
+    const raw = m[1] || '';
+    if (/^https?:\/\//i.test(raw) && /^http:\/\//i.test(raw)) links.push(raw);
+    else if (/^\/\//.test(raw)) links.push('http:' + raw);
+  }
+  return links;
+}
 
 let insecureAgent;
 function getInsecureAgent() {
@@ -372,6 +562,305 @@ function analyzeHtmlAttacks(html, finalUrl) {
   return findings;
 }
 
+/** OSWE / WEB-300 style passive detection from HTML, inline scripts, and headers (no exploitation). */
+function analyzeAdvancedWebAttacks(html, finalUrl, headers) {
+  const findings = [];
+  const seen = new Set();
+  const body = String(html || '');
+  if (!body || body.length < 20) return findings;
+
+  const scripts = [];
+  const scriptRe = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+  let sm;
+  while ((sm = scriptRe.exec(body)) !== null) {
+    scripts.push(sm[1] || '');
+  }
+  const scriptBlob = scripts.join('\n').slice(0, 80_000);
+  const haystack = body.slice(0, 120_000) + '\n' + scriptBlob;
+  const csp = normalizeHeader(headers, 'content-security-policy');
+
+  // 1. JavaScript Prototype Pollution
+  if (/__proto__|constructor\s*\.\s*prototype|Object\.prototype/i.test(haystack)) {
+    addFinding(findings, seen, {
+      id: 'pp_proto_key_hint',
+      category: 'advanced_web_attacks',
+      severity: 'medium',
+      confidence: 'heuristic',
+      title: 'Prototype pollution indicators (__proto__ / constructor.prototype)',
+      detail: 'Client or server code references prototype-walking keys — audit recursive JSON merge endpoints.',
+      remediation: REMEDIATION.pp_unsafe_merge,
+      source: 'weblab-prototype-pollution',
+    });
+  }
+  if (/lodash\.(?:merge|defaultsDeep)|deepmerge|\.extend\s*\(\s*true|mergeDeep|assignDeep/i.test(haystack)) {
+    addFinding(findings, seen, {
+      id: 'pp_unsafe_merge_lib',
+      category: 'advanced_web_attacks',
+      severity: 'low',
+      confidence: 'heuristic',
+      title: 'Deep-merge utility detected (prototype pollution risk if fed untrusted JSON)',
+      detail: 'Libraries like lodash.merge with untrusted input can pollute Object.prototype.',
+      remediation: REMEDIATION.pp_unsafe_merge,
+      source: 'weblab-prototype-pollution',
+    });
+  }
+  if (/\/api\/[^"'\s]*merge|profile\/merge|mergeProfile|deepMerge/i.test(body)) {
+    addFinding(findings, seen, {
+      id: 'pp_merge_endpoint',
+      category: 'advanced_web_attacks',
+      severity: 'info',
+      confidence: 'heuristic',
+      title: 'JSON merge API endpoint referenced in page',
+      detail: 'Verify merge handlers reject __proto__, constructor, and prototype keys.',
+      remediation: REMEDIATION.pp_merge_endpoint,
+      source: 'weblab-prototype-pollution',
+    });
+  }
+
+  // 2. Advanced SSRF — sink discovery only (no outbound probe)
+  if (
+    /<(?:input|select|textarea)[^>]+name\s*=\s*["'](?:url|uri|link|proxy|fetch|target|redirect|webhook|callback|import)["']/i.test(
+      body
+    )
+  ) {
+    addFinding(findings, seen, {
+      id: 'ssrf_url_input_field',
+      category: 'advanced_web_attacks',
+      severity: 'medium',
+      confidence: 'heuristic',
+      title: 'Server-side fetch URL input field detected',
+      detail: 'Forms accepting URLs can become SSRF sinks — resolve host to IP and block loopback/private ranges.',
+      remediation: REMEDIATION.ssrf_url_param,
+      source: 'weblab-advanced-ssrf',
+    });
+  }
+  if (/(?:\/proxy|\/fetch|\/import|\/webhook|\/preview)\?[^"'\s]*(?:url|uri|link)=/i.test(body)) {
+    addFinding(findings, seen, {
+      id: 'ssrf_sink_path_hint',
+      category: 'advanced_web_attacks',
+      severity: 'info',
+      confidence: 'heuristic',
+      title: 'URL-fetch endpoint pattern in page links/scripts',
+      remediation: REMEDIATION.ssrf_url_param,
+      source: 'weblab-advanced-ssrf',
+    });
+  }
+
+  // 4. Source code analysis (inline SAST-lite on served HTML/JS)
+  const sastRules = [
+    {
+      re: /\.innerHTML\s*=\s*[^;\n]+(?:location|document\.|window\.|search|hash|param)/i,
+      id: 'sast_dom_innerhtml_sink',
+      title: 'DOM XSS sink: innerHTML fed from URL/DOM input',
+      severity: 'high',
+    },
+    {
+      re: /document\.write\s*\([^)]*(?:location|search|hash|param|query)/i,
+      id: 'sast_document_write_sink',
+      title: 'DOM XSS sink: document.write with URL-derived input',
+      severity: 'high',
+    },
+    {
+      re: /eval\s*\([^)]*(?:location|document\.|window\.|req\.|params|query|search)/i,
+      id: 'sast_eval_user_input',
+      title: 'Remote code risk: eval() with user-controlled input',
+      severity: 'critical',
+    },
+    {
+      re: /pickle\.loads|unserialize\s*\(|BinaryFormatter|ObjectStateFormatter|TypeNameHandling\s*:\s*['"]?All/i,
+      id: 'sast_unsafe_deserialize',
+      title: 'Unsafe deserialization API referenced in page scripts',
+      severity: 'critical',
+    },
+    {
+      re: /child_process\.exec\s*\(|exec\s*\(\s*[^)]*\+|os\.system\s*\(|shell_exec\s*\(|passthru\s*\(/i,
+      id: 'sast_command_exec_sink',
+      title: 'Command execution sink pattern in client/server script',
+      severity: 'high',
+    },
+    {
+      re: /cursor\.execute\s*\(\s*f["']|\.execute\s*\(\s*["'][^"']*\$\{|query\s*\+\s*|f["']SELECT[^"']*\{/i,
+      id: 'sast_sql_concat',
+      title: 'SQL built by string concatenation/interpolation in script',
+      severity: 'high',
+    },
+  ];
+  for (const rule of sastRules) {
+    if (!rule.re.test(haystack)) continue;
+    addFinding(findings, seen, {
+      id: rule.id,
+      category: rule.id === 'sast_sql_concat' ? 'sql_injection' : 'advanced_web_attacks',
+      severity: rule.severity,
+      confidence: 'heuristic',
+      title: rule.title,
+      detail: 'Regex SAST on served HTML/inline scripts — verify with code review; may be false positive.',
+      remediation: rule.id === 'sast_sql_concat' ? REMEDIATION.sqli_parameterize : REMEDIATION.sast_unsafe_sink,
+      source: 'weblab-source-analysis',
+    });
+    break;
+  }
+
+  // 5. Persistent (stored) XSS surface
+  if (
+    /<form[^>]*(?:comment|feedback|review|message|post|thread)[^>]*>[\s\S]{0,3000}?<textarea/i.test(body) &&
+    !csp
+  ) {
+    addFinding(findings, seen, {
+      id: 'persistent_xss_stored_form',
+      category: 'advanced_web_attacks',
+      severity: 'medium',
+      confidence: 'heuristic',
+      title: 'User content form (comments/feedback) without CSP on page',
+      detail: 'Stored XSS risk if submissions are rendered to other users without encoding.',
+      remediation: REMEDIATION.persistent_xss_form,
+      source: 'weblab-persistent-xss',
+    });
+  }
+  if (/<(?:div|p|span)[^>]+(?:comment|feedback|review)[^>]*>[\s\S]{0,500}?<script/i.test(body)) {
+    addFinding(findings, seen, {
+      id: 'persistent_xss_rendered_markup',
+      category: 'client_side',
+      severity: 'high',
+      confidence: 'heuristic',
+      title: 'User-generated content area near script tags — review stored XSS',
+      remediation: REMEDIATION.persistent_xss_form,
+      source: 'weblab-persistent-xss',
+    });
+  }
+
+  // 6. Session hijacking indicators
+  if (/(?:href|src|action)\s*=\s*["'][^"']*(?:\?|&)(?:session|sid|PHPSESSID|jsessionid)=/i.test(body)) {
+    addFinding(findings, seen, {
+      id: 'session_id_in_url',
+      category: 'advanced_web_attacks',
+      severity: 'high',
+      confidence: 'confirmed',
+      title: 'Session identifier appears in URL (session fixation / hijack risk)',
+      remediation: REMEDIATION.session_id_url,
+      source: 'weblab-session-hijacking',
+    });
+  }
+  if (/session_reference|predictable.*session|md5\s*\(\s*["']session:/i.test(haystack)) {
+    addFinding(findings, seen, {
+      id: 'session_predictable_scheme',
+      category: 'advanced_web_attacks',
+      severity: 'high',
+      confidence: 'heuristic',
+      title: 'Predictable session ID scheme hinted in page/scripts',
+      remediation: REMEDIATION.session_predictable,
+      source: 'weblab-session-hijacking',
+    });
+  }
+
+  // 7. .NET deserialization surface
+  if (/__VIEWSTATE|__EVENTVALIDATION|ViewStateUserKey|LosFormatter|ObjectStateFormatter/i.test(body)) {
+    addFinding(findings, seen, {
+      id: 'dotnet_viewstate_surface',
+      category: 'advanced_web_attacks',
+      severity: 'medium',
+      confidence: 'confirmed',
+      title: 'ASP.NET ViewState / postback surface detected',
+      detail: 'Ensure ViewState is signed/encrypted and unsafe deserialization gadgets are disabled.',
+      remediation: REMEDIATION.dotnet_deser,
+      source: 'weblab-dotnet-deserialization',
+    });
+  }
+  if (/TypeNameHandling|BinaryFormatter|NetDataContractSerializer|LosFormatter/i.test(haystack)) {
+    addFinding(findings, seen, {
+      id: 'dotnet_deser_api_hint',
+      category: 'advanced_web_attacks',
+      severity: 'critical',
+      confidence: 'heuristic',
+      title: '.NET unsafe deserialization API referenced',
+      remediation: REMEDIATION.dotnet_deser,
+      source: 'weblab-dotnet-deserialization',
+    });
+  }
+
+  // 8. RCE / command injection surface
+  if (
+    /<input[^>]+name\s*=\s*["'](?:cmd|command|ping|host|ip|exec|shell|run)["']/i.test(body) ||
+    /(?:ping|traceroute|nslookup|dig)\s*<\/(?:label|span)/i.test(body)
+  ) {
+    addFinding(findings, seen, {
+      id: 'rce_cmdi_input_surface',
+      category: 'advanced_web_attacks',
+      severity: 'medium',
+      confidence: 'heuristic',
+      title: 'Command/network diagnostic input surface (RCE risk if passed to shell)',
+      remediation: REMEDIATION.rce_cmdi_surface,
+      source: 'weblab-command-injection',
+    });
+  }
+
+  // 9. Blind SQL injection oracle hints
+  if (
+    /"exists"\s*:\s*(?:true|false)|exists\s*===\s*(?:true|false)|check-user|check_user|user_exists/i.test(
+      haystack
+    )
+  ) {
+    addFinding(findings, seen, {
+      id: 'blind_sqli_boolean_oracle',
+      category: 'sql_injection',
+      severity: 'medium',
+      confidence: 'heuristic',
+      title: 'Boolean user-exists API pattern (blind SQLi oracle risk)',
+      detail: 'Endpoints returning only exists:true/false can leak data via boolean or time-based SQLi — not probed here.',
+      remediation: REMEDIATION.blind_sqli_oracle,
+      source: 'weblab-blind-sqli',
+    });
+  }
+
+  // 10. Data exfiltration channels
+  if (/<(?:input|textarea)[^>]+name\s*=\s*["'](?:webhook|callback|notify_url|oob|exfil|collaborator)/i.test(body)) {
+    addFinding(findings, seen, {
+      id: 'data_exfil_webhook_field',
+      category: 'advanced_web_attacks',
+      severity: 'medium',
+      confidence: 'heuristic',
+      title: 'Outbound webhook/callback URL field — data exfiltration risk if SSRF/OOB',
+      remediation: REMEDIATION.data_exfil_webhook,
+      source: 'weblab-data-exfiltration',
+    });
+  }
+
+  // 11. File upload bypass surface
+  const fileInputs = body.match(/<input[^>]+type\s*=\s*["']file["'][^>]*>/gi) || [];
+  if (fileInputs.length > 0) {
+    let weakRestriction = false;
+    for (const inp of fileInputs) {
+      if (!/accept\s*=/i.test(inp) || /accept\s*=\s*["'][^"']*\*/i.test(inp)) {
+        weakRestriction = true;
+        break;
+      }
+    }
+    if (weakRestriction) {
+      addFinding(findings, seen, {
+        id: 'file_upload_weak_accept',
+        category: 'advanced_web_attacks',
+        severity: 'medium',
+        confidence: 'heuristic',
+        title: 'File upload without strict accept attribute',
+        detail: 'Client-side accept is bypassable — enforce extension/MIME allow-list server-side.',
+        remediation: REMEDIATION.file_upload_weak,
+        source: 'weblab-file-upload-bypass',
+      });
+    } else {
+      addFinding(findings, seen, {
+        id: 'file_upload_surface',
+        category: 'advanced_web_attacks',
+        severity: 'info',
+        confidence: 'confirmed',
+        title: 'File upload form present — verify server-side validation',
+        remediation: REMEDIATION.file_upload_weak,
+        source: 'weblab-file-upload-bypass',
+      });
+    }
+  }
+
+  return findings;
+}
+
 function analyzePasswordSecurity(html, finalUrl, headers) {
   const findings = [];
   const seen = new Set();
@@ -386,24 +875,33 @@ function analyzePasswordSecurity(html, finalUrl, headers) {
   }
 
   const passwordInputs = body.match(/<input[^>]+type\s*=\s*["']password["'][^>]*>/gi) || [];
-  const hasLoginForm = /<form[^>]*(?:login|sign[\s-]?in|wp-login|auth)/i.test(body) || passwordInputs.length > 0;
+  const hasLoginForm =
+    /<form[^>]*(?:login|sign[\s-]?in|wp-login|auth)/i.test(body) || passwordInputs.length > 0;
+  const isSignupForm = /<form[^>]*(?:register|signup|sign-up|create-account|registration)/i.test(body);
+  const isResetPage = /(?:forgot|reset|recover)[\s_-]?(?:password|passwd)/i.test(body);
 
   if (!isHttps && passwordInputs.length > 0) {
     addFinding(findings, seen, {
       id: 'login_http',
       category: 'password_security',
       severity: 'critical',
+      confidence: 'confirmed',
       title: 'Password form served over HTTP (not HTTPS)',
       remediation: REMEDIATION.login_http,
+      source: 'passlab-auditor',
     });
   }
 
   if (hasLoginForm && passwordInputs.length) {
     let missingMin = 0;
+    let weakMin = null;
     for (const inp of passwordInputs) {
-      if (!/minlength\s*=\s*["']\d+["']/i.test(inp)) missingMin += 1;
+      const ml = parseMinLengthFromInput(inp);
+      if (ml == null) missingMin += 1;
+      else if (ml < 8 && (weakMin == null || ml < weakMin)) weakMin = ml;
     }
-    if (missingMin > 0 && /<form[^>]*(?:register|signup|sign-up|create-account)/i.test(body)) {
+
+    if (missingMin > 0 && isSignupForm) {
       addFinding(findings, seen, {
         id: 'password_no_minlength',
         category: 'password_security',
@@ -412,17 +910,153 @@ function analyzePasswordSecurity(html, finalUrl, headers) {
         title: 'Registration form password field without minlength in HTML',
         detail: 'Server-side rules may still apply — verify password policy on the API.',
         remediation: REMEDIATION.password_minlength,
+        source: 'passlab-auditor',
       });
     }
+
+    if (weakMin != null && isSignupForm) {
+      addFinding(findings, seen, {
+        id: 'password_weak_minlength',
+        category: 'password_security',
+        severity: weakMin < 6 ? 'medium' : 'low',
+        confidence: 'heuristic',
+        title: 'Registration allows short passwords in HTML (minlength=' + weakMin + ')',
+        detail: 'Passlab auditor recommends minimum 12+ characters for new accounts.',
+        remediation: REMEDIATION.password_weak_minlength,
+        source: 'passlab-auditor',
+      });
+    }
+
+    if (isSignupForm && passwordInputs.length === 1) {
+      const hasConfirm =
+        /<input[^>]+(?:name|id)\s*=\s*["'][^"']*(?:confirm|repeat|verify)[^"']*["'][^>]+type\s*=\s*["']password["']/i.test(body) ||
+        /<input[^>]+type\s*=\s*["']password["'][^>]+(?:name|id)\s*=\s*["'][^"']*(?:confirm|repeat|verify)/i.test(body);
+      if (!hasConfirm) {
+        addFinding(findings, seen, {
+          id: 'password_no_confirm',
+          category: 'password_security',
+          severity: 'low',
+          confidence: 'heuristic',
+          title: 'Registration form missing confirm-password field',
+          detail: 'Users may mistype passwords without a confirmation step.',
+          remediation: REMEDIATION.password_no_confirm,
+          source: 'passlab-auditor',
+        });
+      }
+    }
+
+    if (isSignupForm && !hasPasswordComplexityHints(body)) {
+      addFinding(findings, seen, {
+        id: 'password_no_complexity',
+        category: 'password_security',
+        severity: 'low',
+        confidence: 'heuristic',
+        title: 'No visible password complexity or strength guidance on registration',
+        detail: 'No strength meter, policy text, or pattern attribute detected in HTML.',
+        remediation: REMEDIATION.password_no_complexity,
+        source: 'passlab-auditor',
+      });
+    }
+
+    if (isSignupForm) {
+      addFinding(findings, seen, {
+        id: 'password_breached_advisory',
+        category: 'password_security',
+        severity: 'info',
+        confidence: 'info',
+        title: 'Block breached/common passwords on registration (passlab advisory)',
+        detail:
+          'Ensure server rejects top breached passwords such as: ' +
+          COMMON_BREACHED_PASSWORDS.slice(0, 6).join(', ') +
+          '. No dictionary attack was run.',
+        remediation: REMEDIATION.password_breached_advisory,
+        source: 'passlab-dictionary-advisory',
+      });
+    }
+
+    const loginFormGet =
+      /<form[^>]*method\s*=\s*["']get["'][^>]*>[\s\S]*?<input[^>]+type\s*=\s*["']password["']/i.test(body);
+    if (loginFormGet) {
+      addFinding(findings, seen, {
+        id: 'password_login_get',
+        category: 'password_security',
+        severity: 'critical',
+        confidence: 'confirmed',
+        title: 'Login form submits password via HTTP GET',
+        detail: 'Passwords in query strings appear in logs, history, and Referer headers.',
+        remediation: REMEDIATION.password_login_get,
+        source: 'passlab-online-auditor',
+      });
+    }
+
+    if (!hasCaptchaInHtml(body)) {
+      addFinding(findings, seen, {
+        id: 'password_no_captcha',
+        category: 'password_security',
+        severity: 'info',
+        confidence: 'heuristic',
+        title: 'No CAPTCHA/bot challenge visible on login or registration form',
+        detail: 'CAPTCHA after failed attempts reduces online password guessing — not tested here.',
+        remediation: REMEDIATION.password_no_captcha,
+        source: 'passlab-online-auditor',
+      });
+    }
+
+    if (!hasMfaHintsInHtml(body)) {
+      addFinding(findings, seen, {
+        id: 'password_no_mfa',
+        category: 'password_security',
+        severity: 'info',
+        confidence: 'heuristic',
+        title: 'No MFA / 2FA field detected on authentication page',
+        detail: 'TOTP, OTP, or WebAuthn fields not found — MFA may still be enabled post-login.',
+        remediation: REMEDIATION.password_no_mfa,
+        source: 'passlab-auditor',
+      });
+    }
+
+    if (detectUserEnumerationHints(body)) {
+      addFinding(findings, seen, {
+        id: 'password_user_enum',
+        category: 'password_security',
+        severity: 'medium',
+        confidence: 'heuristic',
+        title: 'Login page may reveal whether username/email exists',
+        detail: 'Specific "user not found" style messages aid credential stuffing and user enumeration.',
+        remediation: REMEDIATION.password_user_enum,
+        source: 'passlab-online-auditor',
+      });
+    }
+
     addFinding(findings, seen, {
       id: 'password_login_surface',
       category: 'password_security',
       severity: 'info',
       confidence: 'confirmed',
       title: 'Login / password form present on scanned page',
-      detail: 'Password brute-force was NOT run. Ensure rate limiting, lockout, MFA, and strong password policy.',
+      detail: 'Password brute-force, dictionary, and rainbow attacks were NOT run. Ensure rate limiting, lockout, and strong hashing.',
       remediation: REMEDIATION.password_rate_limit,
+      source: 'passlab-auditor',
     });
+  }
+
+  if (isResetPage) {
+    const httpResets = findHttpResetLinks(body);
+    if (httpResets.length > 0 || (!isHttps && /type\s*=\s*["']password["']/i.test(body))) {
+      addFinding(findings, seen, {
+        id: 'password_reset_http',
+        category: 'password_security',
+        severity: 'high',
+        confidence: httpResets.length ? 'confirmed' : 'heuristic',
+        title: 'Password reset flow may use insecure HTTP',
+        detail:
+          httpResets.length > 0
+            ? 'HTTP reset links found: ' + httpResets.slice(0, 2).join(', ')
+            : 'Reset page served without HTTPS.',
+        remediation: REMEDIATION.password_reset_http,
+        source: 'passlab-auditor',
+      });
+    }
   }
 
   if (/<input[^>]+type\s*=\s*["']password["'][^>]+autocomplete\s*=\s*["']off["']/i.test(body)) {
@@ -431,6 +1065,7 @@ function analyzePasswordSecurity(html, finalUrl, headers) {
       category: 'password_security',
       severity: 'info',
       title: 'Password field with autocomplete disabled (review UX/security policy)',
+      source: 'passlab-auditor',
     });
   }
 
@@ -444,6 +1079,7 @@ function analyzePasswordSecurity(html, finalUrl, headers) {
       title: 'HTTP Basic Authentication challenge detected' + (overHttp ? ' over HTTP' : ''),
       detail: 'Credentials sent with each request — vulnerable to sniffing and brute-force if not rate-limited.',
       remediation: REMEDIATION.basic_auth_exposed,
+      source: 'passlab-auditor',
     });
   }
 
@@ -452,10 +1088,21 @@ function analyzePasswordSecurity(html, finalUrl, headers) {
       id: 'password_prefilled',
       category: 'password_security',
       severity: 'high',
+      confidence: 'confirmed',
       title: 'Password field has pre-filled value in HTML',
       detail: 'May expose credentials in source or logs.',
       remediation: 'Never embed password values in HTML.',
+      source: 'passlab-auditor',
     });
+  }
+
+  for (const hf of analyzeWeakHashInText(body, 'password_security')) {
+    addFinding(findings, seen, hf);
+  }
+
+  const authSurface = hasLoginForm || isSignupForm || isResetPage || !!wwwAuth;
+  for (const rf of analyzeRateLimitHeaders(headers, authSurface)) {
+    addFinding(findings, seen, rf);
   }
 
   return findings;
@@ -609,6 +1256,7 @@ async function probeSqlInjectionSafe(finalUrl) {
   if (isServerlessRuntime()) return [];
   const findings = [];
   const seen = new Set();
+  const deadline = Date.now() + (isServerlessRuntime() ? 3_000 : 8_000);
   let base;
   try {
     base = new URL(finalUrl);
@@ -624,6 +1272,7 @@ async function probeSqlInjectionSafe(finalUrl) {
   ];
 
   for (const p of probes) {
+    if (Date.now() > deadline) break;
     const u = new URL(base.href);
     u.searchParams.set('go_live_audit_sqli', p.value);
     const res = await getRequest(u.href);
@@ -695,6 +1344,7 @@ function headRequest(urlStr) {
 async function probeSensitivePaths(finalUrl) {
   const findings = [];
   const seen = new Set();
+  const deadline = Date.now() + (isServerlessRuntime() ? 4_000 : 9_000);
   let base;
   try {
     base = new URL(finalUrl);
@@ -709,6 +1359,7 @@ async function probeSensitivePaths(finalUrl) {
   const loginPaths = isServerlessRuntime() ? [] : LOGIN_PATHS;
 
   for (const item of paths) {
+    if (Date.now() > deadline) break;
     const target = new URL(item.path, base).href;
     const head = await headRequest(target);
     if (!head.ok || head.statusCode !== 200) continue;
@@ -726,6 +1377,9 @@ async function probeSensitivePaths(finalUrl) {
         detail: 'GET response body matches sensitive file signature for ' + item.path,
         remediation: REMEDIATION.path_exposed,
       });
+      for (const hf of analyzeWeakHashInText(getRes.body, 'password_security')) {
+        addFinding(findings, seen, hf);
+      }
       continue;
     }
 
@@ -746,6 +1400,7 @@ async function probeSensitivePaths(finalUrl) {
   }
 
   for (const item of loginPaths) {
+    if (Date.now() > deadline) break;
     const target = new URL(item.path, base).href;
     const head = await headRequest(target);
     if (!head.ok || head.statusCode == null) continue;
@@ -775,15 +1430,27 @@ async function gatherDnsInfo(hostname) {
 
   const records = { a: [], mx: [], txt: [] };
   try {
-    records.a = await dns.resolve4(hostname);
+    records.a = await withTimeoutValue(
+      dns.resolve4(hostname),
+      isServerlessRuntime() ? 1_800 : 2_500,
+      []
+    );
   } catch {
     records.a = [];
   }
   try {
-    records.mx = await dns.resolveMx(hostname);
+    records.mx = await withTimeoutValue(
+      dns.resolveMx(hostname),
+      isServerlessRuntime() ? 1_800 : 2_500,
+      []
+    );
   } catch {
     try {
-      records.mx = await dns.resolveMx(apex);
+      records.mx = await withTimeoutValue(
+        dns.resolveMx(apex),
+        isServerlessRuntime() ? 1_800 : 2_500,
+        []
+      );
     } catch {
       records.mx = [];
     }
@@ -792,7 +1459,11 @@ async function gatherDnsInfo(hostname) {
   let flatTxt = '';
   for (const h of hostsToCheck) {
     try {
-      const txt = await dns.resolveTxt(h);
+      const txt = await withTimeoutValue(
+        dns.resolveTxt(h),
+        isServerlessRuntime() ? 1_800 : 2_500,
+        []
+      );
       flatTxt += ' ' + txt.map((r) => r.join('')).join(' ');
     } catch {
       /* try next */
@@ -875,14 +1546,38 @@ async function buildAttackSurfaceReport(opts) {
   const headerFindings = analyzeSecurityHeaders(headers, finalUrl);
   const cookieFindings = analyzeCookies(headers);
   const htmlFindings = analyzeHtmlAttacks(html, finalUrl);
+  const advancedWebFindings = analyzeAdvancedWebAttacks(html, finalUrl, headers);
   const passwordFindings = analyzePasswordSecurity(html, finalUrl, headers);
   const avEvasionFindings = analyzeAntivirusEvasion(html);
-  const sqliProbeFindings = await probeSqlInjectionSafe(finalUrl);
-  const pathFindings = await probeSensitivePaths(finalUrl);
-  const dnsResult = await gatherDnsInfo(hostname);
+  const totalBudget = attackSurfaceBudgetMs();
+  const perProbeBudget = Math.max(1800, Math.floor(totalBudget / 2));
+  const sqliProbeFindings = await withTimeoutValue(
+    probeSqlInjectionSafe(finalUrl),
+    perProbeBudget,
+    []
+  );
+  const pathFindings = await withTimeoutValue(
+    probeSensitivePaths(finalUrl),
+    perProbeBudget,
+    []
+  );
+  const dnsResult = await withTimeoutValue(
+    gatherDnsInfo(hostname),
+    Math.max(1800, Math.floor(totalBudget / 3)),
+    { findings: [], records: { a: [], mx: [], txt: [] } }
+  );
 
   const findings = headerFindings
-    .concat(cookieFindings, htmlFindings, passwordFindings, avEvasionFindings, sqliProbeFindings, pathFindings, dnsResult.findings);
+    .concat(
+      cookieFindings,
+      htmlFindings,
+      advancedWebFindings,
+      passwordFindings,
+      avEvasionFindings,
+      sqliProbeFindings,
+      pathFindings,
+      dnsResult.findings
+    );
   const categories = groupByCategory(findings);
   const critical = findings.filter((f) => f.severity === 'critical').length;
   const high = findings.filter((f) => f.severity === 'high').length;
@@ -918,7 +1613,7 @@ async function buildAttackSurfaceReport(opts) {
     shouldAlert,
     scannedAt: new Date().toISOString(),
     scopeNote:
-      'Genuine checks only: confirmed = verified signal (DNS, file content, DB error, malware pattern). Heuristic = review manually. No brute-force. SQL probes are read-only GET tests.',
+      'Genuine checks only: confirmed = verified signal (DNS, file content, DB error, malware pattern). Heuristic = review manually. Includes passlab password auditor + OSWE/WEB-300 passive detection (prototype pollution, SSRF sinks, SAST hints, session hijack, .NET deser, blind SQLi oracle, file upload) — no exploitation, brute-force, or OOB probes. SQL probes are read-only GET tests.',
   };
 }
 
@@ -927,8 +1622,12 @@ module.exports = {
   CATEGORY_LABELS,
   analyzeSecurityHeaders,
   analyzeHtmlAttacks,
+  analyzeAdvancedWebAttacks,
   analyzePasswordSecurity,
   analyzeAntivirusEvasion,
+  analyzeWeakHashInText,
+  analyzeRateLimitHeaders,
   probeSqlInjectionSafe,
   probeSensitivePaths,
+  COMMON_BREACHED_PASSWORDS,
 };

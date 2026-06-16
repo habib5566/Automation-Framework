@@ -1,0 +1,64 @@
+# Path wordlist for weblab's directory/content-discovery fuzzer (fuzz_paths).
+#
+# One path per non-comment line; blank lines and lines starting with '#' are
+# ignored. Each entry is requested against the target and reported if its
+# status is NOT 404 -- i.e. it names a real, reachable resource. The list mixes
+# the demo app's REAL endpoints (which must come back non-404) with common
+# DECOYS a real wordlist (e.g. SecLists' common.txt) would carry so the fuzzer
+# is exercised against both hits and misses.
+#
+# Leading slashes are optional; the fuzzer normalises them.
+
+# --- real endpoints of the demo app (expected hits) ---
+/
+/search
+/login
+/greet
+/comments
+/account/email
+/api/userinfo
+/download
+/xml
+/render
+/fetch
+/ping
+/internal/metadata
+/api/orders/1
+
+# --- common decoys / probes (expected 404 against the demo app) ---
+/admin
+/administrator
+/admin/login
+/wp-admin
+/wp-login.php
+/phpmyadmin
+/.git/config
+/.env
+/config.php
+/backup
+/backup.zip
+/robots.txt
+/sitemap.xml
+/.htaccess
+/server-status
+/api
+/api/v1
+/api/admin
+/api/users
+/users
+/user
+/dashboard
+/console
+/debug
+/test
+/tmp
+/uploads
+/static
+/assets
+/index.php
+/home
+/logout
+/register
+/signup
+/settings
+/.well-known/security.txt

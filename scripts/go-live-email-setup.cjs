@@ -67,7 +67,7 @@ async function main() {
       process.exit(1);
     }
 
-    const alertInbox = 'habib.developer8899@gmail.com';
+    const alertInbox = 'munem.developer@gmail.com';
     const pairs = [
       ['GO_LIVE_AUDIT_ALERT_EMAIL', alertInbox],
       ['GO_LIVE_AUDIT_SMTP_USER', gmail],

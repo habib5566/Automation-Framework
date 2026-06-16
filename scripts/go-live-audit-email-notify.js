@@ -1,6 +1,6 @@
 /**
  * Optional post-scan email (SMTP). Used by go-live-audit-core after each scan.
- * Default recipient: GO_LIVE_AUDIT_ALERT_EMAIL or habib.developer8899@gmail.com (see go-live-audit-defaults.cjs).
+ * Default recipient: GO_LIVE_AUDIT_ALERT_EMAIL or munem.developer@gmail.com (see go-live-audit-defaults.cjs).
  * @see go-live-audit/EMAIL.md
  */
 const { getAlertEmail } = require('./go-live-audit-defaults.cjs');

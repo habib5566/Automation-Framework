@@ -252,7 +252,19 @@
       transform: translateY(22px);
       transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1), transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
     }
+    /* Insight panels must always be visible — scan results are useless if hidden */
+    .dashboard-stack .reveal-on-scroll {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
     .reveal-on-scroll.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* After scan, insight panels must stay visible even if user never scrolled to them */
+    .dashboard-stack .reveal-on-scroll.scan-populated,
+    .dashboard-stack .reveal-on-scroll.is-visible {
       opacity: 1;
       transform: translateY(0);
     }
@@ -1393,6 +1405,26 @@
       border-color: rgba(251, 113, 133, 0.4);
       color: #fecdd3;
     }
+    .attack-inline-panel {
+      margin: 1rem 0 1.25rem;
+      padding: 1rem 1.1rem;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      background: linear-gradient(165deg, rgba(30, 39, 56, 0.92) 0%, rgba(18, 24, 38, 0.98) 100%);
+    }
+    .attack-inline-panel h3 {
+      margin: 0 0 0.65rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--accent);
+    }
+    .attack-inline-item {
+      padding: 0.55rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+    .attack-inline-item:last-child { border-bottom: none; }
     .stack-empty-hint {
       font-size: 0.88rem;
       color: var(--muted);
@@ -1885,32 +1917,32 @@
   </div>
   <section class="dashboard-stack" aria-label="Scan insights">
     <p class="dashboard-stack-title">Live insights — populated after each scan</p>
+  <div id="attackSurfacePanel" class="site-stack-panel stack-neutral reveal-on-scroll" aria-live="polite">
+    <p class="site-stack-title">Web attacks &amp; attack surface</p>
+    <p class="site-stack-headline">Run a scan to populate this panel</p>
+    <p class="site-stack-sub stack-empty-hint">
+      SQLi, password auditor, OSWE checks (prototype pollution, SSRF, session hijack, .NET deser, blind SQLi, file upload), headers, DNS, AV evasion, path exposure.
+    </p>
+  </div>
   <div id="vulnerabilitiesPanel" class="vulnerabilities-panel insight-card reveal-on-scroll" aria-live="polite">
     <p class="site-stack-title">Vulnerabilities &amp; risks</p>
     <p class="site-stack-headline">Run a scan to populate this panel</p>
     <p class="site-stack-sub stack-empty-hint">
-      Aggregated findings: security threats, outdated frameworks (Laravel, PHP, WordPress), and availability issues. Delivered in the email report to <strong>habib.developer8899@gmail.com</strong>.
+      Aggregated findings: security threats, outdated frameworks (Laravel, PHP, WordPress), and availability issues. Delivered in the email report to <strong>munem.developer@gmail.com</strong>.
     </p>
   </div>
   <div id="securityThreatsPanel" class="security-threats-panel reveal-on-scroll" aria-live="polite">
     <p class="site-stack-title">Security monitor — malware, intrusion &amp; injection</p>
     <p class="site-stack-headline">Run a scan to populate this panel</p>
     <p class="site-stack-sub stack-empty-hint">
-      Automated detection for cryptominers, web shells, defacement, fake crypto airdrops / wallet drainers, exposed secrets, downtime, and content drift versus the last clean baseline. Alerts are sent to <strong>habib.developer8899@gmail.com</strong>.
+      Automated detection for cryptominers, web shells, defacement, fake crypto airdrops / wallet drainers, exposed secrets, downtime, and content drift versus the last clean baseline. Alerts are sent to <strong>munem.developer@gmail.com</strong>.
     </p>
   </div>
   <div id="domainSslPanel" class="site-stack-panel stack-neutral reveal-on-scroll" aria-live="polite">
     <p class="site-stack-title">SSL &amp; domain expiry</p>
     <p class="site-stack-headline">Run a scan to populate this panel</p>
     <p class="site-stack-sub stack-empty-hint">
-      TLS certificate and domain registration expiry are checked on each scan. Warnings appear when SSL is within 30 days or domain within 90 days of expiry. Critical alerts email <strong>habib.developer8899@gmail.com</strong>.
-    </p>
-  </div>
-  <div id="attackSurfacePanel" class="site-stack-panel stack-neutral reveal-on-scroll" aria-live="polite">
-    <p class="site-stack-title">Attack surface &amp; pentest-style checks</p>
-    <p class="site-stack-headline">Run a scan to populate this panel</p>
-    <p class="site-stack-sub stack-empty-hint">
-      Passive security checks: information gathering, vulnerability scanning, web attacks, <strong>SQL injection detection</strong> (safe probes), <strong>password attack surface</strong> (login/policy — no brute-force), <strong>antivirus evasion indicators</strong> in page scripts, and sensitive path exposure.
+      TLS certificate and domain registration expiry are checked on each scan. Warnings appear when SSL is within 30 days or domain within 90 days of expiry. Critical alerts email <strong>munem.developer@gmail.com</strong>.
     </p>
   </div>
   <div id="brandMatrixPanel" class="brand-matrix-panel reveal-on-scroll" aria-live="polite">
@@ -1934,7 +1966,7 @@
     <p class="site-stack-title">Site issues (down · HTTP)</p>
     <p class="site-stack-headline">Run a scan to populate this panel</p>
     <p class="site-stack-sub stack-empty-hint">
-      Per-brand alerts for downtime, HTTP 5xx responses, and console errors—surfaced here and in the email report to <strong>habib.developer8899@gmail.com</strong>.
+      Per-brand alerts for downtime, HTTP 5xx responses, and console errors—surfaced here and in the email report to <strong>munem.developer@gmail.com</strong>.
     </p>
   </div>
   </section>
@@ -2004,7 +2036,7 @@
           </label>
           <label class="chk-wrap">
             <input type="checkbox" id="sendEmailAfterScan" checked />
-            <span>Email scan summary <span class="label-hint">(delivered to habib.developer8899@gmail.com)</span></span>
+            <span>Email scan summary <span class="label-hint">(delivered to munem.developer@gmail.com)</span></span>
           </label>
           <label class="chk-wrap">
             <input type="checkbox" id="addToBrandWatch" checked />
@@ -2037,19 +2069,19 @@
                   <code>GO_LIVE_AUDIT_EMAIL_FROM</code> → <strong>Redeploy</strong>
                 </li>
                 <li><strong>Option B:</strong> Enter Sender Gmail + App Password below, then run Watch or Scan</li>
-                <li>Check inbox and spam folder: <code>habib.developer8899@gmail.com</code></li>
+                <li>Check inbox and spam folder: <code>munem.developer@gmail.com</code></li>
               </ol>
             </details>
             <div class="field-block">
-              <label for="reportEmailInput">Alert recipient <span class="label-hint">(configured)</span></label>
+              <label for="reportEmailInput">Alert recipient <span class="label-hint">(where reports are sent)</span></label>
               <input
                 id="reportEmailInput"
                 type="email"
                 inputmode="email"
                 autocomplete="email"
                 spellcheck="false"
-                readonly
-                value="habib.developer8899@gmail.com"
+                placeholder="munem.developer@gmail.com"
+                value="munem.developer@gmail.com"
               />
             </div>
             <div class="field-block">
@@ -2087,7 +2119,7 @@
               />
             </div>
             <p class="email-help">
-              <strong>Quick start:</strong> Enable <strong>Email scan summary</strong>, enter a <strong>Brand name</strong>, provide your <strong>Gmail App Password</strong>, and run a scan—the full report is delivered to <strong>habib.developer8899@gmail.com</strong>.
+              <strong>Quick start:</strong> Enable <strong>Email scan summary</strong>, enter a <strong>Brand name</strong>, provide your <strong>Gmail App Password</strong>, and run a scan—the full report is delivered to <strong>munem.developer@gmail.com</strong>.
             </p>
             <details class="email-help-details">
               <summary>Advanced — Mailpit, <code>.env</code> configuration, notify token</summary>
@@ -2136,7 +2168,14 @@
       const STORAGE_KEY = 'goLiveAudit_v1';
       const LAST_SCAN_KEY = 'goLiveAudit_lastScan_v1';
       const BRAND_SCANS_LS = 'goLiveAudit_brandScans_v1';
-      const DEFAULT_ALERT_EMAIL = 'habib.developer8899@gmail.com';
+      const DEFAULT_ALERT_EMAIL = 'munem.developer@gmail.com';
+
+      function getReportEmail() {
+        const el = document.getElementById('reportEmailInput');
+        const raw = (el && el.value ? el.value : state.reportEmail || '').trim();
+        if (raw && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) return raw;
+        return DEFAULT_ALERT_EMAIL;
+      }
       let activeBrandKey = null;
       let homeChecklistSnapshot = null;
       let watchBrandsCache = [];
@@ -2293,7 +2332,7 @@
 
       function buildWatchRequestBody() {
         const watchBody = {
-          reportEmail: DEFAULT_ALERT_EMAIL,
+          reportEmail: getReportEmail(),
           sendEmail: true,
           emailReport: true,
           sendWatchDigest: true,
@@ -2840,7 +2879,7 @@
         if (mainEl) mainEl.hidden = view === 'brands';
         if (hub) hub.hidden = view !== 'brands';
         if (brandHead) brandHead.hidden = view !== 'brand';
-        if (scanForm) scanForm.hidden = view === 'brand';
+        if (scanForm) scanForm.hidden = view === 'brands';
         if (metaDetails) metaDetails.hidden = view === 'brands';
         if (siteHeader) siteHeader.hidden = view === 'brands';
         const navScan = document.getElementById('navScan');
@@ -3055,7 +3094,7 @@
       if (apiBaseEl) apiBaseEl.value = state.apiBaseUrl || '';
       applyVercelNoTunnelDefaults();
       if (sendEmailEl) sendEmailEl.checked = !!state.sendEmailAfterScan;
-      if (reportEmailEl) reportEmailEl.value = DEFAULT_ALERT_EMAIL;
+      if (reportEmailEl) reportEmailEl.value = (state.reportEmail || '').trim() || DEFAULT_ALERT_EMAIL;
       if (gmailSenderEl) gmailSenderEl.value = state.gmailSender || '';
       if (gmailAppPasswordEl) gmailAppPasswordEl.value = state.gmailAppPassword || '';
 
@@ -3310,6 +3349,9 @@
             return;
           }
           el.className = 'email-config-status ' + (em.ready ? 'email-good' : 'email-bad');
+          if (em.alertEmail && reportEmailEl && !(state.reportEmail || '').trim()) {
+            reportEmailEl.value = em.alertEmail;
+          }
           let html = '<strong>' + escapeHtml(em.headline) + '</strong> — ' + escapeHtml(em.detail);
           if (!em.ready && em.steps && em.steps.length) {
             html += '<ol>' + em.steps.map(function (s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('') + '</ol>';
@@ -3637,6 +3679,55 @@
         return '';
       }
 
+      function renderAttackSurfaceInlineBlock(data) {
+        const as = data && data.attackSurface;
+        if (!as) return '';
+        const findings = Array.isArray(as.findings) ? as.findings : [];
+        if (!findings.length) {
+          return (
+            '<div class="attack-inline-panel"><h3>Web attacks &amp; attack surface</h3>' +
+            '<p class="site-stack-sub">No attack findings on this pass.</p></div>'
+          );
+        }
+        const priority = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+        const sorted = findings.slice().sort(function (a, b) {
+          return (priority[a.severity] || 9) - (priority[b.severity] || 9);
+        });
+        let html =
+          '<div class="attack-inline-panel" id="attackFindingsInline">' +
+          '<h3>Web attacks &amp; attack surface</h3>' +
+          '<p class="site-stack-sub" style="margin:0 0 0.75rem">' +
+          escapeHtml(as.headline || 'Scan complete') +
+          (as.score != null ? ' · Score <strong>' + escapeHtml(String(as.score)) + '/100</strong>' : '') +
+          ' · <a href="#attackSurfacePanel">Open full panel ↑</a></p>';
+        sorted.slice(0, 14).forEach(function (f) {
+          const sev = String(f.severity || 'info').toUpperCase();
+          const cat = String(f.category || '').replace(/_/g, ' ');
+          html +=
+            '<div class="attack-inline-item"><strong>[' +
+            escapeHtml(sev) +
+            ']</strong> ' +
+            (cat ? '<span style="opacity:0.75">(' + escapeHtml(cat) + ')</span> ' : '') +
+            escapeHtml(f.title || '') +
+            (f.detail ? '<br/><span style="font-size:12px;opacity:0.85">' + escapeHtml(f.detail) + '</span>' : '') +
+            '</div>';
+        });
+        if (findings.length > 14) {
+          html +=
+            '<p class="site-stack-sub" style="margin-top:0.5rem">+' +
+            (findings.length - 14) +
+            ' more in the <a href="#attackSurfacePanel">attack surface panel</a>.</p>';
+        }
+        html += '</div>';
+        return html;
+      }
+
+      function revealDashboardPanels() {
+        document.querySelectorAll('.dashboard-stack .reveal-on-scroll').forEach(function (el) {
+          el.classList.add('is-visible', 'scan-populated');
+        });
+      }
+
       function renderScanDashboard(data) {
         if (!data) {
           renderVulnerabilitiesPanel(null);
@@ -3657,6 +3748,7 @@
         renderConsoleErrorsPanel(data.consoleIssues, data.brandName, data.scanMeta, data.deployHints);
         renderPageIssuesPanel(data.pageIssues, data.brandName, data.siteIssues);
         if (data.siteStack) renderSiteStackPanel(data.siteStack);
+        revealDashboardPanels();
       }
 
       function renderAttackSurfacePanel(attackSurface) {
@@ -3675,7 +3767,7 @@
           : 'neutral';
         panel.className = 'site-stack-panel stack-' + tone;
         let html =
-          '<p class="site-stack-title">Attack surface &amp; pentest-style checks' +
+          '<p class="site-stack-title">Web attacks &amp; attack surface' +
           (attackSurface.hostname ? ' · ' + escapeHtml(attackSurface.hostname) : '') +
           (attackSurface.score != null ? ' · Score <strong>' + escapeHtml(String(attackSurface.score)) + '/100</strong>' : '') +
           '</p>' +
@@ -4033,15 +4125,24 @@
 
       function scrollToScanResultsPanels(data) {
         if (!data) return;
-        const targets = [];
+        revealDashboardPanels();
+        const dash = document.querySelector('.dashboard-stack');
+        if (dash && !dash.hidden && dash.scrollIntoView) {
+          window.setTimeout(function () {
+            dash.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 120);
+        }
+        const targets = ['attackSurfacePanel'];
+        if (data.vulnerabilities && data.vulnerabilities.items && data.vulnerabilities.items.length) {
+          targets.push('vulnerabilitiesPanel');
+        }
+        if (data.domainSsl && data.domainSsl.items && data.domainSsl.items.length) {
+          targets.push('domainSslPanel');
+        }
         if (data.consoleIssues && data.consoleIssues.items && data.consoleIssues.items.length) {
           targets.push('consoleErrorsPanel');
         }
-        if (data.vulnerabilities && data.vulnerabilities.items && data.vulnerabilities.items.length) {
-          targets.push('vulnerabilitiesPanel');
-        } else if (data.attackSurface && data.attackSurface.findings && data.attackSurface.findings.length) {
-          targets.push('attackSurfacePanel');
-        } else if (data.security && data.security.threats && data.security.threats.length) {
+        if (!targets.length && data.security && data.security.threats && data.security.threats.length) {
           targets.push('securityThreatsPanel');
         }
         const id = targets[0] || 'vulnerabilitiesPanel';
@@ -4049,7 +4150,7 @@
         if (el && el.scrollIntoView) {
           window.setTimeout(function () {
             el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 400);
+          }, 450);
         }
       }
 
@@ -4525,7 +4626,7 @@
         document.getElementById('backendBanner').textContent = '';
         if (apiBaseEl) apiBaseEl.value = '';
         if (brandNameEl) brandNameEl.value = '';
-        if (reportEmailEl) reportEmailEl.value = DEFAULT_ALERT_EMAIL;
+        if (reportEmailEl) reportEmailEl.value = (state.reportEmail || '').trim() || DEFAULT_ALERT_EMAIL;
         if (gmailSenderEl) gmailSenderEl.value = '';
         if (gmailAppPasswordEl) gmailAppPasswordEl.value = '';
         if (sendEmailEl) sendEmailEl.checked = true;
@@ -4619,6 +4720,14 @@
         if (gmailAppPasswordEl) state.gmailAppPassword = gmailAppPasswordEl.value.trim();
         saveState(state);
       }
+      function persistReportEmail() {
+        state.reportEmail = getReportEmail();
+        saveState(state);
+      }
+      if (reportEmailEl) {
+        reportEmailEl.addEventListener('change', persistReportEmail);
+        reportEmailEl.addEventListener('input', persistReportEmail);
+      }
       if (gmailSenderEl) {
         gmailSenderEl.addEventListener('change', persistGmailCreds);
         gmailSenderEl.addEventListener('input', persistGmailCreds);
@@ -4674,7 +4783,6 @@
           return;
         }
         lastScanPayload = null;
-        renderScanDashboard(null);
         let stepTimer = null;
         const scanStarted = Date.now();
         btn.disabled = true;
@@ -4709,7 +4817,7 @@
           const brandScan = brandNameEl ? brandNameEl.value.trim() : '';
           if (brandScan) scanBody.brandName = brandScan;
           if (sendEmailEl && sendEmailEl.checked) scanBody.sendEmail = true;
-          scanBody.reportEmail = DEFAULT_ALERT_EMAIL;
+          scanBody.reportEmail = getReportEmail();
           const senderGmail = gmailSenderEl ? gmailSenderEl.value.trim() : '';
           const appPassSend = gmailAppPasswordEl ? gmailAppPasswordEl.value.trim().replace(/\s+/g, '') : '';
           if (appPassSend.length >= 16 && !appPassSend.includes('@') && senderGmail.includes('@')) {
@@ -4731,10 +4839,11 @@
           const notifyTok = notifyTokEl && notifyTokEl.value.trim();
           if (notifyTok) scanBody.notifyToken = notifyTok;
 
-          const res = await fetch(
-            scanApiEndpoint,
-            Object.assign({}, buildApiFetchInit('POST', scanBody), { cache: 'no-store' })
-          );
+          const fetchOpts = Object.assign({}, buildApiFetchInit('POST', scanBody), { cache: 'no-store' });
+          if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
+            fetchOpts.signal = AbortSignal.timeout(120000);
+          }
+          const res = await fetch(scanApiEndpoint, fetchOpts);
           const rawScan = await res.text().catch(function () {
             return '';
           });
@@ -4821,6 +4930,34 @@
                   ')'
               );
             });
+          }
+          if (data.attackSurface) {
+            const as = data.attackSurface;
+            const asSum = as.summary || {};
+            lines.push(
+              'Attack surface: ' +
+                (as.headline || 'scan complete') +
+                (as.score != null ? ' (score ' + as.score + '/100)' : '') +
+                ' — ' +
+                (asSum.total || 0) +
+                ' finding(s)' +
+                (asSum.critical ? ', ' + asSum.critical + ' critical' : '') +
+                (asSum.high ? ', ' + asSum.high + ' high' : '')
+            );
+            const adv = (as.findings || []).filter(function (f) {
+              return f.category === 'advanced_web_attacks' || f.category === 'password_security';
+            });
+            if (adv.length) {
+              lines.push('  Password / OSWE-style checks: ' + adv.length + ' item(s) — scroll up to Live insights panels.');
+              adv.slice(0, 4).forEach(function (f) {
+                lines.push('  · [' + (f.severity || 'info').toUpperCase() + '] ' + (f.title || ''));
+              });
+            } else if ((as.findings || []).length) {
+              lines.push('  Scroll up to <strong>Live insights</strong> panels for full attack-surface breakdown.');
+            }
+          }
+          if (data.vulnerabilities && data.vulnerabilities.headline) {
+            lines.push('Vulnerabilities: ' + data.vulnerabilities.headline);
           }
           lines.push(
             'Final URL: ' + data.finalUrl,
@@ -4931,6 +5068,7 @@
             renderLiveVsLocalBanner(data) +
             dashboardStaleBanner(data) +
             renderEmailReportBanner(data.emailReport, sendEmailEl && sendEmailEl.checked) +
+            renderAttackSurfaceInlineBlock(data) +
             overallBlock +
             availBlock +
             renderChecklistSkippedBanner(data) +
@@ -4938,6 +5076,12 @@
               ? '<div class="scan-scroll">' + detailLines.join('') + '</div>'
               : '');
           hideBackendBanner();
+          const inlineEl = document.getElementById('attackFindingsInline');
+          if (inlineEl && inlineEl.scrollIntoView) {
+            window.setTimeout(function () {
+              inlineEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 200);
+          }
           if (pendingBrandRescanRouteId) {
             const backId = pendingBrandRescanRouteId;
             pendingBrandRescanRouteId = null;
@@ -4949,9 +5093,8 @@
               rescanBtn.textContent = 'Rescan this brand';
             }
             navigateToBrand(brandStorageKey(brandLabel || backId, url), brandLabel || backId);
-          } else if (brandLabel) {
-            navigateToBrand(brandStorageKey(brandLabel, url), brandLabel);
           }
+          /* Do not auto-jump to brand page — keeps scan results + attack inline visible on Quick scan. */
         } catch (e) {
           let hint = '';
           if (useSameOriginApiByDefault()) {
@@ -5112,7 +5255,7 @@
           return;
         }
         panel.hidden = false;
-        const to = s.alertEmail || DEFAULT_ALERT_EMAIL;
+        const to = s.alertEmail || getReportEmail();
         const done = opts.done != null ? opts.done : s.scanned || 0;
         const total = opts.total != null ? opts.total : s.totalBrands || done;
         const title = opts.inProgress
@@ -5582,7 +5725,7 @@
           emailsFailed: 0,
           emailsSkipped: 0,
           brands: [],
-          alertEmail: DEFAULT_ALERT_EMAIL,
+          alertEmail: getReportEmail(),
         };
         try {
           await refreshWatchBrandsCache();

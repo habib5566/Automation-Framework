@@ -1,0 +1,2 @@
+# weblab runs entirely on the Python 3.8+ standard library.
+# There are no third-party dependencies to install.

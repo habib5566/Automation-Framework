@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "updatedAt": "2026-06-15T11:29:52.558Z",
+  "updatedAt": "2026-06-16T14:53:55.584Z",
   "brands": [
     {
       "name": "Example Brand",
       "url": "https://example.com",
       "enabled": true,
       "addedAt": "2026-05-19T00:00:00.000Z",
-      "lastScanAt": "2026-06-15T11:29:52.558Z",
+      "lastScanAt": "2026-06-16T14:53:55.584Z",
       "lastAlertLevel": "ok",
       "lastUrl": "https://example.com/",
       "baselineFingerprint": {
@@ -17,7 +17,7 @@
         "iframeCount": 0,
         "formCount": 0
       },
-      "baselineAt": "2026-06-15T11:29:52.558Z"
+      "baselineAt": "2026-06-16T14:53:55.584Z"
     },
     {
       "name": "weboptimax",
@@ -110,7 +110,7 @@
       "url": "https://vettedlogos.com/",
       "enabled": true,
       "addedAt": "2026-05-20T10:47:30.962Z",
-      "lastScanAt": "2026-06-03T11:30:04.373Z",
+      "lastScanAt": "2026-06-16T13:38:50.681Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://vettedlogos.com/",
       "baselineFingerprint": {
@@ -184,7 +184,7 @@
       "url": "https://www.designcentura.com/",
       "enabled": true,
       "addedAt": "2026-05-21T12:54:06.667Z",
-      "lastScanAt": "2026-06-15T10:57:53.650Z",
+      "lastScanAt": "2026-06-16T13:15:20.913Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://www.designcentura.com/"
     },
@@ -318,7 +318,7 @@
       "url": "https://appxide.com/",
       "enabled": true,
       "addedAt": "2026-06-01T12:31:09.120Z",
-      "lastScanAt": "2026-06-03T10:21:48.079Z",
+      "lastScanAt": "2026-06-16T12:55:58.944Z",
       "lastAlertLevel": "warn",
       "lastUrl": "https://appxide.com/"
     },
@@ -445,6 +445,27 @@
       "url": "https://logogrand.com/",
       "enabled": true,
       "addedAt": "2026-06-15T11:20:56.299Z"
+    },
+    {
+      "name": "Apps",
+      "url": "https://appxide.com/",
+      "enabled": true,
+      "addedAt": "2026-06-16T12:56:03.307Z"
+    },
+    {
+      "name": "D.C",
+      "url": "https://www.designcentura.com/",
+      "enabled": true,
+      "addedAt": "2026-06-16T13:15:21.464Z"
+    },
+    {
+      "name": "V.L",
+      "url": "https://vettedlogos.com/",
+      "enabled": true,
+      "addedAt": "2026-06-16T13:38:51.202Z",
+      "lastScanAt": "2026-06-16T14:41:27.275Z",
+      "lastAlertLevel": "warn",
+      "lastUrl": "https://vettedlogos.com/"
     }
   ]
 }

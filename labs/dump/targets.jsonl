@@ -1,0 +1,6 @@
+{"username": "admin", "algorithm": "sha256", "salt_hex": "706173736c61622d64656d6f2d73616c74", "target": "5a62e1e30d51f056671087ebe55f864998fe1797abcf09b19933a68b70c7b940"}
+{"username": "alice", "algorithm": "md5", "salt_hex": "", "target": "0d107d09f5bbe40cade3de5c71e9e9b7"}
+{"username": "bob", "algorithm": "sha1", "salt_hex": "", "target": "b1b3773a05c0ed0176787a4f1574ff0075f7521e"}
+{"username": "carol", "algorithm": "pbkdf2", "salt_hex": "25bb661619a689c53ac4e68a4f3ead0a", "target": "f7e80f4bb1681e7d009e20ba934e6a386012cace686dbff50a8109a37cf46d40"}
+{"username": "pin", "algorithm": "md5", "salt_hex": "", "target": "05128e44e27c36bdba71221bfccf735d"}
+{"username": "eve", "algorithm": "scrypt", "salt_hex": "09849a12e6e4fff7ba10f6ce6aba6a8c", "target": "5496d715d757a3bae01de5802c2672b68b162efe84caa79b028db48b47ca5322"}

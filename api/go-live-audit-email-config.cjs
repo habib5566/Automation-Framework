@@ -63,7 +63,7 @@ function getEmailConfigStatus() {
         ? [
             'Keep Email scan summary checked',
             'Paste Gmail App Password below (16 chars, no spaces)',
-            'Run quick scan — report goes to habib.developer8899@gmail.com',
+            'Run quick scan — report goes to ' + require('./go-live-audit-defaults.cjs').getAlertEmail(),
           ]
         : ['Run: npm run go-live:email-setup', 'Restart: npm run go-live:audit'];
 
@@ -116,6 +116,7 @@ function getEmailConfigStatus() {
     canDeliverToGmail: envReady || canUseUi,
     uiSmtpAllowed: canUseUi,
     steps,
+    alertEmail: require('./go-live-audit-defaults.cjs').getAlertEmail(),
   };
 }
 

