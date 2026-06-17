@@ -2080,8 +2080,8 @@
                 inputmode="email"
                 autocomplete="email"
                 spellcheck="false"
-                placeholder="munem.developer@gmail.com"
-                value="munem.developer@gmail.com"
+                placeholder="munem.developer@gmail.com, habib.developer8899@gmail.com"
+                value="munem.developer@gmail.com, habib.developer8899@gmail.com"
               />
             </div>
             <div class="field-block">
@@ -2168,12 +2168,20 @@
       const STORAGE_KEY = 'goLiveAudit_v1';
       const LAST_SCAN_KEY = 'goLiveAudit_lastScan_v1';
       const BRAND_SCANS_LS = 'goLiveAudit_brandScans_v1';
-      const DEFAULT_ALERT_EMAIL = 'munem.developer@gmail.com';
+      const DEFAULT_ALERT_EMAIL = 'munem.developer@gmail.com, habib.developer8899@gmail.com';
 
       function getReportEmail() {
         const el = document.getElementById('reportEmailInput');
         const raw = (el && el.value ? el.value : state.reportEmail || '').trim();
-        if (raw && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) return raw;
+        const parts = raw
+          .split(/[,;]+/)
+          .map(function (s) {
+            return s.trim();
+          })
+          .filter(function (s) {
+            return s && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+          });
+        if (parts.length) return parts.join(', ');
         return DEFAULT_ALERT_EMAIL;
       }
       let activeBrandKey = null;

@@ -32,32 +32,46 @@ function isLikelyEmail(s) {
   return true;
 }
 
+function parseEmailList(raw) {
+  const parts = String(raw || '')
+    .split(/[,;]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const valid = parts.filter(isLikelyEmail);
+  return [...new Set(valid)];
+}
+
+function formatRecipientList(list) {
+  return list.join(', ');
+}
+
 /** Typed Report email is allowed unless the deployer sets GO_LIVE_AUDIT_DISALLOW_UI_RECIPIENT=1 (public APIs). */
 function recipientFromUiAllowed() {
   return process.env.GO_LIVE_AUDIT_DISALLOW_UI_RECIPIENT !== '1';
 }
 
 function resolveRecipient(requestJson) {
-  const alertTo = getAlertEmail();
-  if (isLikelyEmail(alertTo)) {
-    return { to: alertTo, mode: 'alert' };
+  const alertList = parseEmailList(getAlertEmail());
+  if (alertList.length) {
+    return { to: formatRecipientList(alertList), mode: 'alert' };
   }
 
   const envTo = (process.env.GO_LIVE_AUDIT_EMAIL_TO || '').trim();
   const uiRaw = String(requestJson.reportEmail || requestJson.emailTo || requestJson.userEmail || '').trim();
-  if (uiRaw && !isLikelyEmail(uiRaw)) {
+  const uiList = parseEmailList(uiRaw);
+  if (uiRaw && !uiList.length) {
     return {
       to: '',
       mode: 'skip',
       reason:
-        'Report email looks invalid — use a full address like name@gmail.com (include @ and a domain with a dot, e.g. .com).',
+        'Report email looks invalid — use full addresses like name@gmail.com (comma-separated for multiple).',
     };
   }
-  const uiValid = uiRaw && isLikelyEmail(uiRaw);
   const canUi = recipientFromUiAllowed();
 
-  if (canUi && uiValid) return { to: uiRaw, mode: 'ui' };
-  if (envTo) return { to: envTo, mode: 'env' };
+  if (canUi && uiList.length) return { to: formatRecipientList(uiList), mode: 'ui' };
+  const envList = parseEmailList(envTo);
+  if (envList.length) return { to: formatRecipientList(envList), mode: 'env' };
   return {
     to: '',
     mode: 'skip',
@@ -487,8 +501,10 @@ function smtpHostIsLocalMailpit() {
 
 /** When Report email is Gmail, Mailpit cannot deliver — require real SMTP in .env. */
 function reportEmailRequiresInternetSmtp(to) {
-  const t = String(to || '').trim().toLowerCase();
-  return t.endsWith('@gmail.com') || t.endsWith('@googlemail.com');
+  return parseEmailList(to).some(function (email) {
+    const t = email.toLowerCase();
+    return t.endsWith('@gmail.com') || t.endsWith('@googlemail.com');
+  });
 }
 
 const GMAIL_SMTP_REQUIRED_MSG =
